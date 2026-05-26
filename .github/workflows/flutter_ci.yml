@@ -9,13 +9,140 @@ on:
     branches: 
         - main
 
-jobs:
-  # BUILD JOB FOR ANDROID
-  build_android:
-    runs-on: ubuntu-latest
-    env:
-        FLUTTER_CHANNEL: 'stable'
+env:
+  FLUTTER_CHANNEL: 'stable'
 
+jobs:
+  # TESTING AND ANALYSING - runs on every push
+  test_and_analyse: 
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Set up the Java environment 
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # Set up Flutter
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: ${{ env.FLUTTER_CHANNEL }}
+        cache: true 
+        pub-cache: true
+        cache-sdk: true
+
+    # Install dependencies
+    - name: Install Dependencies
+      run: flutter pub get
+
+    # Format code
+    - name: Run Linter
+      run: flutter analyze
+
+    # Run Tests
+    - name: Run Tests
+      run: flutter test
+
+  # BUILD JOB FOR ANDROID - only runs on main branch
+  build_android:
+    needs: test_and_analyse
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Set up the Java environment 
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # Set up Flutter
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: ${{ env.FLUTTER_CHANNEL }}
+        cache: true 
+        pub-cache: true
+        cache-sdk: true
+
+    # Install dependencies
+    - name: Install Dependencies
+      run: flutter pub get
+
+    # Build the APK 
+    - name: Build APK
+      run: flutter build apk --debug
+    
+    # Upload APK artifact      uses: actions/upload-artifact@v4
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
+
+  # BUILD JOB FOR IOS
+  build_ios:
+    needs: test_and_analyse
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: ${{ env.FLUTTER_CHANNEL }}
+        cache: true 
+        pub-cache: true
+        cache-sdk: true
+
+    - name: Install Dependencies
+      run: flutter pub get
+
+    - name: Build iOS App
+      run: flutter build ios --debug --no-codesign
+
+    - name: Zip iOS Build
+      run: |
+        cd build/ios/iphoneos
+        zip -r MyFlutterApp.zip Runner.app
+
+    - name: Upload iOS Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-debug-app
+        path: build/ios/iphoneos/MyFlutterApp.zipname: Flutter CI/CD
+
+# Run pipeline on pushes to any branch or pull requests to main
+on:
+  push:
+    branches: 
+        - '*'
+  pull_request:
+    branches: 
+        - main
+
+env:
+  FLUTTER_CHANNEL: 'stable'
+
+jobs:
+  # TESTING AND ANALYSING - runs on every push
+  test_and_analyse: 
+    runs-on: ubuntu-latest
     steps:
     # Checkout the code
     - name: Checkout code
@@ -48,14 +175,43 @@ jobs:
     - name: Run Tests
       run: flutter test
 
-    # Build the APK if in the main branch
+  # BUILD JOB FOR ANDROID - only runs on main branch
+  build_android:
+    needs: test_and_analyse
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Set up the Java environment 
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # Set up Flutter
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: ${{ env.FLUTTER_CHANNEL }}
+        cache: true 
+        pub-cache: true
+
+    # Install dependencies
+    - name: Install Dependencies
+      run: flutter pub get
+
+    # Build the APK 
     - name: Build APK
-      if: github.ref == 'refs/heads/main'
       run: flutter build apk --debug
     
-    # Upload APK artifact
+    # Upload APK artifact      uses: actions/upload-artifact@v4
+
     - name: Upload APK Artifact
-      if: github.ref == 'refs/heads/main'
       uses: actions/upload-artifact@v4
       with:
         name: android-debug-apk
@@ -63,19 +219,13 @@ jobs:
 
   # BUILD JOB FOR IOS
   build_ios:
+    needs: test_and_analyse
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
-    env:
-        FLUTTER_CHANNEL: 'stable'
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Set up Ruby & CocoaPods
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
 
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
@@ -88,17 +238,14 @@ jobs:
       run: flutter pub get
 
     - name: Build iOS App
-      if: github.ref == 'refs/heads/main'
       run: flutter build ios --debug --no-codesign
 
     - name: Zip iOS Build
-      if: github.ref == 'refs/heads/main'
       run: |
         cd build/ios/iphoneos
         zip -r MyFlutterApp.zip Runner.app
 
     - name: Upload iOS Artifact
-      if: github.ref == 'refs/heads/main'
       uses: actions/upload-artifact@v4
       with:
         name: ios-debug-app
