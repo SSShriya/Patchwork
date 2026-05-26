@@ -35,7 +35,6 @@ jobs:
         channel: ${{ env.FLUTTER_CHANNEL }}
         cache: true 
         pub-cache: true
-        cache-sdk: true
 
     # Install dependencies
     - name: Install Dependencies
@@ -74,7 +73,6 @@ jobs:
         channel: ${{ env.FLUTTER_CHANNEL }}
         cache: true 
         pub-cache: true
-        cache-sdk: true
 
     # Install dependencies
     - name: Install Dependencies
@@ -108,7 +106,6 @@ jobs:
         channel: ${{ env.FLUTTER_CHANNEL }}
         cache: true 
         pub-cache: true
-        cache-sdk: true
 
     - name: Install Dependencies
       run: flutter pub get
