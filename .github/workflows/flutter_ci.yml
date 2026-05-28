@@ -176,12 +176,6 @@ jobs:
     - name: Install Dependencies
       run: flutter pub get
 
-    # Get debug keystore to make app update without uninstalling
-    - name: Restore debug keystore
-      run: |
-        mkdir -p ~/.android
-        echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
-
     # Build the APK 
     - name: Build APK
       run: flutter build apk --debug
