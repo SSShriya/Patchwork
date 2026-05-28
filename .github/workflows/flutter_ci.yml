@@ -219,6 +219,8 @@ jobs:
     needs: [build_android, build_ios]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
