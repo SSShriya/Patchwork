@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
                 return InteractiveCard(card: matchCards[index], onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => UserProfileScreen(name: matchCards[index].title, university: matchCards[index].subtitle, course: 'Course', bio: 'Bio', event: 'Event')),
+                    MaterialPageRoute(builder: (context) => UserProfileScreen(name: matchCards[index].title, university: matchCards[index].subtitle, course: matchCards[index].course, bio: matchCards[index].bio, event: matchCards[index].event)),
                   );
                 });
               },
@@ -93,6 +93,20 @@ class  AppCard {
   });
 }
 
+class MatchCard extends AppCard {
+  final String course;
+  final String bio;
+  final String event;
+
+  const MatchCard({
+    required super.title,
+    required super.subtitle,
+    required this.course,
+    required this.bio,
+    required this.event,
+  }) : super(icon: Icons.person, color: Colors.pinkAccent);
+}
+
 const recCards = [
    AppCard(title: 'Cookie Making', subtitle: 'Baking Society', icon: Icons.cloud, color: Colors.indigo),
    AppCard(title: 'Fight Club', subtitle: 'Boxing Society', icon: Icons.cloud, color: Colors.indigo),
@@ -101,12 +115,12 @@ const recCards = [
 ];
 
 const matchCards = [
-   AppCard(title: 'Jeremy', subtitle: 'KCL History', icon: Icons.person, color: Colors.pinkAccent),
-   AppCard(title: 'Emily', subtitle: 'LSE Economics', icon: Icons.person, color: Colors.pinkAccent),
-   AppCard(title: 'Carl', subtitle: 'Imperial Physics', icon: Icons.person, color: Colors.pinkAccent),
-   AppCard(title: 'Anne', subtitle: 'UCL Psychology', icon: Icons.person, color: Colors.pinkAccent),
-   AppCard(title: 'Geoffrey', subtitle: 'Royal Holloway Law', icon: Icons.person, color: Colors.pinkAccent),
-   AppCard(title: 'Zenaidah', subtitle: 'Queen Mary Medicine', icon: Icons.person, color: Colors.pinkAccent),
+   MatchCard(title: 'Jeremy', subtitle: 'KCL', course: 'History', bio: 'Bio', event: 'Event'),
+   MatchCard(title: 'Emily', subtitle: 'LSE', course: 'Economics', bio: 'Bio', event: 'Event'),
+   MatchCard(title: 'Carl', subtitle: 'Imperial', course: 'Physics', bio: 'Bio', event: 'Event'),
+   MatchCard(title: 'Anne', subtitle: 'UCL', course: 'Psychology', bio: 'Bio', event: 'Event'),
+   MatchCard(title: 'Geoffrey', subtitle: 'Royal Holloway', course: 'Law', bio: 'Bio', event: 'Event'),
+   MatchCard(title: 'Zenaidah', subtitle: 'Queen Mary', course: 'Medicine', bio: 'Bio', event: 'Event'),
 ];
 
 class InteractiveCard extends StatelessWidget {
@@ -194,39 +208,40 @@ class UserProfileScreen extends StatelessWidget {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
-      body: 
-      Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              name,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: Padding(
+  padding: const EdgeInsets.all(16),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.deepPurple,
+            child: Text(
+              name[0],
+              style: const TextStyle(fontSize: 32, color: Colors.white),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '$course at $university',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              bio,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Interested in:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              event,
-              style: const TextStyle(fontSize: 16, color: Colors.deepPurple),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text('$course at $university', style: const TextStyle(fontSize: 16, color: Colors.grey)),
+            ],
+          ),
+        ],
       ),
+      const SizedBox(height: 16),
+      Text(bio, style: const TextStyle(fontSize: 16)),
+      const SizedBox(height: 24),
+      const Text('Interested in:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      Text(event, style: const TextStyle(fontSize: 16, color: Colors.deepPurple)),
+    ],
+  ),
+),
     );
   }
 }
