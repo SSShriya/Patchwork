@@ -141,6 +141,17 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
+    # Cache Android SDK
+    - name: Cache Android SDK Components     
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          /usr/local/lib/android/sdk/ndk
+          /usr/local/lib/android/sdk/cmake
+        key: android-sdk-${{ runner.os }}-${{ hashFiles('**/pubspec.lock', '**/build.gradle') }}
+        restore-keys: android-sdk-${{ runner.os }}-
 
     # Install dependencies
     - name: Install Dependencies
@@ -215,3 +226,5 @@ jobs:
         name: ios-debug-app
         path: build/ios/iphoneos/MyFlutterApp.zip
         retention-days: 7
+
+    
