@@ -233,12 +233,6 @@ jobs:
           name: android-debug-apk
           path: artifacts/android
 
-      - name: Download iOS Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-debug-app
-          path: artifacts/ios
-
       # Create a GitHub Release with both files attached
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -247,13 +241,9 @@ jobs:
           name: "Debug Build #${{ github.run_number }}"
           body: |
             Automated debug build from commit ${{ github.sha }}
-            
-            ### Downloads
-            - Android - download `app-debug.apk`
-            - iOS - download `ios-debug.zip`
+    
           files: |
             artifacts/android/app-debug.apk
-            artifacts/ios/ios-debug.zip
           prerelease: true                          
                                                      
         env:
