@@ -21,6 +21,8 @@ jobs:
     # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: false
 
     # Create .env file
     - name: Create .env file
@@ -67,6 +69,8 @@ jobs:
     # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: false
 
     # Create .env file
     - name: Create .env file
@@ -117,6 +121,8 @@ jobs:
     # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: false
     
     # Create .env file
     - name: Create .env file
@@ -188,65 +194,67 @@ jobs:
         path: build/app/outputs/flutter-apk/app-debug.apk
         retention-days: 7
 
-  # BUILD JOB FOR IOS
-  build_ios:
-    needs: [lint, test]
-    if: github.ref == 'refs/heads/main'
-    runs-on: macos-latest
+  # # BUILD JOB FOR IOS
+  # build_ios:
+  #   needs: [lint, test]
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: macos-latest
 
-    steps:
-    # Checkout code
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   # Checkout code
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #     with:
+  #       submodules: false
 
-    # Create .env file
-    - name: Create .env file
-      run: |
-        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+  #   # Create .env file
+  #   - name: Create .env file
+  #     run: |
+  #       echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+  #       echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
-    # Set up Flutter
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: ${{ env.FLUTTER_CHANNEL }}
-        cache: true 
-        pub-cache: true
+  #   # Set up Flutter
+  #   - name: Set up Flutter
+  #     uses: subosito/flutter-action@v2
+  #     with:
+  #       channel: ${{ env.FLUTTER_CHANNEL }}
+  #       cache: true 
+  #       pub-cache: true
 
-      # Cache pub packages
-    - name: Cache pub dependencies        
-      uses: actions/cache@v4
-      with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
+  #     # Cache pub packages
+  #   - name: Cache pub dependencies        
+  #     uses: actions/cache@v4
+  #     with:
+  #         path: |
+  #           ~/.pub-cache
+  #           .dart_tool
+  #         key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+  #         restore-keys: pub-${{ runner.os }}-
 
-    # Install dependencies
-    - name: Install Dependencies
-      run: flutter pub get
+  #   # Install dependencies
+  #   - name: Install Dependencies
+  #     run: flutter pub get
 
-    # Build IOS app without signing it
-    - name: Build iOS App
-      run: flutter build ios --simulator --debug
+  #   # Build IOS app without signing it
+  #   - name: Build iOS App
+  #     run: flutter build ios --simulator --debug
 
-    # Zip and Upload the build artifact
-    - name: Zip iOS Build
-      run: |
-        cd build/ios/iphonesimulator        
-        zip -r ios-simulator.zip Runner.app
+  #   # Zip and Upload the build artifact
+  #   - name: Zip iOS Build
+  #     run: |
+  #       cd build/ios/iphonesimulator        
+  #       zip -r ios-simulator.zip Runner.app
 
-    - name: Upload iOS Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ios-simulator-app
-        path: build/ios/iphonesimulator/ios-simulator.zip  
-        retention-days: 7
+  #   - name: Upload iOS Artifact
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: ios-simulator-app
+  #       path: build/ios/iphonesimulator/ios-simulator.zip  
+  #       retention-days: 7
 
   # Put in Github releases
   release:
-    needs: [build_android, build_ios]
+    needs: [build_android]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -255,6 +263,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: false
 
     # Create .env file
     - name: Create .env file
