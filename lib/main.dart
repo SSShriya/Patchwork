@@ -72,6 +72,7 @@ class MatchService {
       'match_id': matchId,
       'accepted': accepted,
     });
+    await supabase.from('potential_matches').delete().eq('id', matchId);
   }
 
   // Fetch accepted matches (for a future "Accepted" screen)
