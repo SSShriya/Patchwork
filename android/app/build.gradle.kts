@@ -27,25 +27,24 @@ android {
     }
 
     signingConfigs {
-        debug {
-            storeFile file(System.getenv("ORG_GRADLE_PROJECT_storeFile") ?: 
-                         "${System.getProperty('user.home')}/.android/debug.keystore")
-            storePassword System.getenv("ORG_GRADLE_PROJECT_storePassword") ?: "android"
-            keyAlias System.getenv("ORG_GRADLE_PROJECT_keyAlias") ?: "androiddebugkey"
-            keyPassword System.getenv("ORG_GRADLE_PROJECT_keyPassword") ?: "android"
+        getByName("debug") {
+            storeFile = file(System.getenv("ORG_GRADLE_PROJECT_storeFile") 
+                ?: "${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = System.getenv("ORG_GRADLE_PROJECT_storePassword") ?: "android"
+            keyAlias = System.getenv("ORG_GRADLE_PROJECT_keyAlias") ?: "androiddebugkey"
+            keyPassword = System.getenv("ORG_GRADLE_PROJECT_keyPassword") ?: "android"
         }
     }
 
     buildTypes {
-        debug {
-            signingConfig signingConfigs.debug
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
         }
-        release {
-            signingConfig signingConfigs.debug
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
-    
 }
 
 flutter {
