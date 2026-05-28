@@ -59,7 +59,10 @@ class MatchService {
   Future<List<MatchCard>> getPendingMatches() async {
     // Get IDs of already-decided matches
     final decided = await supabase.from('decisions').select('match_id');
-    final decidedIds = (decided as List).map((d) => d['match_id'] as String).toList();
+    final decidedIds = (decided as List)
+      .map((d) => d['match_id'] as String?)
+      .whereType<String>()  // filters out nulls
+      .toList();
 
     // Fetch matches not in that list
     var query = supabase.from('potential_matches').select();
