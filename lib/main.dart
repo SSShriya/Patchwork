@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _supabaseUrl = 'https://fvxsvmpocsmhyhimollx.supabase.co';
@@ -6,6 +7,9 @@ const _supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
   await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
   runApp(const MainApp());
 }
@@ -307,6 +311,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Text(
                     _current.bio,
                     style: const TextStyle(fontSize: 16),
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 24),
@@ -330,7 +336,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.only(bottom: 40),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -370,78 +376,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         ],
       ),
-      // body: Padding(
-      //   padding: const EdgeInsets.all(16),
-      //   child: Column(
-      //     crossAxisAlignment: CrossAxisAlignment.start,
-      //     children: [
-      //       Row(children: [
-      //         CircleAvatar(
-      //           radius: 40,
-      //           backgroundColor: const Color(0XFF8789C0),
-      //           child: Text(_current.title[0],
-      //               style: const TextStyle(fontSize: 32, color: Colors.white)),
-      //         ),
-      //         const SizedBox(width: 16),
-      //         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      //           Text(_current.title,
-      //               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-      //           Text('${_current.course} at ${_current.subtitle}',
-      //               style: const TextStyle(fontSize: 16, color: Colors.grey)),
-      //         ]),
-      //       ]),
-      //       const SizedBox(height: 16),
-      //       Text(_current.bio, style: const TextStyle(fontSize: 16)),
-      //       const SizedBox(height: 24),
-      //       const Text('Interested in:',
-      //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      //       const SizedBox(height: 8),
-      //       Text(_current.event,
-      //           style: const TextStyle(fontSize: 16, color: Colors.deepPurple)),
-      //       const Spacer(),
-      //       Center(
-      //         child: Text('${_index + 1} / ${_cards.length}',
-      //             style: const TextStyle(color: Colors.grey)),
-      //       ),
-      //       const SizedBox(height: 12),
-      //       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      //         TextButton.icon(
-      //           onPressed: _index > 0 ? () => setState(() => _index--) : null,
-      //           icon: const Icon(Icons.arrow_back),
-      //           label: const Text('Prev'),
-      //         ),
-      //         const SizedBox(width: 8),
-      //         TextButton(
-      //           style: TextButton.styleFrom(
-      //               foregroundColor: Colors.white,
-      //               backgroundColor: Colors.red,
-      //               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      //               minimumSize: const Size(80, 50)),
-      //           onPressed: () => _decide(false),
-      //           child: const Text('✕'),
-      //         ),
-      //         const SizedBox(width: 8),
-      //         TextButton(
-      //           style: TextButton.styleFrom(
-      //               foregroundColor: Colors.white,
-      //               backgroundColor: Colors.green,
-      //               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      //               minimumSize: const Size(80, 50)),
-      //           onPressed: () => _decide(true),
-      //           child: const Text('✓'),
-      //         ),
-      //         const SizedBox(width: 8),
-      //         TextButton.icon(
-      //           onPressed: _index < _cards.length - 1
-      //               ? () => setState(() => _index++)
-      //               : null,
-      //           icon: const Icon(Icons.arrow_forward),
-      //           label: const Text('Next'),
-      //         ),
-      //       ]),
-      //     ],
-      //   ),
-      // ),
     );
   }
 }
