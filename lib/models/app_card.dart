@@ -22,7 +22,7 @@ class AppCard extends BaseCard {
 // dummy cards
 const recCards = [
   AppCard(
-    title: 'Cookie Making',
+    title: 'Cookie Makiiiiiing',
     subtitle: 'Baking Society',
     icon: Icons.cloud,
     color: Color(0XFFFED766),
