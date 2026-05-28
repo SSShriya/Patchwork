@@ -141,18 +141,6 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-    # Cache Android SDK
-    - name: Cache Android SDK Components     
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-          /usr/local/lib/android/sdk/ndk
-          /usr/local/lib/android/sdk/cmake
-        key: android-sdk-${{ runner.os }}-${{ hashFiles('**/pubspec.lock', '**/build.gradle') }}
-        restore-keys: android-sdk-${{ runner.os }}-
-
     # Install dependencies
     - name: Install Dependencies
       run: flutter pub get
@@ -198,14 +186,6 @@ jobs:
           key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: pub-${{ runner.os }}-
 
-    # Cache CocoaPods
-    - name: Cache CocoaPods              
-      uses: actions/cache@v4
-      with:
-          path: ios/Pods
-          key: pods-${{ runner.os }}-${{ hashFiles('**/Podfile.lock') }}
-          restore-keys: pods-${{ runner.os }}-
-
     # Install dependencies
     - name: Install Dependencies
       run: flutter pub get
@@ -218,13 +198,54 @@ jobs:
     - name: Zip iOS Build
       run: |
         cd build/ios/iphoneos
-        zip -r MyFlutterApp.zip Runner.app
+        zip -r ios-debug.zip Runner.app
 
     - name: Upload iOS Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ios-debug-app
-        path: build/ios/iphoneos/MyFlutterApp.zip
+        path: build/ios/iphoneos/ios-debug.zip
         retention-days: 7
 
-    
+  # Put in Github releases
+  release:
+    needs: [build_android, build_ios]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Download the artifacts from previous jobs
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-debug-apk
+          path: artifacts/android
+
+      - name: Download iOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-debug-app
+          path: artifacts/ios
+
+      # Create a GitHub Release with both files attached
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}   
+          name: "Debug Build #${{ github.run_number }}"
+          body: |
+            Automated debug build from commit ${{ github.sha }}
+            
+            ### Downloads
+            - Android - download `app-debug.apk`
+            - iOS - download `ios-debug.zip`
+          files: |
+            artifacts/android/app-debug.apk
+            artifacts/ios/ios-debug.zip
+          prerelease: true                          
+                                                     
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
