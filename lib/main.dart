@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text('Welcome Back!'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               itemCount: recCards.length,
               itemBuilder: (context, index) {
-                return InteractiveCard(card: recCards[index]);
+                return InteractiveCard(card: recCards[index], onTap: () => {});
               },
             ),
           ),
@@ -61,7 +61,12 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               itemCount: matchCards.length,
               itemBuilder: (context, index) {
-                return InteractiveCard(card: matchCards[index]);
+                return InteractiveCard(card: matchCards[index], onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserProfileScreen(name: matchCards[index].title, university: matchCards[index].subtitle, course: 'Course', bio: 'Bio', event: 'Event')),
+                  );
+                });
               },
             ),
           ),
@@ -106,20 +111,22 @@ const matchCards = [
 
 class InteractiveCard extends StatelessWidget {
   final  AppCard card;
+  final VoidCallback? onTap;
 
-  const InteractiveCard({super.key, required this.card});
+  const InteractiveCard({super.key, required this.card, required this.onTap});
     
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
+      width: 140,
       child:
     Material(
       color: card.color,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {}, // handle tap
+        onTap: onTap ?? () => {}, // handle tap
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -167,6 +174,59 @@ class AppNavigationBar extends StatelessWidget {
       ],
       currentIndex: 0,
       onTap: (index) {}, // handle navigation
+    );
+  }
+}
+
+class UserProfileScreen extends StatelessWidget {
+  const UserProfileScreen({super.key, required this.name, required this.university, required this.course, required this.bio, required this.event});
+  final String name;
+  final String university;
+  final String course;
+  final String bio;
+  final String event;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(name),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+      ),
+      body: 
+      Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$course at $university',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              bio,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Interested in:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              event,
+              style: const TextStyle(fontSize: 16, color: Colors.deepPurple),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
