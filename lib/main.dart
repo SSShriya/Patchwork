@@ -267,78 +267,181 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: const Color(0XFF8789C0),
-                child: Text(_current.title[0],
-                    style: const TextStyle(fontSize: 32, color: Colors.white)),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundColor: const Color(0XFF8789C0),
+                        child: Text(
+                          _current.title[0],
+                          style: const TextStyle(fontSize: 32, color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _current.title,
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '${_current.course} at ${_current.subtitle}',
+                            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Text(
+                    _current.bio,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    'Interested in:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    _current.event,
+                    style: const TextStyle(fontSize: 16, color: Colors.deepPurple),
+                  ),
+
+                  const SizedBox(height: 80), // space for buttons
+                ],
               ),
-              const SizedBox(width: 16),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(_current.title,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Text('${_current.course} at ${_current.subtitle}',
-                    style: const TextStyle(fontSize: 16, color: Colors.grey)),
-              ]),
-            ]),
-            const SizedBox(height: 16),
-            Text(_current.bio, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 24),
-            const Text('Interested in:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(_current.event,
-                style: const TextStyle(fontSize: 16, color: Colors.deepPurple)),
-            const Spacer(),
-            Center(
-              child: Text('${_index + 1} / ${_cards.length}',
-                  style: const TextStyle(color: Colors.grey)),
             ),
-            const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              TextButton.icon(
-                onPressed: _index > 0 ? () => setState(() => _index--) : null,
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Prev'),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                style: TextButton.styleFrom(
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton.icon(
+                  onPressed: _index > 0 ? () => setState(() => _index--) : null,
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Prev'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    minimumSize: const Size(80, 50)),
-                onPressed: () => _decide(false),
-                child: const Text('✕'),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                style: TextButton.styleFrom(
+                  ),
+                  onPressed: () => _decide(false),
+                  child: const Text('✕'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    minimumSize: const Size(80, 50)),
-                onPressed: () => _decide(true),
-                child: const Text('✓'),
-              ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: _index < _cards.length - 1
-                    ? () => setState(() => _index++)
-                    : null,
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Next'),
-              ),
-            ]),
-          ],
-        ),
+                  ),
+                  onPressed: () => _decide(true),
+                  child: const Text('✓'),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: _index < _cards.length - 1
+                      ? () => setState(() => _index++)
+                      : null,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Next'),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+      // body: Padding(
+      //   padding: const EdgeInsets.all(16),
+      //   child: Column(
+      //     crossAxisAlignment: CrossAxisAlignment.start,
+      //     children: [
+      //       Row(children: [
+      //         CircleAvatar(
+      //           radius: 40,
+      //           backgroundColor: const Color(0XFF8789C0),
+      //           child: Text(_current.title[0],
+      //               style: const TextStyle(fontSize: 32, color: Colors.white)),
+      //         ),
+      //         const SizedBox(width: 16),
+      //         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      //           Text(_current.title,
+      //               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+      //           Text('${_current.course} at ${_current.subtitle}',
+      //               style: const TextStyle(fontSize: 16, color: Colors.grey)),
+      //         ]),
+      //       ]),
+      //       const SizedBox(height: 16),
+      //       Text(_current.bio, style: const TextStyle(fontSize: 16)),
+      //       const SizedBox(height: 24),
+      //       const Text('Interested in:',
+      //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      //       const SizedBox(height: 8),
+      //       Text(_current.event,
+      //           style: const TextStyle(fontSize: 16, color: Colors.deepPurple)),
+      //       const Spacer(),
+      //       Center(
+      //         child: Text('${_index + 1} / ${_cards.length}',
+      //             style: const TextStyle(color: Colors.grey)),
+      //       ),
+      //       const SizedBox(height: 12),
+      //       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      //         TextButton.icon(
+      //           onPressed: _index > 0 ? () => setState(() => _index--) : null,
+      //           icon: const Icon(Icons.arrow_back),
+      //           label: const Text('Prev'),
+      //         ),
+      //         const SizedBox(width: 8),
+      //         TextButton(
+      //           style: TextButton.styleFrom(
+      //               foregroundColor: Colors.white,
+      //               backgroundColor: Colors.red,
+      //               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      //               minimumSize: const Size(80, 50)),
+      //           onPressed: () => _decide(false),
+      //           child: const Text('✕'),
+      //         ),
+      //         const SizedBox(width: 8),
+      //         TextButton(
+      //           style: TextButton.styleFrom(
+      //               foregroundColor: Colors.white,
+      //               backgroundColor: Colors.green,
+      //               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      //               minimumSize: const Size(80, 50)),
+      //           onPressed: () => _decide(true),
+      //           child: const Text('✓'),
+      //         ),
+      //         const SizedBox(width: 8),
+      //         TextButton.icon(
+      //           onPressed: _index < _cards.length - 1
+      //               ? () => setState(() => _index++)
+      //               : null,
+      //           icon: const Icon(Icons.arrow_forward),
+      //           label: const Text('Next'),
+      //         ),
+      //       ]),
+      //     ],
+      //   ),
+      // ),
     );
   }
 }
