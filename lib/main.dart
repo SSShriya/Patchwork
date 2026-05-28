@@ -169,51 +169,49 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: Text('Recommended Events',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          ),
+          SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: recCards.length,
+              itemBuilder: (_, i) =>
+                  InteractiveCard(card: recCards[i], onTap: () {}),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: Text('Matches',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          ),
+          if (choirCards.isNotEmpty)
+            MatchRow(
+              cards: choirCards,
+              eventLabel: 'Choir Concert - Music Society',
+              onTap: (i) => _openProfile(choirCards[i]),
+            ),
+          if (improvCards.isNotEmpty)
+            MatchRow(
+              cards: improvCards,
+              eventLabel: 'Taster Session - Improv Society',
+              onTap: (i) => _openProfile(improvCards[i]),
+            ),
+          if (choirCards.isEmpty && improvCards.isEmpty)
             const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-              child: Text('Recommended Events',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              padding: EdgeInsets.all(32),
+              child: Center(child: Text("You've reviewed everyone! 🎉")),
             ),
-            SizedBox(
-              height: 180,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: recCards.length,
-                itemBuilder: (_, i) =>
-                    InteractiveCard(card: recCards[i], onTap: () {}),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-              child: Text('Matches',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            ),
-            if (choirCards.isNotEmpty)
-              MatchRow(
-                cards: choirCards,
-                eventLabel: 'Choir Concert - Music Society',
-                onTap: (i) => _openProfile(choirCards[i]),
-              ),
-            if (improvCards.isNotEmpty)
-              MatchRow(
-                cards: improvCards,
-                eventLabel: 'Taster Session - Improv Society',
-                onTap: (i) => _openProfile(improvCards[i]),
-              ),
-            if (choirCards.isEmpty && improvCards.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: Text("You've reviewed everyone! 🎉")),
-              ),
-            const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
-          ],
+          const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
+        ],
         ),
-      ),
       bottomNavigationBar: const AppNavigationBar(),
     );
   }
