@@ -22,6 +22,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # Create .env file
+    - name: Create .env file
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+
     # Set up the Java environment 
     - name: Set up Java
       uses: actions/setup-java@v4
@@ -61,6 +67,12 @@ jobs:
     # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v4
+
+    # Create .env file
+    - name: Create .env file
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
     # Set up the Java environment 
     - name: Set up Java
@@ -105,6 +117,12 @@ jobs:
     # Checkout the code
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    # Create .env file
+    - name: Create .env file
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
     # Set up the Java environment 
     - name: Set up Java
@@ -175,6 +193,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # Create .env file
+    - name: Create .env file
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+
     # Set up Flutter
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
@@ -223,28 +247,34 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      # Download the artifacts from previous jobs
-      - name: Download Android Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: android-debug-apk
-          path: artifacts/android
+    # Create .env file
+    - name: Create .env file
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
-      # Create a GitHub Release with both files attached
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}   
-          name: "Debug Build #${{ github.run_number }}"
-          body: |
-            Automated debug build from commit ${{ github.sha }}
-    
-          files: |
-            artifacts/android/app-debug.apk
-          prerelease: true                          
-                                                     
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Download the artifacts from previous jobs
+    - name: Download Android Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: android-debug-apk
+        path: artifacts/android
+
+    # Create a GitHub Release with both files attached
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: build-${{ github.run_number }}   
+        name: "Debug Build #${{ github.run_number }}"
+        body: |
+          Automated debug build from commit ${{ github.sha }}
+  
+        files: |
+          artifacts/android/app-debug.apk
+        prerelease: true                          
+                                                    
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
