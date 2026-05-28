@@ -229,19 +229,19 @@ jobs:
 
     # Build IOS app without signing it
     - name: Build iOS App
-      run: flutter build ios --debug --no-codesign
+      run: flutter build ios --simulator --debug
 
     # Zip and Upload the build artifact
     - name: Zip iOS Build
       run: |
-        cd build/ios/iphoneos
-        zip -r ios-debug.zip Runner.app
+        cd build/ios/iphonesimulator        
+        zip -r ios-simulator.zip Runner.app
 
     - name: Upload iOS Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ios-debug-app
-        path: build/ios/iphoneos/ios-debug.zip
+        name: ios-simulator-app
+        path: build/ios/iphonesimulator/ios-simulator.zip  
         retention-days: 7
 
   # Put in Github releases
