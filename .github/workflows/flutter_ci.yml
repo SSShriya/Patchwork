@@ -15,7 +15,7 @@ env:
 
 jobs:
   # TESTING AND ANALYSING - runs on every push
-  test_and_analyse: 
+  lint: 
     runs-on: ubuntu-latest
     steps:
     # Checkout the code
@@ -36,6 +36,16 @@ jobs:
         channel: ${{ env.FLUTTER_CHANNEL }}
         cache: true 
         pub-cache: true
+    
+    # Cache pub packages
+    - name: Cache pub dependencies       
+      uses: actions/cache@v4
+      with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
 
     # Install dependencies
     - name: Install Dependencies
@@ -45,13 +55,49 @@ jobs:
     - name: Run Linter
       run: flutter analyze
 
+  test: 
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Set up the Java environment 
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # Set up Flutter
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: ${{ env.FLUTTER_CHANNEL }}
+        cache: true 
+        pub-cache: true
+    
+    # Cache pub packages
+    - name: Cache pub dependencies       
+      uses: actions/cache@v4
+      with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+    # Install dependencies
+    - name: Install Dependencies
+      run: flutter pub get
+
     # Run Tests
     - name: Run Tests
       run: flutter test
 
   # BUILD JOB FOR ANDROID - only runs on main branch
   build_android:
-    needs: test_and_analyse
+    needs: [lint, test]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -74,6 +120,27 @@ jobs:
         channel: ${{ env.FLUTTER_CHANNEL }}
         cache: true 
         pub-cache: true
+
+    # Reuse cached packages
+    - name: Cache pub dependencies        
+      uses: actions/cache@v4
+      with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+    # Cache gradle
+    - name: Cache Gradle                  
+      uses: actions/cache@v4
+      with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
 
     # Install dependencies
     - name: Install Dependencies
@@ -89,10 +156,11 @@ jobs:
       with:
         name: android-debug-apk
         path: build/app/outputs/flutter-apk/app-debug.apk
+        retention-days: 7
 
   # BUILD JOB FOR IOS
   build_ios:
-    needs: test_and_analyse
+    needs: [lint, test]
     if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
 
@@ -108,6 +176,24 @@ jobs:
         channel: ${{ env.FLUTTER_CHANNEL }}
         cache: true 
         pub-cache: true
+
+      # Cache pub packages
+    - name: Cache pub dependencies        
+      uses: actions/cache@v4
+      with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
+
+    # Cache CocoaPods
+    - name: Cache CocoaPods              
+      uses: actions/cache@v4
+      with:
+          path: ios/Pods
+          key: pods-${{ runner.os }}-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: pods-${{ runner.os }}-
 
     # Install dependencies
     - name: Install Dependencies
@@ -128,3 +214,4 @@ jobs:
       with:
         name: ios-debug-app
         path: build/ios/iphoneos/MyFlutterApp.zip
+        retention-days: 7
