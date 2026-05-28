@@ -21,10 +21,11 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0XFFF5F0F6),
       appBar: AppBar(
         title: const Text('Welcome Back!'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0XFF84DCC6),
+        foregroundColor: Color(0XFF222222),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -120,14 +121,14 @@ class MatchCard extends AppCard {
     required this.course,
     required this.bio,
     required this.event,
-  }) : super(icon: Icons.person, color: Colors.pinkAccent);
+  }) : super(icon: Icons.person, color: const Color(0XFFEEC0C6));
 }
 
 const recCards = [
-   AppCard(title: 'Cookie Making', subtitle: 'Baking Society', icon: Icons.cloud, color: Colors.indigo),
-   AppCard(title: 'Fight Club', subtitle: 'Boxing Society', icon: Icons.cloud, color: Colors.indigo),
-   AppCard(title: 'Listening Party', subtitle: 'Alternative Music Society', icon: Icons.cloud, color: Colors.indigo),
-   AppCard(title: 'Off the Hook', subtitle: 'KnitSock', icon: Icons.cloud, color: Colors.indigo),
+   AppCard(title: 'Cookie Making', subtitle: 'Baking Society', icon: Icons.cloud, color: Color(0XFFFED766)),
+   AppCard(title: 'Fight Club', subtitle: 'Boxing Society', icon: Icons.cloud, color: Color(0XFFFED766)),
+   AppCard(title: 'Listening Party', subtitle: 'Alternative Music Society', icon: Icons.cloud, color: Color(0XFFFED766)),
+   AppCard(title: 'Off the Hook', subtitle: 'KnitSock', icon: Icons.cloud, color: Color(0XFFFED766)),
 ];
 
 const matchCards = [
@@ -162,12 +163,12 @@ class InteractiveCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(card.icon, color: Colors.white, size: 32),
+              Icon(card.icon, color: Color(0XFF222222), size: 32),
               const Spacer(),
               Text(
                 card.title,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color(0XFF222222),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -176,7 +177,7 @@ class InteractiveCard extends StatelessWidget {
               Text(
                 card.subtitle,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: Color(0XFF222222).withValues(alpha: 0.8),
                   fontSize: 13,
                 ),
               ),
@@ -221,7 +222,7 @@ class UserProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(name),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0XFF84DCC6),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -233,7 +234,7 @@ class UserProfileScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: Color(0XFF8789C0),
             child: Text(
               name[0],
               style: const TextStyle(fontSize: 32, color: Colors.white),
