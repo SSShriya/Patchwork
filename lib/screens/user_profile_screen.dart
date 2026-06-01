@@ -126,6 +126,7 @@ void _decide(bool accepted) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             CircleAvatar(
                               radius: 40,
@@ -145,7 +146,7 @@ void _decide(bool accepted) {
                                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                                   ),
                                   Text(
-                                    '${_current.course} at ${_current.subtitle}',
+                                    '${_current.yearGroup} at ${_current.subtitle}',
                                     style: const TextStyle(fontSize: 16, color: Colors.grey),
                                   ),
                                 ],
@@ -153,12 +154,52 @@ void _decide(bool accepted) {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(_current.bio, style: const TextStyle(fontSize: 16), softWrap: true),
                         const SizedBox(height: 24),
-                        const Text('Interested in:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+                        // -- shared event group --
+                        Text(
+                          'You both want to attend:',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _current.group.toUpperCase(),
+                          style: const TextStyle(fontSize: 16, color: Color(0xFF5DA9E9), fontWeight: FontWeight.bold),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // -- interests --
+                        const Text(
+                          'Interests:', 
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                        ),
+                        const SizedBox(height: 3),
+                        ..._current.interests.map(
+                          (interest) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('★ ', style: TextStyle(fontSize: 16)),
+                                Expanded(
+                                  child: Text(interest, style: const TextStyle(fontSize: 16)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // -- Bio --
+                        const Text(
+                          'Bio:',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 8),
-                        Text(_current.event, style: const TextStyle(fontSize: 16, color: Colors.deepPurple)),
+                        Text(_current.bio, style: const TextStyle(fontSize: 16)),
+
                         const SizedBox(height: 80),
                       ],
                     ),

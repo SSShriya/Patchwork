@@ -11,6 +11,8 @@ class MatchCard extends BaseCard {
   final String bio;
   final String event;
   final String group;
+  final String yearGroup;
+  final List<String> interests;
 
   const MatchCard({
     required this.id,
@@ -20,6 +22,8 @@ class MatchCard extends BaseCard {
     required this.bio,
     required this.event,
     required this.group,
+    required this.yearGroup,
+    required this.interests,
   });
 
   factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(
@@ -30,6 +34,10 @@ class MatchCard extends BaseCard {
     bio: json['bio'],
     event: json['event'],
     group: json['event_group'],
+    yearGroup: json['year_group'] ?? '',
+    interests: (json['interests'] as List<dynamic>? ?? [])
+    .map((i) => i['interest'] as String)
+    .toList(),
   );
 
   // So InteractiveCard still works

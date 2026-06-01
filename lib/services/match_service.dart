@@ -16,7 +16,7 @@ class MatchService {
         .toList();
 
     // Fetch matches not in that list
-    var query = supabase.from('potential_matches').select();
+    var query = supabase.from('potential_matches').select('*, interests(interest)');
     final rows = decidedIds.isEmpty
         ? await query
         : await query.not('id', 'in', decidedIds);
