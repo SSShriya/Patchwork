@@ -1,3 +1,4 @@
+import 'package:drp/screens/congrats_popup.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 
@@ -30,12 +31,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   MatchCard get _current => _cards[_index];
 
-  void _decide(bool accepted) {
-    final card = _current;
-    widget.onDecision(
-      card,
-      accepted,
-    ); // → saves to Supabase, removes from HomeScreen
+void _decide(bool accepted) {
+  final card = _current;
+  widget.onDecision(card, accepted);
+
+  if (accepted) {
+    showDialog(
+      context: context,
+      builder: (context) => CongratsPopup(matchName: card.title),
+    ).then((_) {
+      setState(() {
+        _cards.remove(card);
+        if (_cards.isEmpty) {
+          Navigator.pop(context);
+          return;
+        }
+        if (_index >= _cards.length) _index = _cards.length - 1;
+      });
+    });
+  } else {
     setState(() {
       _cards.remove(card);
       if (_cards.isEmpty) {
@@ -45,6 +59,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       if (_index >= _cards.length) _index = _cards.length - 1;
     });
   }
+}
 
   @override
   Widget build(BuildContext context) {
