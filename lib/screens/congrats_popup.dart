@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/match_card.dart';
+import 'home_screen.dart';
 
 class CongratsPopup extends StatelessWidget {
   final String matchName;
@@ -45,26 +45,26 @@ class CongratsPopup extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(
               onPressed: () {},
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0XFF8789C0),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
               child: const Text('DM Now'),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () { Navigator.pop(context); },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () {},
               child: const Text('Next Match'),
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0XFF8789C0),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () {},
+              onPressed: () { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen())); },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
                 foregroundColor: Colors.white,
