@@ -146,7 +146,7 @@ void _decide(bool accepted) {
                                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                                   ),
                                   Text(
-                                    '${_current.yearGroup} at ${_current.subtitle}',
+                                    '${_current.yearGroup} at ${_current.university}',
                                     style: const TextStyle(fontSize: 16, color: Colors.grey),
                                   ),
                                 ],

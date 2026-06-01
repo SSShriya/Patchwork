@@ -5,8 +5,7 @@ class MatchCard extends BaseCard {
   final String id; // from Supabase
   @override
   final String title;
-  @override
-  final String subtitle;
+  final String university;
   final String course;
   final String bio;
   final String event;
@@ -17,7 +16,7 @@ class MatchCard extends BaseCard {
   const MatchCard({
     required this.id,
     required this.title,
-    required this.subtitle,
+    required this.university,
     required this.course,
     required this.bio,
     required this.event,
@@ -29,7 +28,7 @@ class MatchCard extends BaseCard {
   factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(
     id: json['id'],
     title: json['name'],
-    subtitle: json['university'],
+    university: json['university'],
     course: json['course'],
     bio: json['bio'],
     event: json['event'],

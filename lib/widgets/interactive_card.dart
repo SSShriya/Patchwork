@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/base_card.dart';
+import '../models/match_card.dart';
 
 class InteractiveCard extends StatelessWidget {
   final BaseCard card;
@@ -34,13 +35,18 @@ class InteractiveCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  card.subtitle,
-                  style: TextStyle(
-                    color: Color(0XFF222222).withValues(alpha: 0.8),
-                    fontSize: 13,
-                  ),
-                ),
+                Builder(builder: (context) {
+                  final matchCard = card is MatchCard ? card as MatchCard : null;
+                  return Text(
+                    matchCard != null && matchCard.interests.isNotEmpty
+                        ? matchCard.interests.take(2).join(', ')
+                        : '',
+                    style: TextStyle(
+                      color: Color(0XFF222222).withValues(alpha: 0.8),
+                      fontSize: 13,
+                    ),
+                  );
+                }),
               ],
             ),
           ),
