@@ -59,6 +59,7 @@ class MatchService {
     return [
       ChatConversation(
         name: 'Alice',
+        interests: ['Hiking', 'Cooking', 'Travel'],
         lastMessage: 'Hey, which uni do you go to?',
         time: '09:00 AM',
         unreadCount: 2,
@@ -66,6 +67,7 @@ class MatchService {
       ),
       ChatConversation(
         name: 'Bob',
+        interests: ['Books', 'Music', 'Art'],
         lastMessage: 'Looking forward to book club!',
         time: 'Yesterday',
         unreadCount: 0,
@@ -73,6 +75,7 @@ class MatchService {
       ),
       ChatConversation(
         name: 'Charlie',
+        interests: ['Gaming', 'Tech', 'Movies'],
         lastMessage: 'Do you have any pets?',
         time: 'Monday',
         unreadCount: 1,

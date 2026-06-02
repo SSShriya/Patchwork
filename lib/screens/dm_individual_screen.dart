@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/match_convo.dart';
+import 'package:bulleted_list/bulleted_list.dart';
 
 class DMScreen extends StatefulWidget {
-  final String matchName;
+  final ChatConversation chat;
 
-  const DMScreen({super.key, required this.matchName});
+  const DMScreen({super.key, required this.chat});
 
   @override
   State<DMScreen> createState() => _DMScreenState();
@@ -37,12 +39,12 @@ class _DMScreenState extends State<DMScreen> {
             CircleAvatar(
               backgroundColor: const Color(0XFF8789C0),
               child: Text(
-                widget.matchName[0],
+                widget.chat.name[0],
                 style: const TextStyle(color: Colors.white),
               ),
             ),
             const SizedBox(width: 12),
-            Text(widget.matchName),
+            Text(widget.chat.name),
           ],
         ),
         backgroundColor: const Color(0XFF84DCC6),
@@ -50,12 +52,21 @@ class _DMScreenState extends State<DMScreen> {
       ),
       body: Column(
         children: [
+          SizedBox(height: 16),
           Expanded(
             child: _messages.isEmpty
                 ? Center(
-                    child: Text(
-                      'Say hi to ${widget.matchName}!',
-                      style: const TextStyle(color: Colors.grey),
+                    child: Column (
+                      children: [
+                        Text(
+                          'Interests:',
+                          style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        BulletedList(
+                          listItems: widget.chat.interests,
+                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(
@@ -106,7 +117,7 @@ class _DMScreenState extends State<DMScreen> {
                       controller: _controller,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
-                        hintText: 'Message ${widget.matchName}...',
+                        hintText: 'Message ${widget.chat.name}...',
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 10,

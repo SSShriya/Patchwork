@@ -32,12 +32,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             icon: const Icon(Icons.edit_note, color: Colors.black, size: 28),
             onPressed: () {
               // Action to start a completely new DM
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DMScreen(matchName: 'New Match'), // Placeholder for new DM screen
-                ),
-              );
             },
           ),
         ],
@@ -81,7 +75,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => DMScreen(matchName: chat.name), // Pass the match name to the DM screen
+                        builder: (_) => DMScreen(chat: chat),
                       ),
                     );
                   },

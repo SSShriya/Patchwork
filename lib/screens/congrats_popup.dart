@@ -1,3 +1,4 @@
+import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
@@ -45,7 +46,7 @@ class CongratsPopup extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => DMScreen(matchName: matchName))); },
+              onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => DMScreen(chat: ChatConversation(name: matchName, interests: [])))); },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
                 foregroundColor: Colors.white,
