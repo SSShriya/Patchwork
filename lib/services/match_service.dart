@@ -33,8 +33,8 @@ class MatchService {
     for (final row in rows as List) {
       final user1Id = row['user1_id'] as String;
       final user2Id = row['user2_id'] as String;
-      final user1Accepted = row['user1_accepted'] as bool;
-      final user2Accepted = row['user2_accepted'] as bool;
+      final user1Accepted = row['user1_accepted'] as bool? ?? false;
+      final user2Accepted = row['user2_accepted'] as bool? ?? false;
       final eventId = row['event_id'] as String;
 
       final isUser1 = currentUserId == user1Id;

@@ -37,15 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _pendingMatches = matches;
       _loading = false;
-      _interestedEvents = events;
+      _interestedEvents = events
+        ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     });
   }
 
   // Called by UserProfileScreen via callback
-  void _handleDecision(MatchCard card, bool accepted) {
+  Future<void> _handleDecision(MatchCard card, bool accepted) async {
+    await _matchService.recordDecision(card.id, accepted);
     setState(() => _pendingMatches.remove(card));
-    // Fire-and-forget — saves to Supabase in background
-    _matchService.recordDecision(card.id, accepted);
   }
 
   void _openProfile(MatchCard card) {
@@ -72,7 +72,23 @@ class _HomeScreenState extends State<HomeScreen> {
     for (final card in _pendingMatches) {
       map.putIfAbsent(card.event, () => []).add(card);
     }
-    return map;
+
+    // sort by date time
+    final sorted = Map.fromEntries(
+      map.entries.toList()..sort((a, b) {
+        final aEvent = _interestedEvents.firstWhere(
+          (e) => e.eventId == a.key,
+          orElse: () => _interestedEvents.first,
+        );
+        final bEvent = _interestedEvents.firstWhere(
+          (e) => e.eventId == b.key,
+          orElse: () => _interestedEvents.first,
+        );
+        return aEvent.startDateTime.compareTo(bEvent.startDateTime);
+      }),
+    );
+
+    return sorted;
   }
 
   @override

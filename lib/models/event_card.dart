@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'base_card.dart';
 
 class EventCard extends BaseCard {
-  @override
   final String eventId;
+  @override
   final String title;
   final String subtitle;
   final int numMatches;
