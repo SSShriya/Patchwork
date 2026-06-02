@@ -86,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _loadMatches, // pull fresh data anytime
           ),
         ],
+        automaticallyImplyLeading: false,
       ),
       body: ListView(
         padding: EdgeInsets.zero,

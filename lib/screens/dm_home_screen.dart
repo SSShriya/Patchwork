@@ -1,3 +1,4 @@
+import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
 
@@ -31,6 +32,12 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             icon: const Icon(Icons.edit_note, color: Colors.black, size: 28),
             onPressed: () {
               // Action to start a completely new DM
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DMScreen(matchName: 'New Match'), // Placeholder for new DM screen
+                ),
+              );
             },
           ),
         ],
@@ -38,7 +45,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Search Bar
+          // search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -56,78 +63,10 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             ),
           ),
 
-          // 2. "Start a conversation" Horizontal List
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              'Active Now',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-            ),
-          ),
-          SizedBox(
-            height: 95,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: 16),
-              itemCount: conversations.length,
-              itemBuilder: (context, index) {
-                final user = conversations[index];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 20.0),
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundColor: const Color(0XFF8789C0),
-                            child: Text(
-                              user.name[0],
-                              style: const TextStyle(
-                                fontSize: 32,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          if (user.isOnline)
-                            Positioned(
-                              right: 2,
-                              bottom: 2,
-                              child: Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      SizedBox(
-                        width: 60,
-                        child: Text(
-                          user.name.split(' ')[0], // Just first name for UI space
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const Divider(height: 30, thickness: 1, indent: 16, endIndent: 16),
-
-          // 3. Recent Conversations Vertical List
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Text(
-              'Recent Chats',
+              'Chats',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
             ),
           ),

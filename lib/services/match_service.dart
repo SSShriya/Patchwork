@@ -38,10 +38,10 @@ class MatchService {
   Future<List<MatchCard>> getAcceptedMatches() async {
     final rows = await supabase
         .from('decisions')
-        .select('match_id, matches(*)')
+        .select('match_id, potential_matches(*)')
         .eq('accepted', true);
 
-    return (rows as List).map((r) => MatchCard.fromJson(r['matches'])).toList();
+    return (rows as List).map((r) => MatchCard.fromJson(r['potential_matches'])).toList();
   }
 
   Future<List<ChatConversation>> getConversations() async {
@@ -55,7 +55,7 @@ class MatchService {
       lastMessage: '',
       time: '09:00 AM',
       unreadCount: 0,
-      isOnline: false,
+      isOnline: true,
     )).toList();
   }
 
