@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import '../screens/dm_home_screen.dart';
 
 class AppNavigationBar extends StatelessWidget {
-  const AppNavigationBar({super.key});
+  final int currentIndex;
+
+  const AppNavigationBar({super.key, this.currentIndex = 0});
 
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
+      currentIndex: currentIndex,
+      selectedItemColor: const Color(0xFFEBA6A9),
+      unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Events'),
@@ -18,31 +23,32 @@ class AppNavigationBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
-      currentIndex: 0,
       onTap: (index) {
+        if (index == currentIndex) return; // alr here, do nothing
         switch (index) {
           case 0:
-            // Already on Home, do nothing
+            // pop until back to route
+            Navigator.popUntil(context, (route) => route.isFirst);
             break;
           case 1:
-            // Navigate to Search screen
+            // search screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => EventsScreen()),
             );
             break;
           case 2:
+            // dm screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => DMOverviewScreen()),
             );
-            // Navigate to DMOverviewScreen (not implemented)
             break;
           case 3:
             // Navigate to Profile screen (not implemented)
             break;
         }
-      }, // handle navigation
+      },
     );
   }
 }

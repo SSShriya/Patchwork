@@ -14,7 +14,6 @@ class DMOverviewScreen extends StatefulWidget {
 class _DMOverviewScreenState extends State<DMOverviewScreen> {
   final _conversationService = ConversationService();
   List<ChatConversation> _conversations = [];
-  bool _loading = true;
 
   @override
   void initState() {
@@ -26,7 +25,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
     final convos = await _conversationService.getConversations();
     setState(() {
       _conversations = convos;
-      _loading = false;
     });
   }
 
@@ -189,7 +187,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: AppNavigationBar(), // add dm data
+      bottomNavigationBar: AppNavigationBar(currentIndex: 2), // add dm data
     );
   }
 }

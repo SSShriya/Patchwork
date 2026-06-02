@@ -161,7 +161,7 @@ class _EventsScreenState extends State<EventsScreen> {
                   ),
               ],
             ),
-      bottomNavigationBar: const AppNavigationBar(),
+      bottomNavigationBar: const AppNavigationBar(currentIndex: 1),
     );
   }
 }
