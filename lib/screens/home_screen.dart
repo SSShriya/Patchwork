@@ -131,7 +131,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-
           // one MatchRow per event
           if (groupedMatches.isEmpty)
             const Padding(
@@ -145,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 eventLabel: entry.key,
                 onTap: (i) => _openProfile(entry.value[i]),
               ),
-          
+
           const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
         ],
       ),

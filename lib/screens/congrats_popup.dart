@@ -46,31 +46,56 @@ class CongratsPopup extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (_) => DMScreen(chat: ChatConversation(name: matchName, interests: [])))); },
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DMScreen(
+                      chat: ChatConversation(name: matchName, interests: []),
+                    ),
+                  ),
+                );
+              },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               child: const Text('DM Now'),
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () { Navigator.pop(context); },
+              onPressed: () {
+                Navigator.pop(context);
+              },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               child: const Text('Next Match'),
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomeScreen())); },
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                );
+              },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               child: const Text('Back to Home'),
             ),

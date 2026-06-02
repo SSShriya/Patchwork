@@ -32,8 +32,8 @@ class MatchCard extends BaseCard {
     event: json['event'],
     yearGroup: json['year_group'] ?? '',
     interests: (json['user_interests'] as List<dynamic>? ?? [])
-    .map((i) => i['interest'] as String)
-    .toList(),
+        .map((i) => i['interest'] as String)
+        .toList(),
   );
 
   // So InteractiveCard still works
