@@ -17,8 +17,7 @@ class InteractiveCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      width: 140,
-      height: 180,
+      width: 150,
       child: Material(
         color: card.color,
         borderRadius: BorderRadius.circular(16),
@@ -70,23 +69,58 @@ class InteractiveCard extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
 
-                // ── Subtitle ──
-                Text(
-                  matchCard != null && matchCard.interests.isNotEmpty
-                      ? matchCard.interests.take(3).join(', ')
-                      : '',
-                  style: TextStyle(
-                    color: const Color(0xFF222222).withValues(alpha: 0.8),
-                    fontSize: 12,
+                // ── Subtitle (EventCard only) ──
+                if (eventCard != null)
+                  Text(
+                    eventCard.subtitle,
+                    style: TextStyle(
+                      color: const Color(0xFF222222).withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+
+                // ── Subtitle ──
+                if (matchCard != null && matchCard.interests.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: matchCard.interests
+                        .take(3)
+                        .map(
+                          (interest) => Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Row(
+                              children: [
+                                const Text(
+                                  '★ ',
+                                  style: TextStyle(
+                                    color: Color(0xFF222222),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    interest,
+                                    style: const TextStyle(
+                                      color: Color(0xFF222222),
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
 
                 // ── Date & Time & Location (EventCard only) ──
                 if (eventCard != null) ...[
