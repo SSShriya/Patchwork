@@ -1,5 +1,6 @@
 import 'package:drp/models/app_card.dart';
 import 'package:drp/screens/events_screen.dart';
+import 'package:drp/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
 import '../screens/dm_home_screen.dart';
@@ -31,7 +32,12 @@ class AppNavigationBar extends StatelessWidget {
       onTap: (index) {
         switch(index) {
           case 0:
-            // Already on Home, do nothing
+            Navigator.push(
+              context, 
+              MaterialPageRoute(
+                builder: (_) => HomeScreen(),
+              )
+            );
             break;
           case 1:
             // Navigate to Search screen

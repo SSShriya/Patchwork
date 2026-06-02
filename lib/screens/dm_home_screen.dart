@@ -34,9 +34,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_note, color: Colors.black, size: 28),
-            onPressed: () {
-              // Action to start a completely new DM
-            },
+            onPressed: () {},
           ),
         ],
       ),
