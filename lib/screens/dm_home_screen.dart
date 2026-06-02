@@ -1,4 +1,5 @@
 import 'package:drp/screens/dm_individual_screen.dart';
+import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
 
@@ -151,6 +152,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: AppNavigationBar(conversations: conversations), // add dm data
     );
   }
 }

@@ -44,44 +44,24 @@ class MatchService {
   }
 
   Future<List<ChatConversation>> getConversations() async {
-    /*final rows = await supabase
-      .from('potential_matches')
-      .select('name, decisions!inner(accepted)')
-      .eq('decisions.accepted', true);
+    final rows = await supabase
+        .from('decisions')
+        .select('match_id, potential_matches(name, interests(interest))')
+        .eq('accepted', true);
 
-    return (rows as List).map((r) => ChatConversation(
-      name: r.name,
-      lastMessage: '',
-      time: '09:00 AM',
-      unreadCount: 0,
-      isOnline: true,
-    )).toList();*/
-    return [
-      ChatConversation(
-        name: 'Alice',
-        interests: ['Hiking', 'Cooking', 'Travel'],
-        lastMessage: 'Hey, which uni do you go to?',
-        time: '09:00 AM',
-        unreadCount: 2,
-        isOnline: true,
-      ),
-      ChatConversation(
-        name: 'Bob',
-        interests: ['Books', 'Music', 'Art'],
-        lastMessage: 'Looking forward to book club!',
-        time: 'Yesterday',
-        unreadCount: 0,
-        isOnline: false,
-      ),
-      ChatConversation(
-        name: 'Charlie',
-        interests: ['Gaming', 'Tech', 'Movies'],
-        lastMessage: 'Do you have any pets?',
-        time: 'Monday',
-        unreadCount: 1,
-        isOnline: true,
-      ),
-    ];
+    return rows.map((r) {
+        final matchData = r['potential_matches'] as Map<String, dynamic>?;
+        final String name = matchData?['name'] ?? 'Unknown Match';
+
+        final interestsData = matchData?['interests'] as List<dynamic>? ?? [];
+        final List<String> interestsList = interestsData
+            .map((i) => i['interest'] as String)
+            .toList();
+
+        return ChatConversation(
+          name: name,
+          interests: interestsList,
+        );
+    }).toList();
   }
-
 }
