@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _service = MatchService();
+  final _matchService = MatchService();
   final _eventService = EventService();
   List<MatchCard> _pendingMatches = [];
   List<EventCard> _interestedEvents = [];
@@ -32,14 +32,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadMatches() async {
     setState(() => _loading = true);
-    final matches = await _service.getPendingMatches();
-    final convos = await _service.getConversations();
+    final matches = await _matchService.getPendingMatches();
     final events = await _eventService.getInterestedEvents();
     setState(() {
       _pendingMatches = matches;
       _loading = false;
       _interestedEvents = events;
-      conversations = convos;
     });
   }
 
@@ -47,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleDecision(MatchCard card, bool accepted) {
     setState(() => _pendingMatches.remove(card));
     // Fire-and-forget — saves to Supabase in background
-    _service.recordDecision(card.id, accepted);
+    _matchService.recordDecision(card.id, accepted);
   }
 
   void _openProfile(MatchCard card) {

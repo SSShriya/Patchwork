@@ -79,7 +79,7 @@ class InteractiveCard extends StatelessWidget {
                 Text(
                   matchCard != null && matchCard.interests.isNotEmpty
                       ? matchCard.interests.take(3).join(', ')
-                      : eventCard?.subtitle ?? '',
+                      : '',
                   style: TextStyle(
                     color: const Color(0xFF222222).withValues(alpha: 0.8),
                     fontSize: 12,
