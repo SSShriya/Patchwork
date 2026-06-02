@@ -51,7 +51,7 @@ class MatchService {
 
     return rows.map((r) {
         final matchData = r['potential_matches'] as Map<String, dynamic>?;
-        final String name = matchData?['name'] ?? 'Unknown Match';
+        final String name = matchData?['name'] ?? '';
 
         final interestsData = matchData?['interests'] as List<dynamic>? ?? [];
         final List<String> interestsList = interestsData
@@ -62,6 +62,6 @@ class MatchService {
           name: name,
           interests: interestsList,
         );
-    }).toList();
+    }).where((c) => c.name.isNotEmpty).toList(); // Filter out any with empty names
   }
 }
