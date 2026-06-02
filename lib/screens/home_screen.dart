@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
-import '../models/app_card.dart';
+import '../models/event_card.dart';
 import '../services/match_service.dart';
 import '../widgets/match_row.dart';
 import '../widgets/app_navigation_bar.dart';
 import 'user_profile_screen.dart';
 import '../models/match_convo.dart';
+import '../widgets/interactive_card.dart';
+import '../screens/event_matches_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
 
   List<ChatConversation> conversations = [];
-  final List<AppCard> _recommendedEvents = recCards;
+  final List<EventCard> _recommendedEvents = recCards;
 
   @override
   void initState() {
@@ -94,7 +96,31 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: Text(
-              'Matches',
+              'Confirmed Matches by Event',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: recCards.length,
+              itemBuilder: (_, i) => InteractiveCard(
+                card: recCards[i],
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EventMatchesScreen(event: recCards[i]),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: Text(
+              'Matches to Review',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),

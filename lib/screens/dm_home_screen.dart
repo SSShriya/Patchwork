@@ -2,22 +2,25 @@ import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
-import '../models/app_card.dart';
+import '../models/event_card.dart';
 
 class DMOverviewScreen extends StatefulWidget {
   final List<ChatConversation> conversations;
-  final List<AppCard> recommendedEvents;
-  const DMOverviewScreen({super.key, required this.conversations, required this.recommendedEvents});
+  final List<EventCard> recommendedEvents;
+  const DMOverviewScreen({
+    super.key,
+    required this.conversations,
+    required this.recommendedEvents,
+  });
   @override
   State<DMOverviewScreen> createState() => _DMOverviewScreenState();
 }
 
 class _DMOverviewScreenState extends State<DMOverviewScreen> {
-
-@override
+  @override
   Widget build(BuildContext context) {
     final List<ChatConversation> conversations = widget.conversations;
-    final List<AppCard> recommendedEvents = widget.recommendedEvents;
+    final List<EventCard> recommendedEvents = widget.recommendedEvents;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -29,7 +32,11 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
         ),
         title: const Text(
           'Messages',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22),
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
         ),
         actions: [
           IconButton(
@@ -65,7 +72,11 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Text(
               'Chats',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
             ),
           ),
           Expanded(
@@ -78,12 +89,13 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                     // Navigate to individual chat thread
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => DMScreen(chat: chat),
-                      ),
+                      MaterialPageRoute(builder: (_) => DMScreen(chat: chat)),
                     );
                   },
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   leading: Stack(
                     children: [
                       CircleAvatar(
@@ -115,15 +127,22 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                   ),
                   title: Text(
                     chat.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   subtitle: Text(
                     chat.lastMessage,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: chat.unreadCount > 0 ? Colors.black87 : Colors.grey[600],
-                      fontWeight: chat.unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                      color: chat.unreadCount > 0
+                          ? Colors.black87
+                          : Colors.grey[600],
+                      fontWeight: chat.unreadCount > 0
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                   trailing: Column(
@@ -144,7 +163,11 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                           ),
                           child: Text(
                             '${chat.unreadCount}',
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                     ],
@@ -155,7 +178,10 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: AppNavigationBar(conversations: conversations, recommendedEvents: recommendedEvents), // add dm data
+      bottomNavigationBar: AppNavigationBar(
+        conversations: conversations,
+        recommendedEvents: recommendedEvents,
+      ), // add dm data
     );
   }
 }

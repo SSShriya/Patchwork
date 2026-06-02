@@ -1,13 +1,13 @@
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import '../models/app_card.dart';
+import '../models/event_card.dart';
 import '../widgets/interactive_card.dart';
 
 class EventsScreen extends StatefulWidget {
-  final List<AppCard> recommendedEvents;
+  final List<EventCard> recommendedEvents;
   final List<ChatConversation> conversations;
- 
+
   const EventsScreen({
     super.key,
     required this.recommendedEvents,
@@ -20,7 +20,7 @@ class EventsScreen extends StatefulWidget {
 
 class _EventsScreenState extends State<EventsScreen> {
   late TextEditingController _searchController;
-  List<AppCard> _filteredEvents = [];
+  List<EventCard> _filteredEvents = [];
 
   @override
   void initState() {
@@ -40,9 +40,11 @@ class _EventsScreenState extends State<EventsScreen> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredEvents = widget.recommendedEvents
-          .where((event) =>
-              event.title.toLowerCase().contains(query) ||
-              event.subtitle.toLowerCase().contains(query))
+          .where(
+            (event) =>
+                event.title.toLowerCase().contains(query) ||
+                event.subtitle.toLowerCase().contains(query),
+          )
           .toList();
     });
   }
@@ -103,7 +105,6 @@ class _EventsScreenState extends State<EventsScreen> {
             ),
           ),
 
-
           // Recommended Events Section
           if (_filteredEvents.isNotEmpty) ...[
             const Padding(
@@ -133,18 +134,11 @@ class _EventsScreenState extends State<EventsScreen> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
+                    Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
                     const SizedBox(height: 16),
                     Text(
                       'No events found',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -158,5 +152,4 @@ class _EventsScreenState extends State<EventsScreen> {
       ),
     );
   }
-
 }
