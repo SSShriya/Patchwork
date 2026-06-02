@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import '../models/app_card.dart';
 import '../services/match_service.dart';
-import '../widgets/interactive_card.dart';
 import '../widgets/match_row.dart';
 import '../widgets/app_navigation_bar.dart';
 import 'user_profile_screen.dart';
@@ -20,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
 
   List<ChatConversation> conversations = [];
+  final List<AppCard> _recommendedEvents = recCards;
 
   @override
   void initState() {
@@ -94,23 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: Text(
-              'Recommended Events',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
-          SizedBox(
-            height: 180,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: recCards.length,
-              itemBuilder: (_, i) =>
-                  InteractiveCard(card: recCards[i], onTap: () {}),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-            child: Text(
               'Matches',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
@@ -136,7 +119,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       
-      bottomNavigationBar: AppNavigationBar(conversations: conversations), // add dm data
+      bottomNavigationBar: AppNavigationBar(
+        conversations: conversations,
+        recommendedEvents: _recommendedEvents,
+      ),
     );
   }
 }
