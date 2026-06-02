@@ -4,7 +4,6 @@ import 'base_card.dart';
 class AppCard extends BaseCard {
   @override
   final String title;
-  @override
   final String subtitle;
   @override
   final IconData icon;
