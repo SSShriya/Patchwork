@@ -78,6 +78,12 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                 return ListTile(
                   onTap: () {
                     // Navigate to individual chat thread
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DMScreen(matchName: chat.name), // Pass the match name to the DM screen
+                      ),
+                    );
                   },
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   leading: Stack(

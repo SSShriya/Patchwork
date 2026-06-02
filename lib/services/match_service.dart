@@ -56,7 +56,29 @@ class MatchService {
       unreadCount: 0,
       isOnline: true,
     )).toList();*/
-    return [];
+    return [
+      ChatConversation(
+        name: 'Alice',
+        lastMessage: 'Hey, which uni do you go to?',
+        time: '09:00 AM',
+        unreadCount: 2,
+        isOnline: true,
+      ),
+      ChatConversation(
+        name: 'Bob',
+        lastMessage: 'Looking forward to book club!',
+        time: 'Yesterday',
+        unreadCount: 0,
+        isOnline: false,
+      ),
+      ChatConversation(
+        name: 'Charlie',
+        lastMessage: 'Do you have any pets?',
+        time: 'Monday',
+        unreadCount: 1,
+        isOnline: true,
+      ),
+    ];
   }
 
 }
