@@ -85,18 +85,6 @@ class InteractiveCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // ── Subtitle (EventCard only) ──
-                if (eventCard != null)
-                  Text(
-                    eventCard.subtitle,
-                    style: TextStyle(
-                      color: const Color(0xFF222222).withValues(alpha: 0.8),
-                      fontSize: 12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
                 // Year group for match card
                 if (matchCard != null && matchCard.yearGroup.isNotEmpty) ...[
                   const SizedBox(height: 2),
