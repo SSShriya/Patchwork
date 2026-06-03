@@ -157,7 +157,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                 ? 0.85
                                 : width > 600
                                 ? 0.95
-                                : 1.2;
+                                : 0.75;
                             final cardWidth =
                                 (width - 12 * (crossAxisCount + 1)) /
                                 crossAxisCount;
