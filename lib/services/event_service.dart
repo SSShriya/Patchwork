@@ -14,7 +14,7 @@ class EventService {
     final rows = await supabase
         .from('interested_events')
         .select(
-          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description)',
+          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url)',
         )
         .eq('user_id', currentUserId);
 
@@ -56,6 +56,7 @@ class EventService {
         eventId: eventId,
         icon: Icons.event,
         color: const Color(0XFFFED766),
+        imageUrl: e['image_url'] ?? '',
       );
     }).toList();
   }
@@ -64,7 +65,7 @@ class EventService {
     final rows = await supabase
         .from('events')
         .select(
-          'event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description',
+          'event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url',
         );
 
     return (rows as List).map((e) {
@@ -79,6 +80,7 @@ class EventService {
         location: e['location'] ?? '',
         icon: Icons.event,
         color: const Color(0XFFFED766),
+        imageUrl: e['image_url'] ?? '',
       );
     }).toList();
   }

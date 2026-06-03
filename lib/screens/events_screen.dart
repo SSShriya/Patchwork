@@ -163,15 +163,15 @@ class _EventsScreenState extends State<EventsScreen> {
                                 : width > 600
                                 ? 3
                                 : 2;
-                            final aspectRatio = width > 900
-                                ? 0.85
-                                : width > 600
-                                ? 0.95
-                                : 0.75;
-                            final cardWidth =
-                                (width - 12 * (crossAxisCount + 1)) /
+                            // final aspectRatio = width > 900
+                            //     ? 0.85
+                            //     : width > 600
+                            //     ? 0.95
+                            //     : 0.75;
+                            // final cardWidth =
+                            //     (width - 12 * (crossAxisCount + 1)) /
                                 crossAxisCount;
-                            final cardHeight = cardWidth * aspectRatio;
+                            // final cardHeight = cardWidth * aspectRatio;
                             return GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -188,7 +188,9 @@ class _EventsScreenState extends State<EventsScreen> {
                                     crossAxisCount: crossAxisCount,
                                     mainAxisSpacing: 12,
                                     crossAxisSpacing: 12,
-                                    childAspectRatio: cardWidth / cardHeight,
+                                    // childAspectRatio: cardWidth / cardHeight,
+                                    childAspectRatio: 1.0,
+                                    mainAxisExtent: 230,
                                   ),
                             );
                           },
