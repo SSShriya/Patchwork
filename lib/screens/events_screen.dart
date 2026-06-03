@@ -137,7 +137,7 @@ class _EventsScreenState extends State<EventsScreen> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: 1.0,
+                      childAspectRatio: 1.4,
                       ), 
                   )
                 ] else

@@ -19,7 +19,7 @@ class InteractiveCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: 150,
-      height: 200,
+      // height: 200,
       child: Material(
         color: card.color,
         borderRadius: BorderRadius.circular(16),
