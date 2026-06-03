@@ -150,7 +150,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _isRegistered ? registrationService.registerForEvent(widget.card.eventId) : null,
+                onPressed: _isRegistered ? null : () => registrationService.registerForEvent(widget.card.eventId),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0XFF84DCC6),
                   foregroundColor: const Color(0XFF222222),
