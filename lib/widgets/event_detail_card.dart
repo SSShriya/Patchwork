@@ -31,7 +31,7 @@ class EventDetailCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
                       card.imageUrl,
-                      height: 60,
+                      height: 75,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => const SizedBox.shrink(),
