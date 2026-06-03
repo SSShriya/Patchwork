@@ -34,7 +34,7 @@ class EventDetailCard extends StatelessWidget {
                       height: 60,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
                   ),
 
@@ -145,18 +145,18 @@ class EventDetailCard extends StatelessWidget {
     );
   }
 
-  Widget _colorHeader() {
-    return Container(
-      height: 80,
-      width: double.infinity,
-      color: card.color.withValues(alpha: 0.6),
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(card.icon, size: 24, color: const Color(0xFF222222)),
-        ),
-      ),
-    );
-  }
+  // Widget _colorHeader() {
+  //   return Container(
+  //     height: 80,
+  //     width: double.infinity,
+  //     color: card.color.withValues(alpha: 0.6),
+  //     child: Align(
+  //       alignment: Alignment.topLeft,
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(8),
+  //         child: Icon(card.icon, size: 24, color: const Color(0xFF222222)),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
