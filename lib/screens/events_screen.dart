@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/event_card.dart';
 import '../widgets/interactive_card.dart';
 import '../services/event_service.dart';
+import 'event_profile_screen.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -52,6 +53,15 @@ class _EventsScreenState extends State<EventsScreen> {
           )
           .toList();
     });
+  }
+
+  void _openEventSummary(EventCard card) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventProfileScreen(card: card),
+      ),
+    );
   }
 
   void _clearSearch() {
@@ -132,7 +142,7 @@ class _EventsScreenState extends State<EventsScreen> {
                       itemCount: _filteredEvents.length,
                       itemBuilder: (_, i) => InteractiveCard(
                         card: _filteredEvents[i],
-                        onTap: () {},
+                        onTap: () => _openEventSummary(_filteredEvents[i]),
                       ),
                     ),
                   ),
