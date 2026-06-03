@@ -14,6 +14,7 @@ dependencies:
   smooth_page_indicator: ^2.0.1
   bulleted_list: ^0.0.1+0.1a
   intl: ^0.20.2
+  flutter_profile_picture: ^2.0.0
 
 dev_dependencies:
   flutter_test:

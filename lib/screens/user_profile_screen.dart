@@ -2,11 +2,12 @@ import 'package:drp/screens/congrats_popup.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final List<MatchCard> cards;
   final int initialIndex;
-  final Future<void> Function(MatchCard, bool) onDecision;
+  final Future<Future<void>> Function(MatchCard, bool) onDecision;
 
   const UserProfileScreen({
     super.key,
@@ -141,16 +142,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            CircleAvatar(
+                            ProfilePicture(
+                              name: _current.title,
                               radius: 40,
-                              backgroundColor: const Color(0XFF8789C0),
-                              child: Text(
-                                _current.title[0],
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              fontsize: 32,
+                              random: false,
+                              img: _current.imageUrl.isNotEmpty ? _current.imageUrl : null,
                             ),
                             const SizedBox(width: 16),
                             Expanded(

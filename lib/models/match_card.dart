@@ -12,6 +12,8 @@ class MatchCard extends BaseCard {
   final String eventName;
   final String yearGroup;
   final List<String> interests;
+  @override
+  final String imageUrl; // profile image URL, can be empty if no image
 
   const MatchCard({
     required this.id,
@@ -23,6 +25,7 @@ class MatchCard extends BaseCard {
     required this.eventName,
     required this.yearGroup,
     required this.interests,
+    this.imageUrl = '',
   });
 
   factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(
@@ -37,6 +40,7 @@ class MatchCard extends BaseCard {
     interests: (json['user_interests'] as List<dynamic>? ?? [])
         .map((i) => i['interest'] as String)
         .toList(),
+    imageUrl: json['profile_image_url'] ?? '',
   );
 
   // So InteractiveCard still works
