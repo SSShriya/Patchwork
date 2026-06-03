@@ -33,7 +33,7 @@ class EventDetailCard extends StatelessWidget {
                         height: 80,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _colorHeader(),
+                        errorBuilder: (_, _, _) => _colorHeader(),
                       )
                     : _colorHeader(),
               ),
