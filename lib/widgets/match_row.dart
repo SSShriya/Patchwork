@@ -20,7 +20,7 @@ class MatchRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 4, 16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 4, 10),
           child: Text(
             eventLabel,
             style: const TextStyle(fontSize: 16, color: Colors.grey),

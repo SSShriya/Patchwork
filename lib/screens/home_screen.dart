@@ -150,22 +150,43 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // one MatchRow per event
-          if (groupedMatches.isEmpty)
+          if (_pendingMatches.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32),
               child: Center(child: Text("You've reviewed everyone!!")),
             )
           else
-            for (final entry in groupedMatches.entries)
-              MatchRow(
-                cards: entry.value,
-                eventLabel: _interestedEvents
-                    .firstWhere(
-                      (e) => e.eventId == entry.key,
-                      orElse: () => _interestedEvents.first,
-                    )
-                    .title,
-                onTap: (i) => _openProfile(entry.value[i]),
+            for (final event in _interestedEvents)
+              (groupedMatches[event.eventId]?.isEmpty ?? true)
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event.title,
+                          style: const TextStyle(fontSize: 16, color: Colors.grey)
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'No matches yet, come back later',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+              : MatchRow(
+                cards: groupedMatches[event.eventId] ?? [],
+                eventLabel: event.title,
+                onTap: (i) {
+                  final cards = groupedMatches[event.eventId] ?? [];
+                  if (cards.isNotEmpty) {
+                    _openProfile(cards[i]);
+                  }
+                },
               ),
 
           const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
