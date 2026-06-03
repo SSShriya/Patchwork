@@ -1,4 +1,3 @@
-import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:drp/widgets/chat_section.dart';
 import 'package:flutter/material.dart';

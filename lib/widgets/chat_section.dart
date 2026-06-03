@@ -6,7 +6,8 @@ class ChatSection extends StatelessWidget {
   final String title;
   final List<ChatConversation> conversations;
 
-  ChatSection({
+  const ChatSection({
+    super.key, 
     required this.title,
     required this.conversations,
   });
