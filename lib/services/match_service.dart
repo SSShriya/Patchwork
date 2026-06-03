@@ -35,8 +35,8 @@ class MatchService {
     for (final row in rows as List) {
       final user1Id = row['user1_id'] as String;
       final user2Id = row['user2_id'] as String;
-      final user1Accepted = row['user1_accepted'] as bool? ?? false;
-      final user2Accepted = row['user2_accepted'] as bool? ?? false;
+      final user1Accepted = row['user1_accepted'] as bool?;
+      final user2Accepted = row['user2_accepted'] as bool?;
       final eventId = row['event_id'] as String;
       final eventName =
           (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
@@ -45,7 +45,7 @@ class MatchService {
       final isUser1 = currentUserId == user1Id;
 
       final currentUserAccepted = isUser1 ? user1Accepted : user2Accepted;
-      if (currentUserAccepted) continue;
+      if (currentUserAccepted != null) continue;
 
       final otherUserData = isUser1
           ? row['user2'] as Map<String, dynamic>
@@ -133,17 +133,21 @@ class MatchService {
   }
 
   Future<void> uploadProfilePicture(File imageFile, String userId) async {
-      final String filePath = '$userId/profile.jpg';
-    
-      await supabase.storage.from('avatars').upload(
+    final String filePath = '$userId/profile.jpg';
+
+    await supabase.storage
+        .from('avatars')
+        .upload(
           filePath,
           imageFile,
           fileOptions: const FileOptions(upsert: true),
         );
 
-      final String publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+    final String publicUrl = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
 
-      await supabase
+    await supabase
         .from('users')
         .update({'avatar_url': publicUrl})
         .eq('id', userId);
@@ -151,8 +155,8 @@ class MatchService {
 
   Future<String?> getProfilePictureUrl(String userId) async {
     final String publicUrl = supabase.storage
-      .from('avatars')
-      .getPublicUrl('$userId/profile.jpg');
+        .from('avatars')
+        .getPublicUrl('$userId/profile.jpg');
 
     return publicUrl;
   }

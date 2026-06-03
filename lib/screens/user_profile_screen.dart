@@ -147,7 +147,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               radius: 40,
                               fontsize: 32,
                               random: false,
-                              img: _current.imageUrl.isNotEmpty ? _current.imageUrl : null,
+                              img: _current.imageUrl.isNotEmpty
+                                  ? _current.imageUrl
+                                  : null,
                             ),
                             const SizedBox(width: 16),
                             Expanded(
