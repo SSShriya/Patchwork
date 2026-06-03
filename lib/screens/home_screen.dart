@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openProfile(MatchCard card) {
     final groupCards = _pendingMatches
-        .where((c) => c.event == card.event)
+        .where((c) => c.eventId == card.eventId)
         .toList();
     final initialIndex = groupCards.indexOf(card);
 
@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, List<MatchCard>> get _matchesByEvent {
     final map = <String, List<MatchCard>>{};
     for (final card in _pendingMatches) {
-      map.putIfAbsent(card.event, () => []).add(card);
+      map.putIfAbsent(card.eventId, () => []).add(card);
     }
 
     // sort by date time
@@ -159,7 +159,12 @@ class _HomeScreenState extends State<HomeScreen> {
             for (final entry in groupedMatches.entries)
               MatchRow(
                 cards: entry.value,
-                eventLabel: entry.key,
+                eventLabel: _interestedEvents
+                    .firstWhere(
+                      (e) => e.eventId == entry.key,
+                      orElse: () => _interestedEvents.first,
+                    )
+                    .title,
                 onTap: (i) => _openProfile(entry.value[i]),
               ),
 

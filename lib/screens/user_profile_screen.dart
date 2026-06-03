@@ -186,7 +186,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _current.event.toUpperCase(),
+                          _current.eventName.toUpperCase(),
                           style: const TextStyle(
                             fontSize: 16,
                             color: Color(0xFF5DA9E9),

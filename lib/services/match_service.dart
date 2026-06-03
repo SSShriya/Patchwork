@@ -36,6 +36,9 @@ class MatchService {
       final user1Accepted = row['user1_accepted'] as bool? ?? false;
       final user2Accepted = row['user2_accepted'] as bool? ?? false;
       final eventId = row['event_id'] as String;
+      final eventName =
+          (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
+          '';
 
       final isUser1 = currentUserId == user1Id;
 
@@ -46,10 +49,6 @@ class MatchService {
           ? row['user2'] as Map<String, dynamic>
           : row['user1'] as Map<String, dynamic>;
 
-      final eventName =
-          (row['events'] as Map<String, dynamic>?)?['event_name'] ??
-          'Unknown Event';
-
       matches.add(
         MatchCard(
           id: '$user1Id|$user2Id|$eventId',
@@ -57,7 +56,8 @@ class MatchService {
           university: otherUserData['university'] ?? '',
           course: otherUserData['course'] ?? '',
           bio: otherUserData['bio'] ?? '',
-          event: eventName,
+          eventId: eventId,
+          eventName: eventName,
           yearGroup: otherUserData['year_group'] ?? '',
           interests: (otherUserData['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
@@ -95,7 +95,7 @@ class MatchService {
     final rows = await supabase
         .from('matches')
         .select(
-          'user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, user_interests(interest))',
+          'events(event_name), user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, user_interests(interest))',
         )
         .eq('event_id', eventId)
         .eq('user1_accepted', true)
@@ -105,6 +105,9 @@ class MatchService {
     return (rows as List).map((row) {
       final user1Data = row['user1'] as Map<String, dynamic>;
       final user2Data = row['user2'] as Map<String, dynamic>;
+      final eventName =
+          (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
+          '';
 
       final otherUser = user1Data['id'] == currentUserId
           ? user2Data
@@ -116,7 +119,8 @@ class MatchService {
         university: otherUser['university'] ?? '',
         course: otherUser['course'] ?? '',
         bio: otherUser['bio'] ?? '',
-        event: eventId,
+        eventId: eventId,
+        eventName: eventName,
         yearGroup: otherUser['year_group'] ?? '',
         interests: (otherUser['user_interests'] as List<dynamic>? ?? [])
             .map((i) => i['interest'] as String)
