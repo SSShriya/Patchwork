@@ -56,11 +56,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final card = _current;
     await widget.onDecision(card, accepted);
 
+    if (!mounted) return;
+
     if (accepted) {
       showDialog(
         context: context,
         builder: (context) => CongratsPopup(matchName: card.title),
       ).then((_) {
+        if (!mounted) return;
         setState(() {
           _cards.remove(card);
           if (_cards.isEmpty) {
