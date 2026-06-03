@@ -119,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: Text(
-              'Confirmed Matches by Event',
+              'Your Upcoming Events',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
@@ -165,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Text(
                           event.title,
-                          style: const TextStyle(fontSize: 16, color: Colors.grey)
+                          style: const TextStyle(fontSize: 16, color: Colors.grey) // NOTE: LEFT GREY FOR EMPTY EVENTS
                         ),
                         const SizedBox(height: 4),
                         Text(

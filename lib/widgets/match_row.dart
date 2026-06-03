@@ -23,7 +23,7 @@ class MatchRow extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 4, 10),
           child: Text(
             eventLabel,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF222222), fontWeight: FontWeight.bold),
           ),
         ),
         SizedBox(
