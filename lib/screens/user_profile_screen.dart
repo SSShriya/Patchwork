@@ -6,7 +6,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 class UserProfileScreen extends StatefulWidget {
   final List<MatchCard> cards;
   final int initialIndex;
-  final void Function(MatchCard, bool) onDecision;
+  final Future<void> Function(MatchCard, bool) onDecision;
 
   const UserProfileScreen({
     super.key,
@@ -46,18 +46,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       _goingForward = newIndex > _index;
       _index = newIndex;
     });
-    Future.delayed(const Duration(milliseconds: 250), () => _isAnimating = false);
+    Future.delayed(
+      const Duration(milliseconds: 250),
+      () => _isAnimating = false,
+    );
   }
 
-void _decide(bool accepted) {
-  final card = _current;
-  widget.onDecision(card, accepted);
+  void _decide(bool accepted) async {
+    final card = _current;
+    await widget.onDecision(card, accepted);
 
-  if (accepted) {
-    showDialog(
-      context: context,
-      builder: (context) => CongratsPopup(matchName: card.title),
-    ).then((_) {
+    if (!mounted) return;
+
+    if (accepted) {
+      showDialog(
+        context: context,
+        builder: (context) => CongratsPopup(matchName: card.title),
+      ).then((_) {
+        if (!mounted) return;
+        setState(() {
+          _cards.remove(card);
+          if (_cards.isEmpty) {
+            Navigator.pop(context);
+            return;
+          }
+          if (_index >= _cards.length) _index = _cards.length - 1;
+        });
+      });
+    } else {
       setState(() {
         _cards.remove(card);
         if (_cards.isEmpty) {
@@ -66,18 +82,8 @@ void _decide(bool accepted) {
         }
         if (_index >= _cards.length) _index = _cards.length - 1;
       });
-    });
-  } else {
-    setState(() {
-      _cards.remove(card);
-      if (_cards.isEmpty) {
-        Navigator.pop(context);
-        return;
-      }
-      if (_index >= _cards.length) _index = _cards.length - 1;
-    });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -112,10 +118,16 @@ void _decide(bool accepted) {
                       ? Offset(_goingForward ? 1.0 : -1.0, 0.0)
                       : Offset(_goingForward ? -1.0 : 1.0, 0.0);
                   return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: beginOffset,
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+                    position:
+                        Tween<Offset>(
+                          begin: beginOffset,
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOut,
+                          ),
+                        ),
                     child: child,
                   );
                 },
@@ -134,21 +146,31 @@ void _decide(bool accepted) {
                               backgroundColor: const Color(0XFF8789C0),
                               child: Text(
                                 _current.title[0],
-                                style: const TextStyle(fontSize: 32, color: Colors.white),
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Expanded(                              // fixes layout overflow on long names
+                            Expanded(
+                              // fixes layout overflow on long names
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     _current.title,
-                                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   Text(
                                     '${_current.yearGroup} at ${_current.university}',
-                                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -160,20 +182,30 @@ void _decide(bool accepted) {
                         // -- shared event group --
                         Text(
                           'You both want to attend:',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _current.group.toUpperCase(),
-                          style: const TextStyle(fontSize: 16, color: Color(0xFF5DA9E9), fontWeight: FontWeight.bold),
+                          _current.eventName.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF5DA9E9),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
 
                         const SizedBox(height: 24),
 
                         // -- interests --
                         const Text(
-                          'Interests:', 
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                          'Interests:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 3),
                         ..._current.interests.map(
@@ -182,9 +214,15 @@ void _decide(bool accepted) {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('★ ', style: TextStyle(fontSize: 16)),
+                                const Text(
+                                  '★ ',
+                                  style: TextStyle(fontSize: 16),
+                                ),
                                 Expanded(
-                                  child: Text(interest, style: const TextStyle(fontSize: 16)),
+                                  child: Text(
+                                    interest,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
                                 ),
                               ],
                             ),
@@ -196,10 +234,16 @@ void _decide(bool accepted) {
                         // -- Bio --
                         const Text(
                           'Bio:',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        Text(_current.bio, style: const TextStyle(fontSize: 16)),
+                        Text(
+                          _current.bio,
+                          style: const TextStyle(fontSize: 16),
+                        ),
 
                         const SizedBox(height: 80),
                       ],
@@ -209,7 +253,7 @@ void _decide(bool accepted) {
               ),
             ),
           ),
-          
+
           // pagination dots
           AnimatedSmoothIndicator(
             activeIndex: _index,
@@ -230,7 +274,9 @@ void _decide(bool accepted) {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton.icon(
-                  onPressed: _index > 0 ? () => setState(() => _index--) : () => setState(() => _index = _cards.length - 1),
+                  onPressed: _index > 0
+                      ? () => setState(() => _index--)
+                      : () => setState(() => _index = _cards.length - 1),
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('Prev'),
                 ),

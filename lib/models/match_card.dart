@@ -8,10 +8,12 @@ class MatchCard extends BaseCard {
   final String university;
   final String course;
   final String bio;
-  final String event;
-  final String group;
+  final String eventId;
+  final String eventName;
   final String yearGroup;
   final List<String> interests;
+  @override
+  final String imageUrl; // profile image URL, can be empty if no image
 
   const MatchCard({
     required this.id,
@@ -19,10 +21,11 @@ class MatchCard extends BaseCard {
     required this.university,
     required this.course,
     required this.bio,
-    required this.event,
-    required this.group,
+    required this.eventId,
+    required this.eventName,
     required this.yearGroup,
     required this.interests,
+    this.imageUrl = '',
   });
 
   factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(
@@ -31,12 +34,13 @@ class MatchCard extends BaseCard {
     university: json['university'],
     course: json['course'],
     bio: json['bio'],
-    event: json['event'],
-    group: json['event_group'],
+    eventId: json['event_id'],
+    eventName: json['event_name'],
     yearGroup: json['year_group'] ?? '',
     interests: (json['user_interests'] as List<dynamic>? ?? [])
-    .map((i) => i['interest'] as String)
-    .toList(),
+        .map((i) => i['interest'] as String)
+        .toList(),
+    imageUrl: json['profile_image_url'] ?? '',
   );
 
   // So InteractiveCard still works

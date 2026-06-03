@@ -1,71 +1,131 @@
+// lib/services/match_service.dart
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/match_card.dart';
-import '../models/match_convo.dart';
 
-// Single shared Supabase client for the whole app
 final supabase = Supabase.instance.client;
 
-// -- Supabase service --
 class MatchService {
-  // Fetch all matches that haven't been decided yet
+  final String currentUserId = '5f7e9d61-3865-47b2-9155-202267ee947f';
+
   Future<List<MatchCard>> getPendingMatches() async {
-    // Get IDs of already-decided matches
-    final decided = await supabase.from('decisions').select('match_id');
-    final decidedIds = (decided as List)
-        .map((d) => d['match_id'] as String?)
-        .whereType<String>() // filters out nulls
+    final interestedEventsData = await supabase
+        .from('interested_events')
+        .select('event_id')
+        .eq('user_id', currentUserId);
+
+    final interestedEventIds = (interestedEventsData as List)
+        .map((e) => e['event_id'] as String)
         .toList();
 
-    // Fetch matches not in that list
-    var query = supabase
-        .from('potential_matches')
-        .select('*, user_interests(interest)');
-    final rows = decidedIds.isEmpty
-        ? await query
-        : await query.not('id', 'in', decidedIds);
+    if (interestedEventIds.isEmpty) return [];
 
-    return (rows as List).map((r) => MatchCard.fromJson(r)).toList();
-  }
-
-  // Record accept/reject — this is what gets saved to Supabase
-  Future<void> recordDecision(String matchId, bool accepted) async {
-    await supabase.from('decisions').insert({
-      'match_id': matchId,
-      'accepted': accepted,
-    });
-  }
-
-  // Fetch accepted matches (for a future "Accepted" screen)
-  Future<List<MatchCard>> getAcceptedMatches() async {
     final rows = await supabase
-        .from('decisions')
-        .select('match_id, potential_matches(*)')
-        .eq('accepted', true);
+        .from('matches')
+        .select(
+          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, user_interests(interest))',
+        )
+        .inFilter('event_id', interestedEventIds)
+        .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
-    return (rows as List)
-        .map((r) => MatchCard.fromJson(r['potential_matches']))
-        .toList();
-  }
+    final matches = <MatchCard>[];
 
-  Future<List<ChatConversation>> getConversations() async {
-    final rows = await supabase
-        .from('decisions')
-        .select('match_id, potential_matches(name, user_interests(interest))')
-        .eq('accepted', true);
+    for (final row in rows as List) {
+      final user1Id = row['user1_id'] as String;
+      final user2Id = row['user2_id'] as String;
+      final user1Accepted = row['user1_accepted'] as bool? ?? false;
+      final user2Accepted = row['user2_accepted'] as bool? ?? false;
+      final eventId = row['event_id'] as String;
+      final eventName =
+          (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
+          '';
 
-    return rows
-        .map((r) {
-          final matchData = r['potential_matches'] as Map<String, dynamic>?;
-          final String name = matchData?['name'] ?? 'Unknown Match';
+      final isUser1 = currentUserId == user1Id;
 
-          final interestsData = matchData?['user_interests'] as List<dynamic>? ?? [];
-          final List<String> interestsList = interestsData
+      final currentUserAccepted = isUser1 ? user1Accepted : user2Accepted;
+      if (currentUserAccepted) continue;
+
+      final otherUserData = isUser1
+          ? row['user2'] as Map<String, dynamic>
+          : row['user1'] as Map<String, dynamic>;
+
+      matches.add(
+        MatchCard(
+          id: '$user1Id|$user2Id|$eventId',
+          title: otherUserData['name'] ?? 'Unknown',
+          university: otherUserData['university'] ?? '',
+          course: otherUserData['course'] ?? '',
+          bio: otherUserData['bio'] ?? '',
+          eventId: eventId,
+          eventName: eventName,
+          yearGroup: otherUserData['year_group'] ?? '',
+          interests: (otherUserData['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
-              .toList();
+              .toList(),
+        ),
+      );
+    }
 
-          return ChatConversation(name: name, interests: interestsList);
+    return matches;
+  }
+
+  Future<void> recordDecision(String matchId, bool accepted) async {
+    final parts = matchId.split('|');
+    final user1Id = parts[0];
+    final user2Id = parts[1];
+    final eventId = parts[2];
+
+    final isUser1 = currentUserId == user1Id;
+
+    await supabase
+        .from('matches')
+        .update({
+          if (isUser1)
+            'user1_accepted': accepted
+          else
+            'user2_accepted': accepted,
         })
-        .where((c) => c.name.isNotEmpty)
-        .toList(); // Filter out any with empty names
+        .eq('user1_id', user1Id)
+        .eq('user2_id', user2Id)
+        .eq('event_id', eventId);
+  }
+
+  // for getting confirmed matches for an event
+  Future<List<MatchCard>> getConfirmedMatchesForEvent(String eventId) async {
+    final rows = await supabase
+        .from('matches')
+        .select(
+          'events(event_name), user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, user_interests(interest))',
+        )
+        .eq('event_id', eventId)
+        .eq('user1_accepted', true)
+        .eq('user2_accepted', true)
+        .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
+
+    return (rows as List).map((row) {
+      final user1Data = row['user1'] as Map<String, dynamic>;
+      final user2Data = row['user2'] as Map<String, dynamic>;
+      final eventName =
+          (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
+          '';
+
+      final otherUser = user1Data['id'] == currentUserId
+          ? user2Data
+          : user1Data;
+
+      return MatchCard(
+        id: otherUser['id'],
+        title: otherUser['name'] ?? 'Unknown',
+        university: otherUser['university'] ?? '',
+        course: otherUser['course'] ?? '',
+        bio: otherUser['bio'] ?? '',
+        eventId: eventId,
+        eventName: eventName,
+        yearGroup: otherUser['year_group'] ?? '',
+        interests: (otherUser['user_interests'] as List<dynamic>? ?? [])
+            .map((i) => i['interest'] as String)
+            .toList(),
+      );
+    }).toList();
   }
 }

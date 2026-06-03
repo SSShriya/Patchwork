@@ -1,19 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
+import '../models/match_card.dart';
+import '../services/match_service.dart';
 
-class EventMatchesScreen extends StatelessWidget {
+class EventMatchesScreen extends StatefulWidget {
   final EventCard event;
 
   const EventMatchesScreen({super.key, required this.event});
+
+  @override
+  State<EventMatchesScreen> createState() => _EventMatchesScreenState();
+}
+
+class _EventMatchesScreenState extends State<EventMatchesScreen> {
+  final _matchService = MatchService();
+  List<MatchCard> _matches = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMatches();
+  }
+
+  Future<void> _loadMatches() async {
+    final matches = await _matchService.getConfirmedMatchesForEvent(
+      widget.event.eventId,
+    );
+    setState(() {
+      _matches = matches;
+      _loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0XFFF5F0F6),
       appBar: AppBar(
-        title: Text(event.title),
-        backgroundColor: event.color,
+        title: Text(widget.event.title),
+        backgroundColor: widget.event.color,
         foregroundColor: const Color(0xFF222222),
         elevation: 0,
       ),
@@ -24,7 +51,7 @@ class EventMatchesScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: event.color,
+              color: widget.event.color,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -32,11 +59,15 @@ class EventMatchesScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(event.icon, color: const Color(0xFF222222), size: 32),
+                    Icon(
+                      widget.event.icon,
+                      color: const Color(0xFF222222),
+                      size: 32,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        event.title,
+                        widget.event.title,
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -48,7 +79,7 @@ class EventMatchesScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  event.subtitle,
+                  widget.event.subtitle,
                   style: TextStyle(
                     fontSize: 15,
                     color: const Color(0xFF222222).withValues(alpha: 0.8),
@@ -57,7 +88,6 @@ class EventMatchesScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Divider(color: Color(0xFF222222), thickness: 0.3),
                 const SizedBox(height: 8),
-                // Date & Time
                 Row(
                   children: [
                     const Icon(
@@ -69,7 +99,7 @@ class EventMatchesScreen extends StatelessWidget {
                     Text(
                       DateFormat(
                         'EEEE, d MMMM yyyy',
-                      ).format(event.startDateTime),
+                      ).format(widget.event.startDateTime),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF222222),
@@ -87,7 +117,7 @@ class EventMatchesScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '${DateFormat('HH:mm').format(event.startDateTime)} - ${DateFormat('HH:mm').format(event.endDateTime)}',
+                      '${DateFormat('HH:mm').format(widget.event.startDateTime)} - ${DateFormat('HH:mm').format(widget.event.endDateTime)}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF222222),
@@ -96,7 +126,6 @@ class EventMatchesScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                // Location
                 Row(
                   children: [
                     const Icon(
@@ -107,11 +136,27 @@ class EventMatchesScreen extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        event.location,
+                        widget.event.location,
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF222222),
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.sell, size: 14, color: Color(0xFF222222)),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.event.cost == 0
+                          ? 'Free'
+                          : '£${widget.event.cost.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF222222),
                       ),
                     ),
                   ],
@@ -124,7 +169,7 @@ class EventMatchesScreen extends StatelessWidget {
 
           // ── Matches Section ──
           Text(
-            '${event.numMatches} ${event.numMatches == 1 ? 'Match' : 'Matches'}',
+            '${_matches.length} ${_matches.length == 1 ? 'Match' : 'Matches'}',
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -133,17 +178,123 @@ class EventMatchesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // placeholder — replace with real match cards later
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Text(
-                'Your matches for this event will appear here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else if (_matches.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Text(
+                  'No confirmed matches for this event yet.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            // ── Match Cards ──
+            ..._matches.map(
+              (match) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // ── Avatar ──
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: const Color(0XFFEEC0C6),
+                      child: Text(
+                        match.title[0],
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF222222),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // ── Details ──
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            match.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            match.course,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.7),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            match.yearGroup,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.7),
+                            ),
+                          ),
+                          if (match.interests.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: match.interests
+                                  .take(3)
+                                  .map(
+                                    (interest) => Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0XFFEEC0C6,
+                                        ).withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        interest,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF222222),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

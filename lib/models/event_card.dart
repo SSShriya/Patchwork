@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'base_card.dart';
 
 class EventCard extends BaseCard {
+  final String eventId;
   @override
   final String title;
   final String subtitle;
@@ -9,63 +10,39 @@ class EventCard extends BaseCard {
   final String location;
   final DateTime startDateTime;
   final DateTime endDateTime;
+  final double cost;
   @override
   final IconData icon;
   @override
   final Color color;
+  @override
+  final String imageUrl;
 
   const EventCard({
+    required this.eventId,
     required this.title,
     required this.subtitle,
     required this.numMatches,
     required this.location,
     required this.startDateTime,
     required this.endDateTime,
+    required this.cost,
     required this.icon,
     required this.color,
+    this.imageUrl = '',
   });
-}
 
-// dummy cards
-var recCards = [
-  EventCard(
-    title: 'Cookie Making',
-    subtitle: 'Baking Society',
-    numMatches: 2,
-    location: 'ACEX',
-    startDateTime: DateTime.utc(2026, 6, 3, 18),
-    endDateTime: DateTime.utc(2026, 6, 3, 20),
-    icon: Icons.cloud,
-    color: Color(0XFFFED766),
-  ),
-  EventCard(
-    title: 'Fight Club',
-    subtitle: 'Boxing Society',
-    numMatches: 3,
-    location: 'Queens Lawn',
-    startDateTime: DateTime.utc(2026, 6, 4, 18),
-    endDateTime: DateTime.utc(2026, 6, 4, 19),
-    icon: Icons.cloud,
-    color: Color(0XFFFED766),
-  ),
-  EventCard(
-    title: 'Listening Party',
-    subtitle: 'Alternative Music Society',
-    numMatches: 1,
-    location: 'Huxley 145',
-    startDateTime: DateTime.utc(2026, 6, 5, 19),
-    endDateTime: DateTime.utc(2026, 6, 5, 21),
-    icon: Icons.cloud,
-    color: Color(0XFFFED766),
-  ),
-  EventCard(
-    title: 'Off the Hook',
-    subtitle: 'KnitSock',
-    numMatches: 1,
-    location: 'RSM 147',
-    startDateTime: DateTime.utc(2026, 6, 8, 18),
-    endDateTime: DateTime.utc(2026, 6, 8, 20),
-    icon: Icons.cloud,
-    color: Color(0XFFFED766),
-  ),
-];
+  factory EventCard.fromJson(Map<String, dynamic> json) => EventCard(
+    eventId: json['event_id'],
+    title: json['title'] ?? '',
+    subtitle: json['subtitle'] ?? '',
+    numMatches: json['num_matches'] ?? 0,
+    location: json['location'] ?? '',
+    startDateTime: DateTime.parse(json['start_date_time']),
+    endDateTime: DateTime.parse(json['end_date_time']),
+    cost: (json['cost'] as num?)?.toDouble() ?? 0.0,
+    icon: Icons.event, 
+    color: const Color(0xFF000000), 
+    imageUrl: json['image_url'] ?? '',
+  );
+}
