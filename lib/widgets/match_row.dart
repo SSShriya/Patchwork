@@ -27,7 +27,7 @@ class MatchRow extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 210,
+          height: 220,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
