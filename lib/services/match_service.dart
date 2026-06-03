@@ -1,10 +1,7 @@
 // lib/services/match_service.dart
 
-<<<<<<< HEAD
-=======
 import 'dart:io';
 
->>>>>>> profile-pics
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/match_card.dart';
 
@@ -28,11 +25,7 @@ class MatchService {
     final rows = await supabase
         .from('matches')
         .select(
-<<<<<<< HEAD
-          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, user_interests(interest))',
-=======
-          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, avatar_url, user_interests(interest))',
->>>>>>> profile-pics
+          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, avatar_url, user_interests(interest))',
         )
         .inFilter('event_id', interestedEventIds)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
@@ -71,10 +64,7 @@ class MatchService {
           interests: (otherUserData['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
               .toList(),
-<<<<<<< HEAD
-=======
           imageUrl: otherUserData['avatar_url'] ?? '',
->>>>>>> profile-pics
         ),
       );
     }
@@ -140,8 +130,6 @@ class MatchService {
             .toList(),
       );
     }).toList();
-<<<<<<< HEAD
-=======
   }
 
   Future<void> uploadProfilePicture(File imageFile, String userId) async {
@@ -173,6 +161,5 @@ class MatchService {
       .getPublicUrl('$userId/profile.jpg');
 
     return publicUrl;
->>>>>>> profile-pics
   }
 }
