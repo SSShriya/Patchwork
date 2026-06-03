@@ -124,18 +124,22 @@ class _EventsScreenState extends State<EventsScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 220,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: _filteredEvents.length,
-                      itemBuilder: (_, i) => InteractiveCard(
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _filteredEvents.length,
+                    itemBuilder: (_, i) => InteractiveCard(
                         card: _filteredEvents[i],
                         onTap: () {},
-                      ),
                     ),
-                  ),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.0,
+                      ), 
+                  )
                 ] else
                   Padding(
                     padding: const EdgeInsets.all(32),
