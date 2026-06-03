@@ -7,7 +7,7 @@ import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 class UserProfileScreen extends StatefulWidget {
   final List<MatchCard> cards;
   final int initialIndex;
-  final Future<Future<void>> Function(MatchCard, bool) onDecision;
+  final Future<void> Function(MatchCard, bool) onDecision;
 
   const UserProfileScreen({
     super.key,

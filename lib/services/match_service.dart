@@ -133,7 +133,6 @@ class MatchService {
   }
 
   Future<void> uploadProfilePicture(File imageFile, String userId) async {
-    try {
       final String filePath = '$userId/profile.jpg';
     
       await supabase.storage.from('avatars').upload(
@@ -148,11 +147,6 @@ class MatchService {
         .from('users')
         .update({'avatar_url': publicUrl})
         .eq('id', userId);
-
-      print('Profile picture uploaded and database updated successfully!');
-    } catch (e) {
-      print('Error uploading profile picture: $e');
-    }
   }
 
   Future<String?> getProfilePictureUrl(String userId) async {
