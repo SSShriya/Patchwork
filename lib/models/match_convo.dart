@@ -1,13 +1,16 @@
 class ChatConversation {
   final String name;
+  final String otherUserId;
   final List<String> interests;
   final String lastMessage;
   final String time;
   final int unreadCount;
   final bool isOnline;
+  int numMessages = 0;
 
   ChatConversation({
     required this.name,
+    required this.otherUserId,
     required this.interests,
     this.lastMessage = '',
     this.time = '',
@@ -15,3 +18,4 @@ class ChatConversation {
     this.isOnline = false,
   });
 }
+

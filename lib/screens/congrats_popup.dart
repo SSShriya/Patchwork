@@ -1,12 +1,13 @@
+import 'package:drp/models/match_card.dart';
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 
 class CongratsPopup extends StatelessWidget {
-  final String matchName;
+  final MatchCard match;
 
-  const CongratsPopup({super.key, required this.matchName});
+  const CongratsPopup({super.key, required this.match});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class CongratsPopup extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              matchName.toUpperCase(),
+              match.name.toUpperCase(),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
@@ -51,7 +52,7 @@ class CongratsPopup extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => DMScreen(
-                      chat: ChatConversation(name: matchName, interests: []),
+                      chat: ChatConversation(name: match.name, otherUserId: match.id, interests: []),
                     ),
                   ),
                 );

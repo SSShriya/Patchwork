@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
 import 'package:bulleted_list/bulleted_list.dart';
+import '../services/conversation_service.dart';
 
 class DMScreen extends StatefulWidget {
   final ChatConversation chat;
@@ -12,14 +13,49 @@ class DMScreen extends StatefulWidget {
 }
 
 class _DMScreenState extends State<DMScreen> {
-  final List<_Message> _messages = [];
   final TextEditingController _controller = TextEditingController();
+  final ConversationService _conversationService = ConversationService();
+  late final String myUserId;
+  List<String> messages = [];
+  List<_Message> _messages = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    myUserId = _conversationService.currentUserId;
+    _loadMessages();
+  }
+
+  Future<void> _loadMessages() async {
+    try {
+      final fetchedMaps = await _conversationService.getMessages(myUserId, widget.chat.otherUserId);
+      setState(() {
+        _messages = fetchedMaps.map((row) {
+          final senderId = row['sender_id'] as String;
+          return _Message(
+            text: row['content'] ?? '',
+            fromMe: senderId == myUserId,
+          );
+        }).toList();
+        // Map strings over to your custom visual _Message objects
+        _messages = messages.map((m) => _Message(text: m, fromMe: true)).toList();
+        _isLoading = false; // Loading complete!
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      debugPrint("Error fetching messages: $e");
+    }
+  }
 
   void _send() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     setState(() {
       _messages.add(_Message(text: text, fromMe: true));
+      _conversationService.recordMessage(text, myUserId, widget.chat.otherUserId);
     });
     _controller.clear();
   }
@@ -50,7 +86,10 @@ class _DMScreenState extends State<DMScreen> {
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: Colors.white,
       ),
-      body: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          :
+      Column(
         children: [
           SizedBox(height: 16),
           Expanded(

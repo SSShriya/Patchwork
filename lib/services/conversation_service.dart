@@ -16,7 +16,7 @@ class ConversationService {
         )
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
-        .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
+        .or('user1_id.eq.$currentUserId, user2_id.eq.$currentUserId');
 
     return (rows as List).map((r) {
       final user1Data = r['user1'] as Map<String, dynamic>;
@@ -27,12 +27,32 @@ class ConversationService {
           : user1Data;
 
       final name = otherUser['name'] ?? 'Unknown Match';
+      final id = otherUser['id'] as String;
       final interestsList =
           (otherUser['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
               .toList();
 
-      return ChatConversation(name: name, interests: interestsList);
+      return ChatConversation(name: name, otherUserId: id, interests: interestsList);
     }).toList();
+  }
+
+  Future<void> recordMessage(String message, String sender, String receiver) async {
+    await supabase.from('messages').insert({
+      'sender_id': sender,
+      'recipient_id': receiver,
+      'content': message,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getMessages(String thisUserId, String otherUserId) async {
+    final rows = await supabase
+      .from('messages')
+      .select()
+      .or('sender_id.eq.$thisUserId, sender_id.eq.$otherUserId')
+      .or('recipient_id.eq.$thisUserId, recipient_id.eq.$otherUserId')
+      .order('created_at', ascending: true);
+
+    return List<Map<String, dynamic>>.from(rows);
   }
 }
