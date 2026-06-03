@@ -87,6 +87,26 @@ class _DMScreenState extends State<DMScreen> {
     super.dispose();
   }
 
+  void _hints() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Chat Hints'),
+        content: Text(
+          '''Here's some helpful prompts to help you chat to ${widget.chat.name}:
+          \n- "What are your favorite hobbies?"
+          \n- "Have you traveled anywhere interesting recently?"''',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('BACK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -114,6 +134,14 @@ class _DMScreenState extends State<DMScreen> {
               Text(widget.chat.name),
             ],
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.lightbulb_outline),
+              onPressed: _hints,
+              tooltip: 'Prompts to help you chat with ${widget.chat.name}',
+              iconSize: 36,
+            ),
+          ],
           backgroundColor: const Color(0XFF84DCC6),
           foregroundColor: Colors.white,
         ),
