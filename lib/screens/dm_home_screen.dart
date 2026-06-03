@@ -1,6 +1,7 @@
 import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:drp/widgets/chat_section.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/match_convo.dart';
 import '../services/conversation_service.dart';
 
@@ -37,9 +38,10 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F0F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0XFF84DCC6),
+        foregroundColor: const Color(0XFF222222),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -88,11 +90,11 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             ),
           ),
 
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Text(
               'Chats',
-              style: TextStyle(
+              style: GoogleFonts.lora(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey,

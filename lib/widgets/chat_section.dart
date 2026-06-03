@@ -2,6 +2,7 @@ import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ChatSection extends StatelessWidget {
   final String title;
@@ -18,7 +19,7 @@ class ChatSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {      
       return ExpansionTile(
-            title: Text(title),
+            title: Text(title, style: GoogleFonts.montserrat(fontWeight: FontWeight.bold)),
             initiallyExpanded: true,
             children: [
               ListView.builder(
@@ -71,7 +72,7 @@ class ChatSection extends StatelessWidget {
                   ),
                   title: Text(
                     chat.name,
-                    style: const TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

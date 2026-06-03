@@ -24,7 +24,7 @@ class MatchRow extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 4, 10),
           child: Text(
             eventLabel,
-            style: GoogleFonts.bitter(fontSize: 16, color: Colors.grey),
+            style: GoogleFonts.bitter(fontSize: 18, color: const Color.fromARGB(255, 89, 79, 79))
           ),
         ),
         SizedBox(
