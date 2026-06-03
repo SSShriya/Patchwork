@@ -120,12 +120,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: Text(
-              'Confirmed Matches by Event',
+              'Your Upcoming Events',
               style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
           SizedBox(
-            height: 210,
+            height: 140,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),

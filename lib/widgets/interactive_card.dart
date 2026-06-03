@@ -20,7 +20,6 @@ class InteractiveCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: 150,
-      // height: 200,
       child: Material(
         color: card.color,
         borderRadius: BorderRadius.circular(16),
@@ -55,9 +54,11 @@ class InteractiveCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF222222,
-                          ).withValues(alpha: 0.15),
+                          color: eventCard.numMatches == 0 ? // make it more obvious when there are no matches
+                          const Color(
+                            0xAAFF1100,
+                          ).withValues(alpha: 0.45) :
+                          const Color(0xFF220000).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -85,18 +86,6 @@ class InteractiveCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-
-                // ── Subtitle (EventCard only) ──
-                if (eventCard != null)
-                  Text(
-                    eventCard.subtitle,
-                    style: GoogleFonts.merriweather(
-                      color: const Color(0xFF222222).withValues(alpha: 0.8),
-                      fontSize: 12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
 
                 // Year group for match card
                 if (matchCard != null && matchCard.yearGroup.isNotEmpty) ...[
