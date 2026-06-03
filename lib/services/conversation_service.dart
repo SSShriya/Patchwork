@@ -61,8 +61,8 @@ class ConversationService {
             eventName = firstEvent['event_name'] as String? ?? '';
           }
         }
-      }
-
+      } 
+ 
       return ChatConversation(
         name: name,
         otherUserId: actualOtherUserId,
@@ -97,3 +97,5 @@ class ConversationService {
     return List<Map<String, dynamic>>.from(rows);
   }
 }
+                 
+                 

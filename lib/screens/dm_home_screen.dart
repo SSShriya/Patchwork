@@ -16,7 +16,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
   List<ChatConversation> _conversations = [];
   bool isLoading = true;
 
-  String _searchQuery = '';
+  String _searchQuery = ''; 
 
   @override
   void initState() {

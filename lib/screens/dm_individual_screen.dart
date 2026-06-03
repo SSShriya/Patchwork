@@ -44,7 +44,7 @@ class _DMScreenState extends State<DMScreen> {
       final fetchedMaps = await _conversationService.getMessages(
         myUserId,
         widget.chat.otherUserId,
-      );
+      ); 
       setState(() {
         _messages = fetchedMaps.map((row) {
           final senderId = row['sender_id'] as String;

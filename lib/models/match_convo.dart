@@ -23,4 +23,3 @@ class ChatConversation {
     this.numMessages = 0,
   });
 }
-
