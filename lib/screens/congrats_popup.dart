@@ -61,7 +61,8 @@ class CongratsPopup extends StatelessWidget {
                       chat: ChatConversation(
                         name: match.name, 
                         otherUserId: otherUserId(), 
-                        interests: match.interests
+                        interests: match.interests,
+                        imageUrl: match.imageUrl,
                         ),
                     ),
                   ),

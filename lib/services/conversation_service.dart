@@ -12,7 +12,7 @@ class ConversationService {
     final matchRows = await supabase
       .from('matches')
       .select(
-        '*, user1:user1_id(id, name, user_interests(interest)), user2:user2_id(id, name, user_interests(interest))',
+        '*, user1:user1_id(id, name, avatar_url, user_interests(interest)), user2:user2_id(id, name, avatar_url, user_interests(interest))',
       )
       .eq('user1_accepted', true)
       .eq('user2_accepted', true)
@@ -49,6 +49,7 @@ class ConversationService {
         name: name,
         otherUserId: actualOtherUserId,
         interests: interestsList,
+        imageUrl: otherUser['avatar_url'] as String? ?? '', // Placeholder, can be extended to fetch actual image URLs
         numMessages: messageCount, // Now truly dynamic!
         lastMessage: hasHistory ? directMessages.last['content'] ?? '' : 'No messages yet',
         time: hasHistory ? 'Active' : '', 

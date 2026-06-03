@@ -27,7 +27,7 @@ class MatchCard extends BaseCard {
     required this.yearGroup,
     required this.location,
     required this.interests,
-    this.imageUrl = '',
+    required this.imageUrl,
   });
 
   factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(

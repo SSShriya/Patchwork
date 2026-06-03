@@ -1,6 +1,7 @@
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 
 class ChatSection extends StatelessWidget {
   final String title;
@@ -43,16 +44,14 @@ class ChatSection extends StatelessWidget {
                   ),
                   leading: Stack(
                     children: [
-                      CircleAvatar(
+                      ProfilePicture(
+                        name: chat.name,
                         radius: 28,
-                        backgroundColor: const Color(0XFF8789C0),
-                        child: Text(
-                          chat.name[0],
-                          style: const TextStyle(
-                            fontSize: 24,
-                            color: Colors.white,
-                          ),
-                        ),
+                        fontsize: 24,
+                        random: false,
+                        img: chat.imageUrl != null && chat.imageUrl!.isNotEmpty
+                                  ? chat.imageUrl
+                                  : null,
                       ),
                       if (chat.isOnline)
                         Positioned(

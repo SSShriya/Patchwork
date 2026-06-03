@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';
 import 'package:bulleted_list/bulleted_list.dart';
 import '../services/conversation_service.dart';
@@ -77,12 +78,14 @@ class _DMScreenState extends State<DMScreen> {
         appBar: AppBar(
           title: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: const Color(0XFF8789C0),
-                child: Text(
-                  widget.chat.name[0],
-                  style: const TextStyle(color: Colors.white),
-                ),
+              ProfilePicture(
+                name: widget.chat.name,
+                radius: 20,
+                fontsize: 16,
+                random: false,
+                img: widget.chat.imageUrl != null && widget.chat.imageUrl!.isNotEmpty
+                          ? widget.chat.imageUrl
+                          : null,
               ),
               const SizedBox(width: 12),
               Text(widget.chat.name),
