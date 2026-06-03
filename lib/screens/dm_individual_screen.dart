@@ -39,7 +39,6 @@ class _DMScreenState extends State<DMScreen> {
           );
         }).toList();
         // Map strings over to your custom visual _Message objects
-        _messages = messages.map((m) => _Message(text: m, fromMe: true)).toList();
         _isLoading = false; // Loading complete!
       });
     } catch (e) {
@@ -56,6 +55,7 @@ class _DMScreenState extends State<DMScreen> {
     setState(() {
       _messages.add(_Message(text: text, fromMe: true));
       _conversationService.recordMessage(text, myUserId, widget.chat.otherUserId);
+      widget.chat.numMessages += 1;
     });
     _controller.clear();
   }
