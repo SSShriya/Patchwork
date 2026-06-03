@@ -99,7 +99,7 @@ class MatchService {
     final rows = await supabase
         .from('matches')
         .select(
-          'events(event_name), user1:user1_id(id, name, university, course, bio, year_group, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, user_interests(interest))',
+          'events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
         )
         .eq('event_id', eventId)
         .eq('user1_accepted', true)
@@ -130,6 +130,7 @@ class MatchService {
             .map((i) => i['interest'] as String)
             .toList(),
         location: (otherUser['location']) ?? '',
+        imageUrl: otherUser['avatar_url'] ?? '',
       );
     }).toList();
   }

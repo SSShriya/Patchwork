@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/event_card.dart';
 import '../models/match_card.dart';
 import '../services/match_service.dart';
+import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 
 class EventMatchesScreen extends StatefulWidget {
   final EventCard event;
@@ -211,17 +212,13 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                 child: Row(
                   children: [
                     // ── Avatar ──
-                    CircleAvatar(
+                    // Replace CircleAvatar with:
+                    ProfilePicture(
+                      name: match.title,
                       radius: 28,
-                      backgroundColor: const Color(0XFFEEC0C6),
-                      child: Text(
-                        match.title[0],
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF222222),
-                        ),
-                      ),
+                      fontsize: 22,
+                      random: false,
+                      img: match.imageUrl.isNotEmpty ? match.imageUrl : null,
                     ),
                     const SizedBox(width: 12),
                     // ── Details ──
@@ -229,6 +226,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ── Name ──
                           Text(
                             match.title,
                             style: const TextStyle(
@@ -236,27 +234,72 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF222222),
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            match.course,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: const Color(
-                                0xFF222222,
-                              ).withValues(alpha: 0.7),
+                          const SizedBox(height: 4),
+
+                          // ── Year · University · Course ──
+                          if (match.yearGroup.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.school,
+                                  size: 13,
+                                  color: const Color(
+                                    0xFF222222,
+                                  ).withValues(alpha: 0.7),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    '${match.yearGroup} · ${match.university} · ${match.course}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: const Color(
+                                        0xFF222222,
+                                      ).withValues(alpha: 0.7),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            match.yearGroup,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: const Color(
-                                0xFF222222,
-                              ).withValues(alpha: 0.7),
+                          ],
+
+                          // ── Location ──
+                          if (match.location.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: 13,
+                                  color: const Color(
+                                    0xFF222222,
+                                  ).withValues(alpha: 0.7),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    match.location,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: const Color(
+                                        0xFF222222,
+                                      ).withValues(alpha: 0.7),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          ],
+
+                          // ── Interests ──
                           if (match.interests.isNotEmpty) ...[
                             const SizedBox(height: 6),
                             Wrap(

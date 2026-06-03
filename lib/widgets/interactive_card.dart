@@ -110,12 +110,12 @@ class InteractiveCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
-                          matchCard.yearGroup,
+                          '${matchCard.yearGroup} · ${matchCard.university}',
                           style: TextStyle(
+                            fontSize: 13,
                             color: const Color(
                               0xFF222222,
-                            ).withValues(alpha: 0.8),
-                            fontSize: 11,
+                            ).withValues(alpha: 0.7),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -143,7 +143,7 @@ class InteractiveCard extends StatelessWidget {
                             color: const Color(
                               0xFF222222,
                             ).withValues(alpha: 0.8),
-                            fontSize: 11,
+                            fontSize: 13,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -187,7 +187,7 @@ class InteractiveCard extends StatelessWidget {
                                     interest,
                                     style: const TextStyle(
                                       color: Color(0xFF222222),
-                                      fontSize: 11,
+                                      fontSize: 13,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
