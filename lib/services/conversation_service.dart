@@ -12,10 +12,7 @@ class ConversationService {
     final matchRows = await supabase
       .from('matches')
       .select(
-        '''*, 
-        user1:user1_id(id, name, avatar_url, user_interests(interest)), 
-        user2:user2_id(id, name, avatar_url, user_interests(interest)),
-        event:event_id(event_name)''',
+        '*, user1:user1_id(id, name, avatar_url, user_interests(interest)), user2:user2_id(id, name, avatar_url, user_interests(interest))',
       )
       .eq('user1_accepted', true)
       .eq('user2_accepted', true)
@@ -66,11 +63,10 @@ class ConversationService {
       return ChatConversation(
         name: name,
         otherUserId: actualOtherUserId,
-        event: eventName,
         interests: interestsList,
         imageUrl: otherUser['avatar_url'] as String? ?? '', // Placeholder, can be extended to fetch actual image URLs
         numMessages: messageCount, // Now truly dynamic!
-        lastMessage: hasHistory ? directMessages.last['content'] ?? '' : 'Interests: ${interestsList.join(', ')}',
+        lastMessage: hasHistory ? directMessages.last['content'] ?? '' : 'No messages yet',
         time: hasHistory ? 'Active' : '', 
         unreadCount: 0,
         isOnline: false,

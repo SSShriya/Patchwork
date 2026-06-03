@@ -160,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
             for (final event in _interestedEvents)
               (groupedMatches[event.eventId]?.isEmpty ?? true)
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Nobody else is interested in this event yet, come back later',
+                          'No matches yet, come back later',
                           style: GoogleFonts.merriweather(
                             fontSize: 14,
                             color: Colors.grey[600],

@@ -163,23 +163,6 @@ class _DMScreenState extends State<DMScreen> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                if (widget.chat.event.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
-                                    child: Center (
-                                      child: Text(
-                                        'You are both going to: ${widget.chat.event.toUpperCase()}',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 12),
                                 // ── Interests Card (always at top) ──
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
