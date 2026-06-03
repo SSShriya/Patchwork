@@ -121,7 +121,7 @@ class _EventsScreenState extends State<EventsScreen> {
                 // Events Section
                 if (_filteredEvents.isNotEmpty) ...[
                   Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -133,46 +133,72 @@ class _EventsScreenState extends State<EventsScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-                          onPressed: () => setState(() => _isGridView = !_isGridView),
+                          icon: Icon(
+                            _isGridView ? Icons.view_list : Icons.grid_view,
+                          ),
+                          onPressed: () =>
+                              setState(() => _isGridView = !_isGridView),
                         ),
                       ],
-                    )
+                    ),
                   ),
                   _isGridView
-                  ? GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: _filteredEvents.length,
-                      itemBuilder: (_, i) => InteractiveCard(
-                          card: _filteredEvents[i],
-                          onTap: () {},
-                      ),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.4,
-                        ), 
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: _filteredEvents.length,
-                      itemBuilder: (_, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SizedBox(
-                          height: 250,
-                          child: InteractiveCard(
-                            card: _filteredEvents[i], 
-                            onTap: () {},
-                          ),
+                      ? LayoutBuilder(
+                          builder: (context, constraints) {
+                            final width = constraints.maxWidth;
+                            final crossAxisCount = width > 1200
+                                ? 5
+                                : width > 900
+                                ? 4
+                                : width > 600
+                                ? 3
+                                : 2;
+                            final aspectRatio = width > 900
+                                ? 0.85
+                                : width > 600
+                                ? 0.95
+                                : 1.2;
+                            final cardWidth =
+                                (width - 12 * (crossAxisCount + 1)) /
+                                crossAxisCount;
+                            final cardHeight = cardWidth * aspectRatio;
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              itemCount: _filteredEvents.length,
+                              itemBuilder: (_, i) => InteractiveCard(
+                                card: _filteredEvents[i],
+                                onTap: () {},
+                              ),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    childAspectRatio: cardWidth / cardHeight,
+                                  ),
+                            );
+                          },
                         )
-                      ),
-                  )
-                  
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: _filteredEvents.length,
+                          itemBuilder: (_, i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: SizedBox(
+                              height: 250,
+                              child: InteractiveCard(
+                                card: _filteredEvents[i],
+                                onTap: () {},
+                              ),
+                            ),
+                          ),
+                        ),
                 ] else
                   Padding(
                     padding: const EdgeInsets.all(32),
