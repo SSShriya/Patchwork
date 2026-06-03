@@ -147,21 +147,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               radius: 40,
                               fontsize: 32,
                               random: false,
-                             // fixed: const Color(0XFF8789C0),
                               img: _current.imageUrl.isNotEmpty ? _current.imageUrl : null,
                             ),
-                            /*
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundColor: const Color(0XFF8789C0),
-                              child: Text(
-                                _current.title[0],
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),*/
                             const SizedBox(width: 16),
                             Expanded(
                               // fixes layout overflow on long names
