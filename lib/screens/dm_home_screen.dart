@@ -29,8 +29,12 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
     final convos = await _conversationService.getConversations();
     setState(() {
       _conversations = convos;
-      _newConvos = _conversations.where((chat) => chat.numMessages <= 0).toList();
-      _oldConvos = _conversations.where((chat) => chat.numMessages > 0).toList();
+      _newConvos = _conversations
+          .where((chat) => chat.numMessages <= 0)
+          .toList();
+      _oldConvos = _conversations
+          .where((chat) => chat.numMessages > 0)
+          .toList();
       isLoading = false;
     });
   }
@@ -62,10 +66,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
               _loadConversations();
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.edit_note, color: Colors.black, size: 28),
-            onPressed: () {},
-          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -74,45 +74,45 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
           children: [
             // search bar
             Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search conversations...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search conversations...',
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            child: Text(
-              'Chats',
-              style: GoogleFonts.lora(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              child: Text(
+                'Chats',
+                style: GoogleFonts.lora(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
               ),
             ),
+            ChatSection(
+              title: 'New Chats',
+              conversations: _newConvos,
+              onRefresh: _loadConversations,
+            ),
+            ChatSection(
+              title: 'Existing Chats',
+              conversations: _oldConvos,
+              onRefresh: _loadConversations,
+            ),
+          ],
         ),
-          ChatSection(
-            title: 'New Chats',
-            conversations: _newConvos,
-            onRefresh: _loadConversations,
-          ),
-          ChatSection(
-            title: 'Existing Chats',
-            conversations: _oldConvos,
-            onRefresh: _loadConversations,
-          )
-        ],
-      ),
       ),
       bottomNavigationBar: AppNavigationBar(currentIndex: 2),
     );

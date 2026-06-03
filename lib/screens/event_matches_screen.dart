@@ -147,21 +147,6 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.sell, size: 14, color: Color(0xFF222222)),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.event.cost == 0
-                          ? 'Free'
-                          : '£${widget.event.cost.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF222222),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
