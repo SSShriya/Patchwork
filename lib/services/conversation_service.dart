@@ -97,5 +97,3 @@ class ConversationService {
     return List<Map<String, dynamic>>.from(rows);
   }
 }
-                 
-                 
