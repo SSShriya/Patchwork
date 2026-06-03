@@ -25,7 +25,7 @@ class MatchService {
     final rows = await supabase
         .from('matches')
         .select(
-          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, avatar_url, user_interests(interest))',
+          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
         )
         .inFilter('event_id', interestedEventIds)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
@@ -64,6 +64,7 @@ class MatchService {
           interests: (otherUserData['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
               .toList(),
+          location: otherUserData['location'] ?? '',
           imageUrl: otherUserData['avatar_url'] ?? '',
         ),
       );
@@ -128,6 +129,7 @@ class MatchService {
         interests: (otherUser['user_interests'] as List<dynamic>? ?? [])
             .map((i) => i['interest'] as String)
             .toList(),
+        location: (otherUser['location']) ?? '',
       );
     }).toList();
   }

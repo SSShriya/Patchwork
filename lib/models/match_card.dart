@@ -11,6 +11,7 @@ class MatchCard extends BaseCard {
   final String eventId;
   final String eventName;
   final String yearGroup;
+  final String location;
   final List<String> interests;
   @override
   final String imageUrl; // profile image URL, can be empty if no image
@@ -24,6 +25,7 @@ class MatchCard extends BaseCard {
     required this.eventId,
     required this.eventName,
     required this.yearGroup,
+    required this.location,
     required this.interests,
     this.imageUrl = '',
   });
@@ -40,6 +42,7 @@ class MatchCard extends BaseCard {
     interests: (json['user_interests'] as List<dynamic>? ?? [])
         .map((i) => i['interest'] as String)
         .toList(),
+    location: json['location'] ?? '',
     imageUrl: json['profile_image_url'] ?? '',
   );
 

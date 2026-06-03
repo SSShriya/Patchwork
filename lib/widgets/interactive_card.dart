@@ -19,6 +19,7 @@ class InteractiveCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: 150,
+      height: 200,
       child: Material(
         color: card.color,
         borderRadius: BorderRadius.circular(16),
@@ -96,8 +97,75 @@ class InteractiveCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
 
+                // Year group for match card
+                if (matchCard != null && matchCard.yearGroup.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.school,
+                        size: 11,
+                        color: const Color(0xFF222222).withValues(alpha: 0.8),
+                      ),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          matchCard.yearGroup,
+                          style: TextStyle(
+                            color: const Color(
+                              0xFF222222,
+                            ).withValues(alpha: 0.8),
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                // Location for match card
+                if (matchCard != null && matchCard.location.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 11,
+                        color: const Color(0xFF222222).withValues(alpha: 0.8),
+                      ),
+                      SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          matchCard!.location,
+                          style: TextStyle(
+                            color: const Color(
+                              0xFF222222,
+                            ).withValues(alpha: 0.8),
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
                 // ── Subtitle ──
-                if (matchCard != null && matchCard.interests.isNotEmpty)
+                // ── Subtitle ──
+                if (matchCard != null && matchCard.interests.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Interests',
+                    style: TextStyle(
+                      color: Color(0xFF222222),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: matchCard.interests
@@ -131,6 +199,7 @@ class InteractiveCard extends StatelessWidget {
                         )
                         .toList(),
                   ),
+                ],
 
                 // ── Date & Time & Location (EventCard only) ──
                 if (eventCard != null) ...[
