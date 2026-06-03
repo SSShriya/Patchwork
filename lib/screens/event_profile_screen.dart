@@ -1,3 +1,4 @@
+import 'package:drp/screens/event_registered_popup.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
 import '../services/registration_service.dart';
@@ -33,6 +34,15 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
         _isRegistered = isRegistered;
       });
     }
+  }
+
+  Future<void> _register() async {
+    registrationService.registerForEvent(widget.card.eventId);
+
+    showDialog(
+      context: context,
+      builder: (context) => EventRegisteredPopup(eventName: widget.card.title),
+    );
   }
 
   @override
@@ -153,7 +163,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isRegistered ? null : () => registrationService.registerForEvent(widget.card.eventId),
+                onPressed: _isRegistered ? null : () => _register(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0XFF84DCC6),
                   foregroundColor: const Color(0XFF222222),
