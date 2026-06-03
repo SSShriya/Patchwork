@@ -18,6 +18,7 @@ class _EventsScreenState extends State<EventsScreen> {
   List<EventCard> _allEvents = [];
   List<EventCard> _filteredEvents = [];
   bool _loading = true;
+  bool _isGridView = true;
 
   @override
   void initState() {
@@ -121,30 +122,57 @@ class _EventsScreenState extends State<EventsScreen> {
                 if (_filteredEvents.isNotEmpty) ...[
                   Padding(
                     padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: Text(
-                      'All Events',
-                      style: GoogleFonts.lora(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'All Events',
+                          style: GoogleFonts.lora(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
+                          onPressed: () => setState(() => _isGridView = !_isGridView),
+                        ),
+                      ],
+                    )
                   ),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _filteredEvents.length,
-                    itemBuilder: (_, i) => InteractiveCard(
-                        card: _filteredEvents[i],
-                        onTap: () {},
-                    ),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.4,
-                      ), 
+                  _isGridView
+                  ? GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      itemCount: _filteredEvents.length,
+                      itemBuilder: (_, i) => InteractiveCard(
+                          card: _filteredEvents[i],
+                          onTap: () {},
+                      ),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.4,
+                        ), 
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      itemCount: _filteredEvents.length,
+                      itemBuilder: (_, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: SizedBox(
+                          height: 250,
+                          child: InteractiveCard(
+                            card: _filteredEvents[i], 
+                            onTap: () {},
+                          ),
+                        )
+                      ),
                   )
+                  
                 ] else
                   Padding(
                     padding: const EdgeInsets.all(32),
