@@ -1,5 +1,6 @@
 import 'package:drp/models/event_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/base_card.dart';
 import '../models/match_card.dart';
 import 'package:intl/intl.dart';
@@ -34,7 +35,16 @@ class InteractiveCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(card.icon, color: const Color(0xFF222222), size: 28),
+                    if (card.imageUrl.isNotEmpty)
+                      ProfilePicture(
+                        name: card.title,
+                        radius: 12,
+                        fontsize: 32,
+                        random: false,
+                        img: card.imageUrl.isNotEmpty ? card.imageUrl : null,
+                      )
+                    else
+                      Icon(card.icon, color: const Color(0xFF222222), size: 28),
                     const Spacer(),
                     if (eventCard != null)
                       Container(
