@@ -62,7 +62,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     if (accepted) {
       showDialog(
         context: context,
-        builder: (context) => CongratsPopup(matchName: card.title),
+        builder: (context) => CongratsPopup(match: card),
       ).then((_) {
         if (!mounted) return;
         setState(() {

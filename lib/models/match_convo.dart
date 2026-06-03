@@ -1,14 +1,16 @@
 class ChatConversation {
   final String name;
+  final String otherUserId;
   final List<String> interests;
   final String lastMessage;
   final String time;
   final int unreadCount;
   final bool isOnline;
-  final List<_Message> messages = [];
+  int numMessages = 0;
 
   ChatConversation({
     required this.name,
+    required this.otherUserId,
     required this.interests,
     this.lastMessage = '',
     this.time = '',
@@ -17,9 +19,3 @@ class ChatConversation {
   });
 }
 
-class _Message {
-  final String text;
-  final bool fromMe;
-
-  _Message({required this.text, required this.fromMe});
-}

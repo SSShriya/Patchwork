@@ -27,12 +27,32 @@ class ConversationService {
           : user1Data;
 
       final name = otherUser['name'] ?? 'Unknown Match';
+      final id = otherUser['id'] as String;
       final interestsList =
           (otherUser['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
               .toList();
 
-      return ChatConversation(name: name, interests: interestsList);
+      return ChatConversation(name: name, otherUserId: id, interests: interestsList);
     }).toList();
+  }
+
+  Future<void> recordMessage(String message, String sender, String receiver) async {
+    await supabase.from('messages').insert({
+      'sender_id': sender,
+      'receiver_id': receiver,
+      'content': message,
+    });
+  }
+
+  Future<List<String>> getMessages(String thisUserId, String otherUserId) async {
+    final rows = await supabase
+        .from('messages')
+        .select()
+        .or('sender_id.eq.$thisUserId, sender_id.eq.$otherUserId')
+        .or('receiver_id.eq.$thisUserId, receiver_id.eq.$otherUserId')
+        .order('created_at', ascending: true);
+
+    return (rows as List).map((r) => r['content'] as String).toList();
   }
 }
