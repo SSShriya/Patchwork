@@ -8,6 +8,7 @@ import 'user_profile_screen.dart';
 import '../models/match_convo.dart';
 import '../widgets/interactive_card.dart';
 import '../screens/event_matches_screen.dart';
+import '../services/event_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,12 +17,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _service = MatchService();
+  final _matchService = MatchService();
+  final _eventService = EventService();
   List<MatchCard> _pendingMatches = [];
+  List<EventCard> _interestedEvents = [];
   bool _loading = true;
-
   List<ChatConversation> conversations = [];
-  final List<EventCard> _recommendedEvents = recCards;
 
   @override
   void initState() {
@@ -31,36 +32,63 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadMatches() async {
     setState(() => _loading = true);
-    final matches = await _service.getPendingMatches();
-    final convos = await _service.getConversations();
+    final matches = await _matchService.getPendingMatches();
+    final events = await _eventService.getInterestedEvents();
     setState(() {
       _pendingMatches = matches;
       _loading = false;
-      conversations = convos;
+      _interestedEvents = events
+        ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     });
   }
 
   // Called by UserProfileScreen via callback
-  void _handleDecision(MatchCard card, bool accepted) {
+  Future<void> _handleDecision(MatchCard card, bool accepted) async {
+    await _matchService.recordDecision(card.id, accepted);
     setState(() => _pendingMatches.remove(card));
-    // Fire-and-forget — saves to Supabase in background
-    _service.recordDecision(card.id, accepted);
   }
 
   void _openProfile(MatchCard card) {
     final groupCards = _pendingMatches
-        .where((c) => c.group == card.group)
+        .where((c) => c.eventId == card.eventId)
         .toList();
+    final initialIndex = groupCards.indexOf(card);
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => UserProfileScreen(
           cards: groupCards,
-          initialIndex: groupCards.indexOf(card),
+          initialIndex: initialIndex < 0 ? 0 : initialIndex,
           onDecision: _handleDecision,
         ),
       ),
     );
+  }
+
+  // group _pendingMatches by event name
+  Map<String, List<MatchCard>> get _matchesByEvent {
+    final map = <String, List<MatchCard>>{};
+    for (final card in _pendingMatches) {
+      map.putIfAbsent(card.eventId, () => []).add(card);
+    }
+
+    // sort by date time
+    final sorted = Map.fromEntries(
+      map.entries.toList()..sort((a, b) {
+        final aEvent = _interestedEvents.firstWhere(
+          (e) => e.eventId == a.key,
+          orElse: () => _interestedEvents.first,
+        );
+        final bEvent = _interestedEvents.firstWhere(
+          (e) => e.eventId == b.key,
+          orElse: () => _interestedEvents.first,
+        );
+        return aEvent.startDateTime.compareTo(bEvent.startDateTime);
+      }),
+    );
+
+    return sorted;
   }
 
   @override
@@ -69,12 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final choirCards = _pendingMatches
-        .where((c) => c.group == 'choir')
-        .toList();
-    final improvCards = _pendingMatches
-        .where((c) => c.group == 'improv')
-        .toList();
+    final groupedMatches = _matchesByEvent;
 
     return Scaffold(
       backgroundColor: const Color(0XFFF5F0F6),
@@ -105,13 +128,14 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: recCards.length,
+              itemCount: _interestedEvents.length,
               itemBuilder: (_, i) => InteractiveCard(
-                card: recCards[i],
+                card: _interestedEvents[i],
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => EventMatchesScreen(event: recCards[i]),
+                    builder: (_) =>
+                        EventMatchesScreen(event: _interestedEvents[i]),
                   ),
                 ),
               ),
@@ -124,31 +148,31 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
-          if (choirCards.isNotEmpty)
-            MatchRow(
-              cards: choirCards,
-              eventLabel: 'Choir Concert - Music Society',
-              onTap: (i) => _openProfile(choirCards[i]),
-            ),
-          if (improvCards.isNotEmpty)
-            MatchRow(
-              cards: improvCards,
-              eventLabel: 'Taster Session - Improv Society',
-              onTap: (i) => _openProfile(improvCards[i]),
-            ),
-          if (choirCards.isEmpty && improvCards.isEmpty)
+
+          // one MatchRow per event
+          if (groupedMatches.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32),
-              child: Center(child: Text("You've reviewed everyone! 🎉")),
-            ),
+              child: Center(child: Text("You've reviewed everyone!!")),
+            )
+          else
+            for (final entry in groupedMatches.entries)
+              MatchRow(
+                cards: entry.value,
+                eventLabel: _interestedEvents
+                    .firstWhere(
+                      (e) => e.eventId == entry.key,
+                      orElse: () => _interestedEvents.first,
+                    )
+                    .title,
+                onTap: (i) => _openProfile(entry.value[i]),
+              ),
+
           const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
         ],
       ),
 
-      bottomNavigationBar: AppNavigationBar(
-        conversations: conversations,
-        recommendedEvents: _recommendedEvents,
-      ),
+      bottomNavigationBar: AppNavigationBar(),
     );
   }
 }

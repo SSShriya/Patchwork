@@ -2,25 +2,34 @@ import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
-import '../models/event_card.dart';
+import '../services/conversation_service.dart';
 
 class DMOverviewScreen extends StatefulWidget {
-  final List<ChatConversation> conversations;
-  final List<EventCard> recommendedEvents;
-  const DMOverviewScreen({
-    super.key,
-    required this.conversations,
-    required this.recommendedEvents,
-  });
+  const DMOverviewScreen({super.key});
+
   @override
   State<DMOverviewScreen> createState() => _DMOverviewScreenState();
 }
 
 class _DMOverviewScreenState extends State<DMOverviewScreen> {
+  final _conversationService = ConversationService();
+  List<ChatConversation> _conversations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    final convos = await _conversationService.getConversations();
+    setState(() {
+      _conversations = convos;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<ChatConversation> conversations = widget.conversations;
-    final List<EventCard> recommendedEvents = widget.recommendedEvents;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -79,9 +88,9 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: conversations.length,
+              itemCount: _conversations.length,
               itemBuilder: (context, index) {
-                final chat = conversations[index];
+                final chat = _conversations[index];
                 return ListTile(
                   onTap: () {
                     // Navigate to individual chat thread
@@ -176,10 +185,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: AppNavigationBar(
-        conversations: conversations,
-        recommendedEvents: recommendedEvents,
-      ), // add dm data
+      bottomNavigationBar: AppNavigationBar(currentIndex: 2), // add dm data
     );
   }
 }

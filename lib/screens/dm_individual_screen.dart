@@ -56,15 +56,22 @@ class _DMScreenState extends State<DMScreen> {
           Expanded(
             child: _messages.isEmpty
                 ? Center(
-                    child: Column (
+                    child: Column(
                       children: [
                         Text(
                           'Interests:',
-                          style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         BulletedList(
                           listItems: widget.chat.interests,
-                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -91,14 +98,20 @@ class _DMScreenState extends State<DMScreen> {
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(16),
                               topRight: const Radius.circular(16),
-                              bottomLeft: Radius.circular(message.fromMe ? 16 : 0),
-                              bottomRight: Radius.circular(message.fromMe ? 0 : 16),
+                              bottomLeft: Radius.circular(
+                                message.fromMe ? 16 : 0,
+                              ),
+                              bottomRight: Radius.circular(
+                                message.fromMe ? 0 : 16,
+                              ),
                             ),
                           ),
                           child: Text(
                             message.text,
                             style: TextStyle(
-                              color: message.fromMe ? Colors.white : Colors.black87,
+                              color: message.fromMe
+                                  ? Colors.white
+                                  : Colors.black87,
                               fontSize: 15,
                             ),
                           ),
@@ -136,7 +149,11 @@ class _DMScreenState extends State<DMScreen> {
                   CircleAvatar(
                     backgroundColor: const Color(0XFF84DCC6),
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                      icon: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                       onPressed: _send,
                     ),
                   ),
