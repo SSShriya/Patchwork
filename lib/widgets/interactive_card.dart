@@ -19,7 +19,6 @@ class InteractiveCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: 150,
-      // height: 200,
       child: Material(
         color: card.color,
         borderRadius: BorderRadius.circular(16),
@@ -142,7 +141,6 @@ class InteractiveCard extends StatelessWidget {
                 ],
 
                 // ── Subtitle ──
-                // ── Subtitle ──
                 if (matchCard != null && matchCard.interests.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   const Text(
@@ -191,7 +189,7 @@ class InteractiveCard extends StatelessWidget {
 
                 // ── Date & Time & Location (EventCard only) ──
                 if (eventCard != null) ...[
-                  const Spacer(),
+                //   const Spacer(),
                   const Divider(
                     color: Color(0xFF222222),
                     thickness: 0.3,
