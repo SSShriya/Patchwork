@@ -54,11 +54,15 @@ class InteractiveCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: eventCard.numMatches == 0 ? // make it more obvious when there are no matches
-                          const Color(
-                            0xAAFF1100,
-                          ).withValues(alpha: 0.45) :
-                          const Color(0xFF220000).withValues(alpha: 0.15),
+                          color: eventCard.numMatches == 0
+                              ? // make it more obvious when there are no matches
+                                const Color(0xFF220000).withValues(alpha: 0.3)
+                              : const Color.fromARGB(
+                                  192,
+                                  24,
+                                  177,
+                                  24,
+                                ).withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -161,7 +165,7 @@ class InteractiveCard extends StatelessWidget {
                         .take(3)
                         .map(
                           (interest) => Padding(
-                            padding: const EdgeInsets.only(bottom: 2,),
+                            padding: const EdgeInsets.only(bottom: 2),
                             child: Row(
                               children: [
                                 Text(
