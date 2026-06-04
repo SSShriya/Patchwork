@@ -5,12 +5,12 @@ import '../models/match_card.dart';
 import '../services/match_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-class UserProfileScreen extends StatefulWidget {
+class MatchProfileScreen extends StatefulWidget {
   final List<MatchCard> cards;
   final int initialIndex;
   final Future<void> Function(MatchCard, bool) onDecision;
 
-  const UserProfileScreen({
+  const MatchProfileScreen({
     super.key,
     required this.cards,
     required this.initialIndex,
@@ -18,10 +18,10 @@ class UserProfileScreen extends StatefulWidget {
   });
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  State<MatchProfileScreen> createState() => _MatchProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen> {
+class _MatchProfileScreenState extends State<MatchProfileScreen> {
   late List<MatchCard> _cards;
   late int _index;
   bool _isAnimating = false;

@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UserProfileScreen(
+        builder: (_) => MatchProfileScreen(
           cards: groupCards,
           initialIndex: initialIndex < 0 ? 0 : initialIndex,
           onDecision: _handleDecision,
