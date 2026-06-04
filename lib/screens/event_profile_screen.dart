@@ -50,7 +50,29 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
       if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Registration failed: $e'),
+                content: Text('Registration failed, please try again later.'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+    }
+  }
+
+  Future<void> _unregister() async {
+    try {
+      await registrationService.unregisterForEvent(widget.card.eventId);
+      // if (mounted) {
+      //   showDialog(
+      //     context: context,
+      //     builder: (context) => EventRegisteredPopup(eventName: widget.card.title), // UPDATE LATER
+      //   );
+      // }
+      setState(() => _isRegistered = false);
+    } catch (e) {
+      if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cancellation failed, please try again later'),
                 backgroundColor: Colors.redAccent,
               ),
             );
@@ -176,9 +198,9 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isRegistered ? null : () => _register(),
+                onPressed: () => (_isRegistered ? _unregister() : _register()),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0XFF84DCC6),
+                  backgroundColor: _isRegistered ? const Color(0XFFFD5757) : const Color(0XFF84DCC6),
                   foregroundColor: const Color(0XFF222222),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -186,7 +208,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   ),
                 ),
                 child: _isRegistered ? const Text(
-                    "You're already registered!",
+                    "Cancel Registration",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

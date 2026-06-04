@@ -23,4 +23,13 @@ class RegistrationService {
       'event_id': eventId,
     });
   }
+
+  Future<void> unregisterForEvent(String eventId) async {
+
+    await supabase
+      .from('interested_events')
+      .delete()
+      .eq('user_id', currentUserId)
+      .eq('event_id', eventId); 
+  }
 }
