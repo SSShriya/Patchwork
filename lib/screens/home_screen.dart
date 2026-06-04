@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: _awaitingMatches.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (_, i) {
                         final m = _awaitingMatches[i];
                         return ListTile(
@@ -213,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF84DCC6).withOpacity(0.25),
+                              color: const Color(0xFF84DCC6),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
