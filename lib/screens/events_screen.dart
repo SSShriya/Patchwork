@@ -163,15 +163,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                 : width > 600
                                 ? 3
                                 : 2;
-                            // final aspectRatio = width > 900
-                            //     ? 0.85
-                            //     : width > 600
-                            //     ? 0.95
-                            //     : 0.75;
-                            // final cardWidth =
-                            //     (width - 12 * (crossAxisCount + 1)) /
                                 crossAxisCount;
-                            // final cardHeight = cardWidth * aspectRatio;
                             return GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -203,7 +195,7 @@ class _EventsScreenState extends State<EventsScreen> {
                           itemBuilder: (_, i) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: SizedBox(
-                              height: 250,
+                              height: 150,
                               child: EventDetailCard(
                                 card: _filteredEvents[i],
                                 onTap: () => _openEventSummary(_filteredEvents[i]),
