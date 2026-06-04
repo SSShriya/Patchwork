@@ -331,9 +331,9 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                         ],
                       ),
                     ),
-                    TextButton(
+                    OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => DMScreen(
@@ -347,6 +347,14 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                           )
                         );
                       }, 
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: const Color(0XFFEEC0C6).withValues(alpha: 0.5),
+                        side: const BorderSide(color: Color(0XFFEEC0C6), width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       child: Text(
                         "DM",
                         style: const TextStyle(
