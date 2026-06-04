@@ -8,6 +8,7 @@ import '../services/match_service.dart';
 import 'event_profile_screen.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import '../widgets/user_profile_card.dart';
 
 class EventMatchesScreen extends StatefulWidget {
   final List<EventCard> allEvents;
@@ -215,169 +216,181 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
             )
           else
             ...matches.map(
-              (match) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              (match) => GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(
+                        backgroundColor: const Color(0XFF84DCC6),
+                        foregroundColor: Colors.white,
+                        title: Text(match.title),
+                      ),
+                      body: UserProfileCard(card: match),
                     ),
-                  ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    ProfilePicture(
-                      name: match.title,
-                      radius: 28,
-                      fontsize: 22,
-                      random: false,
-                      img: match.imageUrl.isNotEmpty ? match.imageUrl : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            match.title,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF222222),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    // ... rest unchanged
+                    children: [
+                      ProfilePicture(
+                        name: match.title,
+                        radius: 28,
+                        fontsize: 22,
+                        random: false,
+                        img: match.imageUrl.isNotEmpty ? match.imageUrl : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              match.title,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF222222),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          if (match.yearGroup.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.school,
-                                  size: 13,
-                                  color: const Color(
-                                    0xFF222222,
-                                  ).withValues(alpha: 0.7),
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    '${match.yearGroup} · ${match.university} · ${match.course}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: const Color(
-                                        0xFF222222,
-                                      ).withValues(alpha: 0.7),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                            const SizedBox(height: 4),
+                            if (match.yearGroup.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.school,
+                                    size: 13,
+                                    color: const Color(
+                                      0xFF222222,
+                                    ).withValues(alpha: 0.7),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (match.location.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 13,
-                                  color: const Color(
-                                    0xFF222222,
-                                  ).withValues(alpha: 0.7),
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    match.location,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: const Color(
-                                        0xFF222222,
-                                      ).withValues(alpha: 0.7),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (match.interests.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 4,
-                              runSpacing: 4,
-                              children: match.interests
-                                  .take(3)
-                                  .map(
-                                    (interest) => Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      '${match.yearGroup} · ${match.university} · ${match.course}',
+                                      style: TextStyle(
+                                        fontSize: 13,
                                         color: const Color(
-                                          0XFFEEC0C6,
-                                        ).withValues(alpha: 0.5),
-                                        borderRadius: BorderRadius.circular(20),
+                                          0xFF222222,
+                                        ).withValues(alpha: 0.7),
                                       ),
-                                      child: Text(
-                                        interest,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF222222),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (match.location.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 13,
+                                    color: const Color(
+                                      0xFF222222,
+                                    ).withValues(alpha: 0.7),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      match.location,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: const Color(
+                                          0xFF222222,
+                                        ).withValues(alpha: 0.7),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (match.interests.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: match.interests
+                                    .take(3)
+                                    .map(
+                                      (interest) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0XFFEEC0C6,
+                                          ).withValues(alpha: 0.5),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          interest,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF222222),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
+                                    )
+                                    .toList(),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DMScreen(
-                              chat: ChatConversation(
-                                name: match.title,
-                                otherUserId: match.id,
-                                event: event.title,
-                                interests: match.interests,
-                                imageUrl: match.imageUrl,
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DMScreen(
+                                chat: ChatConversation(matchCard: match),
                               ),
                             ),
+                          );
+                        },
+                        icon: const Icon(Icons.message_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(
+                            0XFFEEC0C6,
+                          ).withValues(alpha: 0.5),
+                          foregroundColor: const Color(0xFF222222),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(
+                              color: Color(0XFFEEC0C6),
+                              width: 2,
+                            ),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.message_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(
-                          0XFFEEC0C6,
-                        ).withValues(alpha: 0.5),
-                        foregroundColor: const Color(0xFF222222),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(
-                            color: Color(0XFFEEC0C6),
-                            width: 2,
-                          ),
+                          padding: const EdgeInsets.all(12),
                         ),
-                        padding: const EdgeInsets.all(12),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
