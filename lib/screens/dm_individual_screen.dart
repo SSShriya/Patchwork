@@ -44,7 +44,7 @@ class _DMScreenState extends State<DMScreen> {
       final fetchedMaps = await _conversationService.getMessages(
         myUserId,
         widget.chat.otherUserId,
-      ); 
+      );
       setState(() {
         _messages = fetchedMaps.map((row) {
           final senderId = row['sender_id'] as String;
@@ -88,15 +88,52 @@ class _DMScreenState extends State<DMScreen> {
   }
 
   void _hints() {
+    final prompts = [
+      'What are your favorite hobbies?',
+      'Have you traveled anywhere interesting recently?',
+      'What\'s your favourite type of duck?',
+    ];
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Prompts'),
-        content: Text(
-          '''Here's some helpful prompts to help you chat to ${widget.chat.name}:
-          \n- "What are your favorite hobbies?"
-          \n- "Have you traveled anywhere interesting recently?"
-          \n- "What's your favourite type of duck?"''',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Tap a prompt to send it to ${widget.chat.name}:'),
+            const SizedBox(height: 12),
+            ...prompts.map(
+              (prompt) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.pop(context); // close dialog
+                    _controller.text = prompt; // populate text field
+                    _send(); // send immediately
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0XFF84DCC6).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0XFF84DCC6),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(prompt, style: const TextStyle(fontSize: 14)),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -169,7 +206,7 @@ class _DMScreenState extends State<DMScreen> {
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
                                     ),
-                                    child: Center (
+                                    child: Center(
                                       child: Text(
                                         'You are both going to: ${widget.chat.event.toUpperCase()}',
                                         style: const TextStyle(
@@ -180,7 +217,7 @@ class _DMScreenState extends State<DMScreen> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(height: 12),
+                                SizedBox(height: 12),
                                 // ── Interests Card (always at top) ──
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
