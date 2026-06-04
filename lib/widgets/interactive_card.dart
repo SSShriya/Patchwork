@@ -19,7 +19,7 @@ class InteractiveCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      width: 173,
+      width: 180,
       child: Material(
         color: card.color,
         borderRadius: BorderRadius.circular(16),
@@ -56,7 +56,7 @@ class InteractiveCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: eventCard.numMatches == 0
                               ? // make it more obvious when there are no matches
-                                const Color(0xFF220000).withValues(alpha: 0.3)
+                                const Color(0xFF220000).withValues(alpha: 0.2)
                               : const Color.fromARGB(
                                   192,
                                   24,
