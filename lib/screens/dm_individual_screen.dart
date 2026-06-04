@@ -88,12 +88,17 @@ class _DMScreenState extends State<DMScreen> {
   }
 
   void _hints() {
-    final prompts = [
-      'What are your favorite hobbies?',
-      'Have you traveled anywhere interesting recently?',
-      'What\'s your favourite type of duck?',
-    ];
+    final interests = widget.chat.interests;
+    final event = widget.chat.event;
 
+    final prompts = [
+      if (interests.isNotEmpty)
+        'How long have you been interested in ${interests[0]}?',
+      if (interests.length > 1) 'What got you into ${interests[1]}?',
+      if (interests.length > 2)
+        'Do you have any tips for someone getting into ${interests[2]}?',
+      if (event.isNotEmpty) 'What made you interested in $event?',
+    ];
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -242,9 +247,9 @@ class _DMScreenState extends State<DMScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
-                                          'Interests:',
-                                          style: TextStyle(
+                                        Text(
+                                          '${widget.chat.name}\'s Interests:',
+                                          style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.black,
