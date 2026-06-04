@@ -1,3 +1,4 @@
+import 'package:drp/screens/event_cancellation_popup.dart';
 import 'package:drp/screens/event_registered_popup.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
@@ -60,13 +61,24 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
 
   Future<void> _unregister() async {
     try {
+      final confirmed = await showDialog(
+        context: context,
+        builder: (context) => EventCancellationPopup(),
+      ) ?? false;
+
+      if (!confirmed) return; 
+      
       await registrationService.unregisterForEvent(widget.card.eventId);
-      // if (mounted) {
-      //   showDialog(
-      //     context: context,
-      //     builder: (context) => EventRegisteredPopup(eventName: widget.card.title), // UPDATE LATER
-      //   );
-      // }
+      
+      if (mounted) {
+        setState(() => _isRegistered = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration cancelled.'),
+            backgroundColor: Color(0XFF84DCC6),
+          ),
+        );
+      }
       setState(() => _isRegistered = false);
     } catch (e) {
       if (mounted) {
