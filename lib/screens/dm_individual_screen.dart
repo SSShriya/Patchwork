@@ -232,17 +232,17 @@ class _DMScreenState extends State<DMScreen> {
           ),
           actions: [
             IconButton(
+              icon: const Icon(Icons.pin_drop_outlined),
+              onPressed: _suggestMeeting,
+              tooltip: 'Suggest a time/place to meet ${widget.chat.name} before ${widget.chat.event}!',
+              iconSize: 36
+            ),
+            IconButton(
               icon: const Icon(Icons.lightbulb_outline),
               onPressed: _hints,
               tooltip: 'Prompts to help you chat with ${widget.chat.name}',
               iconSize: 36,
             ),
-            IconButton(
-              icon: const Icon(Icons.map),
-              onPressed: _suggestMeeting,
-              tooltip: 'Suggest a time/place to meet ${widget.chat.name} before ${widget.chat.event}!',
-              iconSize: 36
-            )
           ],
           backgroundColor: const Color(0XFF84DCC6),
           foregroundColor: Colors.white,
