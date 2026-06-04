@@ -442,7 +442,7 @@ class _DMScreenState extends State<DMScreen> {
           border: Border.all(color: const Color(0XFF8789C0), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -530,7 +530,7 @@ class _DMScreenState extends State<DMScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
-                          color: msg.invitationStatus == 'accepted' ? const Color(0XFF84DCC6).withOpacity(0.2) : Colors.red.withOpacity(0.1),
+                          color: msg.invitationStatus == 'accepted' ? const Color(0XFF84DCC6).withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
