@@ -1,3 +1,4 @@
+import 'package:drp/screens/event_cancellation_popup.dart';
 import 'package:drp/screens/event_registered_popup.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
@@ -37,12 +38,58 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
   }
 
   Future<void> _register() async {
-    registrationService.registerForEvent(widget.card.eventId);
+    try {
+      await registrationService.registerForEvent(widget.card.eventId);
+      setState(() => _isRegistered = true);
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => EventRegisteredPopup(eventName: widget.card.title),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Registration failed, please try again later.'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+    }
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => EventRegisteredPopup(eventName: widget.card.title),
-    );
+  Future<void> _unregister() async {
+    try {
+      final confirmed = await showDialog(
+        context: context,
+        builder: (context) => EventCancellationPopup(),
+      ) ?? false;
+
+      if (!confirmed) return; 
+      
+      await registrationService.unregisterForEvent(widget.card.eventId);
+      
+      if (mounted) {
+        setState(() => _isRegistered = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration cancelled.'),
+            backgroundColor: Color(0XFF84DCC6),
+          ),
+        );
+      }
+      setState(() => _isRegistered = false);
+    } catch (e) {
+      if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cancellation failed, please try again later'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+    }
   }
 
   @override
@@ -163,9 +210,9 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isRegistered ? null : () => _register(),
+                onPressed: () => (_isRegistered ? _unregister() : _register()),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0XFF84DCC6),
+                  backgroundColor: _isRegistered ? const Color(0XFFFD5757) : const Color(0XFF84DCC6),
                   foregroundColor: const Color(0XFF222222),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -173,7 +220,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   ),
                 ),
                 child: _isRegistered ? const Text(
-                    "You're already registered!",
+                    "Cancel Registration",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

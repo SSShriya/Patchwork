@@ -73,6 +73,57 @@ class MatchService {
     return matches;
   }
 
+  // Matches where current user accepted, other user hasn't decided yet
+  Future<List<MatchCard>> getAwaitingResponseMatches() async {
+  final rows = await supabase
+      .from('matches')
+      .select(
+        '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
+      )
+      .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
+
+  final waiting = <MatchCard>[];
+
+  for (final row in rows as List) {
+    final user1Id = row['user1_id'] as String;
+    final user2Id = row['user2_id'] as String;
+    final user1Accepted = row['user1_accepted'] as bool?;
+    final user2Accepted = row['user2_accepted'] as bool?;
+    final eventId = row['event_id'] as String;
+    final eventName =
+        (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ?? '';
+
+    final isUser1 = currentUserId == user1Id;
+    final iAccepted = isUser1 ? user1Accepted : user2Accepted;
+    final theyAccepted = isUser1 ? user2Accepted : user1Accepted;
+
+    // I said yes, they haven't answered yet
+    if (iAccepted != true || theyAccepted != null) continue;
+
+    final otherUserData = isUser1
+        ? row['user2'] as Map<String, dynamic>
+        : row['user1'] as Map<String, dynamic>;
+
+    waiting.add(MatchCard(
+      id: '$user1Id|$user2Id|$eventId',
+      title: otherUserData['name'] ?? 'Unknown',
+      university: otherUserData['university'] ?? '',
+      course: otherUserData['course'] ?? '',
+      bio: otherUserData['bio'] ?? '',
+      eventId: eventId,
+      eventName: eventName,
+      yearGroup: otherUserData['year_group'] ?? '',
+      interests: (otherUserData['user_interests'] as List<dynamic>? ?? [])
+          .map((i) => i['interest'] as String)
+          .toList(),
+      location: otherUserData['location'] ?? '',
+      imageUrl: otherUserData['avatar_url'] ?? '',
+    ));
+  }
+
+  return waiting;
+}
+
   Future<void> recordDecision(String matchId, bool accepted) async {
     final parts = matchId.split('|');
     final user1Id = parts[0];

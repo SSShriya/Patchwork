@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final _eventService = EventService();
   List<MatchCard> _pendingMatches = [];
   List<EventCard> _interestedEvents = [];
+  List<MatchCard> _awaitingMatches = [];
   bool _loading = true;
   List<ChatConversation> conversations = [];
 
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void didPopNext() {
-      debugPrint('🔄 Returned to Home Screen via pop. Refreshing data...');
+      debugPrint('Returned to Home Screen via pop. Refreshing data...');
       _loadMatches(); 
   }
 
@@ -54,8 +55,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     setState(() => _loading = true);
     final matches = await _matchService.getPendingMatches();
     final events = await _eventService.getInterestedEvents();
+    final awaiting = await _matchService.getAwaitingResponseMatches();
     setState(() {
       _pendingMatches = matches;
+      _awaitingMatches = awaiting;
       _loading = false;
       _interestedEvents = events
         ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
@@ -121,100 +124,244 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     return Scaffold(
       backgroundColor: const Color(0XFFF5F0F6),
+      endDrawer: Drawer(
+        backgroundColor: const Color(0xFFF5F0F6),
+        child: SafeArea(
+          child:Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Waiting for their response...',
+                  style: GoogleFonts.lora(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'You liked them — waiting to hear back',
+                  style: GoogleFonts.merriweather(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_awaitingMatches.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'No pending responses right now',
+                        style: GoogleFonts.merriweather(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _awaitingMatches.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final m = _awaitingMatches[i];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 4,
+                          ),
+                          leading: CircleAvatar(
+                            radius: 26,
+                            backgroundImage: m.imageUrl.isNotEmpty
+                                ? NetworkImage(m.imageUrl)
+                                : null,
+                            backgroundColor: const Color(0xFF84DCC6),
+                            child: m.imageUrl.isEmpty
+                                ? Text(
+                                    m.title.isNotEmpty
+                                        ? m.title[0].toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          title: Text(
+                            m.title,
+                            style: GoogleFonts.bitter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          subtitle: Text(
+                            m.eventName,
+                            style: GoogleFonts.merriweather(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF84DCC6),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Pending',
+                              style: GoogleFonts.merriweather(
+                                fontSize: 11,
+                                color: const Color(0xFF2A8C73),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          )
+        )
+      ),
+
+
       appBar: AppBar(
         title: Text('Welcome Back!', style: GoogleFonts.lora(fontWeight: FontWeight.bold, fontSize: 25)),
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: const Color(0XFF222222),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadMatches, // pull fresh data anytime
+          Stack(
+            children: [
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+                ),
+              ),
+              if (_awaitingMatches.isNotEmpty)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${_awaitingMatches.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
         automaticallyImplyLeading: false,
       ),
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-            child: Text(
-              'Your Upcoming Events',
-              style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.bold),
+
+      body: RefreshIndicator(
+        onRefresh: _loadMatches,
+        color: const Color(0xFF84DCC6),
+        child: ListView(
+          // physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+              child: Text(
+                'Your Upcoming Events',
+                style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-          SizedBox(
-            height: 140,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _interestedEvents.length,
-              itemBuilder: (_, i) => InteractiveCard(
-                card: _interestedEvents[i],
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        EventMatchesScreen(event: _interestedEvents[i]),
+            SizedBox(
+              height: 140,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: _interestedEvents.length,
+                itemBuilder: (_, i) => InteractiveCard(
+                  card: _interestedEvents[i],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          EventMatchesScreen(event: _interestedEvents[i]),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
-            child: Text(
-              'Matches to Review',
-              style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
-
-          // one MatchRow per event
-          if (_pendingMatches.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: Text("You've reviewed everyone!!")),
-            )
-          else
-            for (final event in _interestedEvents)
-              (groupedMatches[event.eventId]?.isEmpty ?? true)
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event.title,
-                          style: GoogleFonts.bitter(fontSize: 18, color: const Color(0XFF222222), fontWeight: FontWeight.bold)
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'No matches yet, come back later',
-                          style: GoogleFonts.merriweather(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-              : MatchRow(
-                cards: groupedMatches[event.eventId] ?? [],
-                eventLabel: event.title,
-                onTap: (i) {
-                  final cards = groupedMatches[event.eventId] ?? [];
-                  if (cards.isNotEmpty) {
-                    _openProfile(cards[i]);
-                  }
-                },
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
+              child: Text(
+                'Matches to Review',
+                style: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.bold),
               ),
+            ),
+            // one MatchRow per event
+            if (_pendingMatches.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: Text("You've reviewed everyone!!")),
+              )
+            else
+              for (final event in _interestedEvents)
+                (groupedMatches[event.eventId]?.isEmpty ?? true)
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event.title,
+                            style: GoogleFonts.bitter(fontSize: 18, color: const Color(0XFF222222), fontWeight: FontWeight.bold)
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'No matches yet, come back later',
+                            style: GoogleFonts.merriweather(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                : MatchRow(
+                  cards: groupedMatches[event.eventId] ?? [],
+                  eventLabel: event.title,
+                  onTap: (i) {
+                    final cards = groupedMatches[event.eventId] ?? [];
+                    if (cards.isNotEmpty) {
+                      _openProfile(cards[i]);
+                    }
+                  },
+                ),
 
-          const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
-        ],
+            const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
+          ],
+        ),
       ),
-
       bottomNavigationBar: AppNavigationBar(),
     );
   }
 }
- 
