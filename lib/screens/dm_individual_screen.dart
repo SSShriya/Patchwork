@@ -509,10 +509,12 @@ class _DMScreenState extends State<DMScreen> {
         final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
         final RegExp locRegex = RegExp(r'"location":"([^"]*)"');
 
-        if (dateRegex.hasMatch(cleanData))
+        if (dateRegex.hasMatch(cleanData)) {
           extractedDate = dateRegex.firstMatch(cleanData)!.group(1)!;
-        if (timeRegex.hasMatch(cleanData))
+        }
+        if (timeRegex.hasMatch(cleanData)) {
           extractedTime = timeRegex.firstMatch(cleanData)!.group(1)!;
+        }
         if (locRegex.hasMatch(cleanData)) {
           final locVal = locRegex.firstMatch(cleanData)!.group(1)!;
           if (locVal.isNotEmpty) extractedLoc = locVal;
