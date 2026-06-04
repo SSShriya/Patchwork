@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/event_card.dart';
 import '../models/match_card.dart';
 import '../services/match_service.dart';
+import 'event_profile_screen.dart'; 
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 
 class EventMatchesScreen extends StatefulWidget {
@@ -49,106 +50,114 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // ── Event Info Card ──
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: widget.event.color,
-              borderRadius: BorderRadius.circular(16),
+          GestureDetector(
+            onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EventProfileScreen(card: widget.event),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      widget.event.icon,
-                      color: const Color(0xFF222222),
-                      size: 32,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.event.title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF222222),
+          ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: widget.event.color,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        widget.event.icon,
+                        color: const Color(0xFF222222),
+                        size: 32,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          widget.event.title,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF222222),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.event.subtitle,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: const Color(0xFF222222).withValues(alpha: 0.8),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                const Divider(color: Color(0xFF222222), thickness: 0.3),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: Color(0xFF222222),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.event.subtitle,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: const Color(0xFF222222).withValues(alpha: 0.8),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      DateFormat(
-                        'EEEE, d MMMM yyyy',
-                      ).format(widget.event.startDateTime),
-                      style: const TextStyle(
-                        fontSize: 13,
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(color: Color(0xFF222222), thickness: 0.3),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 14,
                         color: Color(0xFF222222),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      size: 14,
-                      color: Color(0xFF222222),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${DateFormat('HH:mm').format(widget.event.startDateTime)} - ${DateFormat('HH:mm').format(widget.event.endDateTime)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF222222),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on,
-                      size: 14,
-                      color: Color(0xFF222222),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        widget.event.location,
+                      const SizedBox(width: 6),
+                      Text(
+                        DateFormat(
+                          'EEEE, d MMMM yyyy',
+                        ).format(widget.event.startDateTime),
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF222222),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
-            ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: Color(0xFF222222),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${DateFormat('HH:mm').format(widget.event.startDateTime)} - ${DateFormat('HH:mm').format(widget.event.endDateTime)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF222222),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Color(0xFF222222),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          widget.event.location,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                ],
+              ),
+            )
           ),
 
           const SizedBox(height: 24),
