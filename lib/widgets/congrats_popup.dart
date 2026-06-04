@@ -2,10 +2,10 @@ import 'package:drp/models/match_card.dart';
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
+import '../main.dart';
 
 class CongratsPopup extends StatelessWidget {
   final MatchCard match;
-  final String currentUserId = '5f7e9d61-3865-47b2-9155-202267ee947f';
 
   const CongratsPopup({super.key, required this.match});
 
