@@ -1,6 +1,5 @@
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
-import 'package:drp/services/conversation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
