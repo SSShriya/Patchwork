@@ -43,13 +43,13 @@ class EventDetailCard extends StatelessWidget {
                 // ── Icon + Title row ──
                 Row(
                   children: [
-                    Icon(card.icon, size: 14, color: const Color(0xFF222222)),
+                    Icon(card.icon, size: 20, color: const Color(0xFF222222)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         card.title,
                         style: GoogleFonts.bitter(
-                          fontSize: 14,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF222222),
                         ),
@@ -67,7 +67,7 @@ class EventDetailCard extends StatelessWidget {
                     child: Text(
                       card.subtitle,
                       style: GoogleFonts.merriweather(
-                        fontSize: 10,
+                        fontSize: 14,
                         color: const Color(0xFF222222).withValues(alpha: 0.7),
                       ),
                       overflow: TextOverflow.clip,
@@ -87,7 +87,7 @@ class EventDetailCard extends StatelessWidget {
                 // ── Date & Time ──
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 10,
+                    Icon(Icons.calendar_today, size: 14,
                         color: const Color(0xFF222222).withValues(alpha: 0.8)),
                     const SizedBox(width: 4),
                     Expanded(
@@ -95,7 +95,7 @@ class EventDetailCard extends StatelessWidget {
                         '${DateFormat('d MMM').format(card.startDateTime)}  ·  '
                         '${DateFormat('HH:mm').format(card.startDateTime)}'
                         '-${DateFormat('HH:mm').format(card.endDateTime)}',
-                        style: GoogleFonts.merriweather(fontSize: 10,
+                        style: GoogleFonts.merriweather(fontSize: 14,
                             color: const Color(0xFF222222).withValues(alpha: 0.8)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -108,13 +108,13 @@ class EventDetailCard extends StatelessWidget {
                 // ── Location ──
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 10,
+                    Icon(Icons.location_on, size: 14,
                         color: const Color(0xFF222222).withValues(alpha: 0.8)),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         card.location,
-                        style: GoogleFonts.merriweather(fontSize: 10,
+                        style: GoogleFonts.merriweather(fontSize: 14,
                             color: const Color(0xFF222222).withValues(alpha: 0.8)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -127,12 +127,12 @@ class EventDetailCard extends StatelessWidget {
                 // ── Cost ──
                 Row(
                   children: [
-                    Icon(Icons.sell, size: 10,
+                    Icon(Icons.sell, size: 14,
                         color: const Color(0xFF222222).withValues(alpha: 0.8)),
                     const SizedBox(width: 4),
                     Text(
                       card.cost == 0 ? 'Free' : '£${card.cost.toStringAsFixed(2)}',
-                      style: GoogleFonts.merriweather(fontSize: 10,
+                      style: GoogleFonts.merriweather(fontSize: 14,
                           color: const Color(0xFF222222).withValues(alpha: 0.8)),
                     ),
                   ],
@@ -144,19 +144,4 @@ class EventDetailCard extends StatelessWidget {
       ),
     );
   }
-
-  // Widget _colorHeader() {
-  //   return Container(
-  //     height: 80,
-  //     width: double.infinity,
-  //     color: card.color.withValues(alpha: 0.6),
-  //     child: Align(
-  //       alignment: Alignment.topLeft,
-  //       child: Padding(
-  //         padding: const EdgeInsets.all(8),
-  //         child: Icon(card.icon, size: 24, color: const Color(0xFF222222)),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
