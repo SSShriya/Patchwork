@@ -73,12 +73,28 @@ class ChatSection extends StatelessWidget {
                     ),
                 ],
               ),
-              title: Text(
-                chat.name,
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    chat.name,
+                    style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (chat.event.isNotEmpty)
+                    Text(
+                      chat.event,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 11,
+                        color: const Color.fromARGB(255, 228, 138, 150),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
               subtitle: Text(
                 chat.lastMessage,
