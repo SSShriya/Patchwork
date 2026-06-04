@@ -43,7 +43,7 @@ class EventDetailCard extends StatelessWidget {
           CircleAvatar(
             radius: 32,
             backgroundImage: NetworkImage(card.imageUrl),
-            onBackgroundImageError: (_, __) {},
+            onBackgroundImageError: (_, _) {},
             backgroundColor: const Color(0xFF222222).withValues(alpha: 0.1),
           )
         else
