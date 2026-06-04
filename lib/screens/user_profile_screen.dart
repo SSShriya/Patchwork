@@ -165,23 +165,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  Text(
-                                    '${_current.yearGroup} at ${_current.university}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Studying ${_current.course}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.school, size: 17),
+                                      const SizedBox(width: 2),
+                                      Expanded(
+                                        child: Text(
+                                          '${_current.yearGroup} · ${_current.university} · ${_current.course}',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   Row(
                                     children: [
-                                      Icon(Icons.location_on),
+                                      Icon(Icons.location_on, size: 17),
                                       Text(
                                         _current.location,
                                         style: const TextStyle(
@@ -190,7 +193,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                         ),
                                       ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
