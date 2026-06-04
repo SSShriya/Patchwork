@@ -1,3 +1,6 @@
+import 'package:drp/models/match_convo.dart';
+import 'package:drp/screens/dm_individual_screen.dart';
+import 'package:drp/services/conversation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
@@ -52,9 +55,9 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
           // ── Event Info Card ──
           GestureDetector(
             onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EventProfileScreen(card: widget.event),
+              context,
+              MaterialPageRoute(
+                builder: (context) => EventProfileScreen(card: widget.event),
             ),
           ),
             child: Container(
@@ -328,6 +331,30 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                         ],
                       ),
                     ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => DMScreen(
+                                chat: ChatConversation(
+                                  name: match.title, 
+                                  otherUserId: match.id, 
+                                  event: widget.event.title, 
+                                  interests: match.interests, 
+                                  imageUrl: match.imageUrl)
+                                ),
+                          )
+                        );
+                      }, 
+                      child: Text(
+                        "DM",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color.fromARGB(255, 17, 17, 17)
+                        )
+                      )
+                    )
                   ],
                 ),
               ),
