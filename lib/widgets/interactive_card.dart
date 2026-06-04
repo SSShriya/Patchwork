@@ -57,12 +57,8 @@ class InteractiveCard extends StatelessWidget {
                           color: eventCard.numMatches == 0
                               ? // make it more obvious when there are no matches
                                 const Color(0xFF220000).withValues(alpha: 0.2)
-                              : const Color.fromARGB(
-                                  192,
-                                  24,
-                                  177,
-                                  24,
-                                ).withValues(alpha: 0.35),
+                              : const Color(0xFF84DCC6).withValues(alpha: 0.7),
+
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
