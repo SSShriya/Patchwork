@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   List<MatchCard> _awaitingMatches = [];
   bool _loading = true;
   List<ChatConversation> conversations = [];
+  bool _notificationSeen = false;
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _pendingMatches = matches;
       _awaitingMatches = awaiting;
       _loading = false;
+      _notificationSeen = false;
       _interestedEvents = events
         ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     });
@@ -250,10 +252,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+                  onPressed: () => {
+                    setState(() => _notificationSeen = true),
+                    Scaffold.of(ctx).openEndDrawer(),
+                  },
                 ),
               ),
-              if (_awaitingMatches.isNotEmpty)
+              if (_awaitingMatches.isNotEmpty && !_notificationSeen)
                 Positioned(
                   right: 8,
                   top: 8,
