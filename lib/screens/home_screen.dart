@@ -10,6 +10,7 @@ import '../widgets/interactive_card.dart';
 import '../screens/event_matches_screen.dart';
 import '../services/event_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../main.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final _matchService = MatchService();
   final _eventService = EventService();
   List<MatchCard> _pendingMatches = [];
@@ -29,6 +30,24 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadMatches();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this); // 👈 Critical: Always clean up to prevent memory leaks!
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+      debugPrint('🔄 Returned to Home Screen via pop. Refreshing data...');
+      _loadMatches(); 
   }
 
   Future<void> _loadMatches() async {

@@ -2,7 +2,6 @@ import 'package:drp/models/match_card.dart';
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
 
 class CongratsPopup extends StatelessWidget {
   final MatchCard match;
@@ -97,10 +96,8 @@ class CongratsPopup extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomeScreen()),
-                );
+                Navigator.pop(context);
+                Navigator.popUntil(context, (route) => route.isFirst);
               },
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0XFF8789C0),
