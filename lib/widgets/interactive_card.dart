@@ -106,7 +106,7 @@ class InteractiveCard extends StatelessWidget {
                         child: Text(
                           '${matchCard.yearGroup} · ${matchCard.university}',
                           style: GoogleFonts.merriweather(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: const Color(
                               0xFF222222,
                             ).withValues(alpha: 0.8),
@@ -126,7 +126,7 @@ class InteractiveCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.location_on,
-                        size: 11,
+                        size: 12,
                         color: const Color(0xFF222222).withValues(alpha: 0.8),
                       ),
                       SizedBox(width: 2),
@@ -137,7 +137,7 @@ class InteractiveCard extends StatelessWidget {
                             color: const Color(
                               0xFF222222,
                             ).withValues(alpha: 0.8),
-                            fontSize: 11,
+                            fontSize: 12,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -151,10 +151,10 @@ class InteractiveCard extends StatelessWidget {
                 if (matchCard != null && matchCard.interests.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Interests',
+                    'Interests:',
                     style: GoogleFonts.merriweather(
                       color: Color(0xFF222222),
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -180,7 +180,7 @@ class InteractiveCard extends StatelessWidget {
                                     interest,
                                     style: GoogleFonts.merriweather(
                                       color: Color(0xFF222222),
-                                      fontSize: 11,
+                                      fontSize: 12,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
