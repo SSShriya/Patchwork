@@ -344,7 +344,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                         ],
                       ),
                     ),
-                    OutlinedButton(
+                    IconButton(
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -361,25 +361,20 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                           ),
                         );
                       },
-                      style: OutlinedButton.styleFrom(
+                      icon: const Icon(Icons.message_rounded),
+                      style: IconButton.styleFrom(
                         backgroundColor: const Color(
                           0XFFEEC0C6,
                         ).withValues(alpha: 0.5),
-                        side: const BorderSide(
-                          color: Color(0XFFEEC0C6),
-                          width: 2,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        foregroundColor: const Color(0xFF222222),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Color(0XFFEEC0C6),
+                            width: 2,
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'DM',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color.fromARGB(255, 17, 17, 17),
-                        ),
+                        padding: const EdgeInsets.all(12),
                       ),
                     ),
                   ],
