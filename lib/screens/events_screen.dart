@@ -180,7 +180,6 @@ class _EventsScreenState extends State<EventsScreen> {
                                     crossAxisCount: crossAxisCount,
                                     mainAxisSpacing: 12,
                                     crossAxisSpacing: 12,
-                                    // childAspectRatio: cardWidth / cardHeight,
                                     childAspectRatio: 1.0,
                                     mainAxisExtent: 230,
                                   ),
@@ -199,6 +198,7 @@ class _EventsScreenState extends State<EventsScreen> {
                               child: EventDetailCard(
                                 card: _filteredEvents[i],
                                 onTap: () => _openEventSummary(_filteredEvents[i]),
+                                isListView: true,
                               ),
                             ),
                           ),
