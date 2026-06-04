@@ -1,4 +1,4 @@
-import 'package:drp/screens/congrats_popup.dart';
+import 'package:drp/widgets/congrats_popup.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';

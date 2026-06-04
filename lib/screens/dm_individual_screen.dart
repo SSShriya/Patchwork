@@ -1,3 +1,4 @@
+import 'package:drp/widgets/dm_meeting_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';
@@ -35,7 +36,7 @@ class _DMScreenState extends State<DMScreen> {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
-      setState(() => _isReady = true); // ✅ reveal after scroll
+      setState(() => _isReady = true);
     });
   }
 
@@ -108,6 +109,35 @@ class _DMScreenState extends State<DMScreen> {
     );
   }
 
+  void _suggestMeeting() async {
+    final result = await showDialog(
+      context: context, 
+      builder: (context) => DMMeetingPopup() 
+    );
+
+    if (result != null) {    
+      String message = result['location'] == null || result['location'].isEmpty ?
+          '''
+          Hey ${widget.chat.name}, do you want to meet on ${result['date']} at ${result['time']}?
+          ''' :
+          '''
+          Suggested Meeting:
+          \nDate: ${result['date']}
+          \nTime: ${result['time']}
+          \nLocation: ${result['location']}
+          ''';
+      setState(() {
+        _messages.add(_Message(text: message, fromMe: true));
+        _conversationService.recordMessage(
+          message,
+          myUserId,
+          widget.chat.otherUserId,
+        );
+      });
+      _scrollToBottom();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -142,6 +172,12 @@ class _DMScreenState extends State<DMScreen> {
               tooltip: 'Prompts to help you chat with ${widget.chat.name}',
               iconSize: 36,
             ),
+            IconButton(
+              icon: const Icon(Icons.map),
+              onPressed: _suggestMeeting,
+              tooltip: 'Suggest a time/place to meet ${widget.chat.name} before ${widget.chat.event}!',
+              iconSize: 36
+            )
           ],
           backgroundColor: const Color(0XFF84DCC6),
           foregroundColor: Colors.white,
