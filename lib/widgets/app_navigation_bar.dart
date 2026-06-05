@@ -1,4 +1,5 @@
 import 'package:drp/screens/events_screen.dart';
+import 'package:drp/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../screens/dm_home_screen.dart';
@@ -54,7 +55,11 @@ class AppNavigationBar extends StatelessWidget {
             );
             break;
           case 3:
-            // Navigate to Profile screen (not implemented)
+            // profile screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ProfileScreen()),
+            );
             break;
         }
       },

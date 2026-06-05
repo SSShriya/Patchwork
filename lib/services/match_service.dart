@@ -1,7 +1,5 @@
 // lib/services/match_service.dart
 
-import 'dart:io';
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/match_card.dart';
 
@@ -265,27 +263,6 @@ class MatchService {
         imageUrl: otherUser['avatar_url'] ?? '',
       );
     }).toList();
-  }
-
-  Future<void> uploadProfilePicture(File imageFile, String userId) async {
-    final String filePath = '$userId/profile.jpg';
-
-    await supabase.storage
-        .from('avatars')
-        .upload(
-          filePath,
-          imageFile,
-          fileOptions: const FileOptions(upsert: true),
-        );
-
-    final String publicUrl = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-    await supabase
-        .from('users')
-        .update({'avatar_url': publicUrl})
-        .eq('id', userId);
   }
 
   Future<String?> getProfilePictureUrl(String userId) async {

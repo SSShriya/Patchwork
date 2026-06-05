@@ -50,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void didPopNext() {
-    debugPrint('Returned to Home Screen via pop. Refreshing data...');
     _loadMatches();
   }
 

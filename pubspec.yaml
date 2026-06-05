@@ -16,6 +16,7 @@ dependencies:
   intl: ^0.20.2
   flutter_profile_picture: ^2.0.0
   google_fonts: ^8.1.0
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:
