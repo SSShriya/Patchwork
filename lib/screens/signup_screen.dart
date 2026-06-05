@@ -57,9 +57,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         if (_isSignUpMode) {
           await supabase.from('users').insert({
             'id': AppState.currentUserId, // Must match the Auth UUID exactly
-//      'name': _nameController.text.trim(),
-//      'university': _universityController.text.trim(),
-//      'course': _courseController.text.trim(),
+            'name': '', // default
+            'university': '',
+            'course': '',
           });
         }
 
