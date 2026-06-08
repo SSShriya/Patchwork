@@ -3,13 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/event_card.dart';
+// import 'utils.dart';
 
 final supabase = Supabase.instance.client;
 
 class EventService {
-  final String currentUserId = '5f7e9d61-3865-47b2-9155-202267ee947f';
 
-  Future<List<EventCard>> getInterestedEvents() async {
+  Future<List<EventCard>> getInterestedEvents(String currentUserId) async {
+    // final currentUserId = await loadUserId();
+
     // get interested events
     final rows = await supabase
         .from('interested_events')

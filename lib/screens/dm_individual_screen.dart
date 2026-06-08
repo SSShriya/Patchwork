@@ -1,3 +1,4 @@
+import 'package:drp/services/utils.dart';
 import 'package:drp/widgets/dm_meeting_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
@@ -17,7 +18,7 @@ class DMScreen extends StatefulWidget {
 class _DMScreenState extends State<DMScreen> {
   final TextEditingController _controller = TextEditingController();
   final ConversationService _conversationService = ConversationService();
-  late final String myUserId;
+  late final String myUserId;     // initialized in loadMessages()
   List<_Message> _messages = [];
   bool _isLoading = true;
   bool _isReady = false;
@@ -26,7 +27,6 @@ class _DMScreenState extends State<DMScreen> {
   @override
   void initState() {
     super.initState();
-    myUserId = _conversationService.currentUserId;
     _scrollController = ScrollController();
     _loadMessages();
   }
@@ -41,6 +41,7 @@ class _DMScreenState extends State<DMScreen> {
   }
 
   Future<void> _loadMessages() async {
+    myUserId = await loadUserId(); 
     try {
       final fetchedMaps = await _conversationService.getMessages(
         myUserId,

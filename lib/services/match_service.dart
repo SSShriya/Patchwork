@@ -6,9 +6,11 @@ import '../models/match_card.dart';
 final supabase = Supabase.instance.client;
 
 class MatchService {
-  final String currentUserId = '5f7e9d61-3865-47b2-9155-202267ee947f';
+  late final String currentUserId;
 
-  Future<List<MatchCard>> getPendingMatches() async {
+  Future<List<MatchCard>> getPendingMatches(String currentUserId) async {
+    this.currentUserId = currentUserId; 
+    
     // fetch current user's profile
     final currentUserData = await supabase
         .from('users')

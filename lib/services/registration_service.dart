@@ -3,9 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final supabase = Supabase.instance.client;
 
 class RegistrationService {
-  final String currentUserId = '5f7e9d61-3865-47b2-9155-202267ee947f';
+  late final String currentUserId;
 
-  Future<bool> hasRegistered(String eventId) async {
+  Future<bool> hasRegistered(String eventId, String currentUserId) async {
+    this.currentUserId = currentUserId;
+    
     final result = await supabase
         .from('interested_events')
         .select()
