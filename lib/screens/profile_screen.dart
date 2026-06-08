@@ -3,7 +3,6 @@ import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'home_screen.dart';
 import '../services/profile_service.dart';
 import '../services/session_manager.dart';
 
