@@ -2,7 +2,6 @@ import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart'; 
-import 'home_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -70,7 +69,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
           await supabase.from('user_purpose').insert({
             'user_id': AppState.currentUserId,
-            'is_committee_member': AppState.holdsEvents
+            'is_committee_member': holdsEvents
           });
         }
 
@@ -221,21 +220,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         TextButton(
                           onPressed: () {
                             setState(() {
-                              AppState.holdsEvents = true;
+                              holdsEvents = true;
                               });
                             },
                           style: TextButton.styleFrom(
                             // If selected: Solid teal/green highlight, otherwise clean light gray tint
-                            backgroundColor: AppState.holdsEvents == true 
+                            backgroundColor: holdsEvents == true 
                                         ? const Color(0XFF84DCC6) 
                                         : Colors.grey.shade100,
-                            foregroundColor: AppState.holdsEvents == true
+                            foregroundColor: holdsEvents == true
                                         ? Colors.white
                                         : Colors.black87,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(
-                                  color: AppState.holdsEvents == true 
+                                  color: holdsEvents == true 
                                             ? const Color(0XFF84DCC6) 
                                             : Colors.grey.shade300,
                                   ),
@@ -250,21 +249,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             TextButton(
                               onPressed: () {
                                 setState(() {
-                                  AppState.holdsEvents = false;
+                                  holdsEvents = false;
                                 });
                               },
                               style: TextButton.styleFrom(
                               // If selected: Dark slate/red highlight, otherwise clean light gray tint
-                              backgroundColor: AppState.holdsEvents == false 
+                              backgroundColor: holdsEvents == false 
                                         ? const Color.fromARGB(255, 238, 48, 48) 
                                         : Colors.grey.shade100,
-                              foregroundColor: AppState.holdsEvents == false 
+                              foregroundColor: holdsEvents == false 
                                         ? Colors.white 
                                         : Colors.black87,
                               shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
-                                  color: AppState.holdsEvents == false 
+                                  color: holdsEvents == false 
                                             ? Colors.grey.shade700 
                                             : Colors.grey.shade300,
                                   ),

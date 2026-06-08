@@ -1,6 +1,6 @@
 import 'package:drp/screens/events_screen.dart';
+import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
 
 class EventRegisteredPopup extends StatelessWidget {
   final String eventName; 

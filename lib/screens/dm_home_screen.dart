@@ -1,4 +1,3 @@
-import 'package:drp/widgets/app_navigation_bar.dart';
 import 'package:drp/widgets/chat_section.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
