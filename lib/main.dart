@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/session_manager.dart';
 import 'screens/signup_screen.dart'; 
 
 final supabase = Supabase.instance.client;
@@ -12,66 +13,7 @@ class AppState {
   static String? currentUserId;
 }
 
-class AuthGuardObserver extends NavigatorObserver {
-  bool _isRedirecting = false;
-
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPush(route, previousRoute);
-    _checkAuth(route);
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    if (newRoute != null) _checkAuth(newRoute);
-  }
-
-  void _checkAuth(Route<dynamic> route) {
-    if (route.settings.name == '/signup' || _isRedirecting) return;
-
-    if (AppState.currentUserId == null) {
-      _isRedirecting = true;
-
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final context = route.navigator?.context;
-        if (context == null) return;
-
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Authentication Required'),
-              content: const Text('Please sign up or log in to access this screen.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (route.navigator != null) {
-          route.navigator!.pushAndRemoveUntil(
-            MaterialPageRoute(
-              settings: const RouteSettings(name: '/signup'),
-              builder: (context) => const SignUpScreen(),
-            ),
-            (route) => false,
-          );
-        }
-        
-        _isRedirecting = false;
-      });
-    }
-  }
-}
-
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
-final AuthGuardObserver authGuardObserver = AuthGuardObserver();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,10 +33,17 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorObservers: [routeObserver, authGuardObserver],
-      home: AppState.currentUserId != null
-          ? const MainShell()
-          : const SignUpScreen(),
+      navigatorObservers: [routeObserver], 
+      home: FutureBuilder<bool>(
+        future: SessionManager.isLoggedIn(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator(); // Loading
+          }
+          // Route based on session
+          return snapshot.data == true ? MainShell() : SignUpScreen();
+        },
+      ),
       routes: {
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const MainShell(),
