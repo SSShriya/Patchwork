@@ -30,7 +30,7 @@ class InteractiveCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 // ── Top Row: Icon + Matches Badge ──
                 Row(

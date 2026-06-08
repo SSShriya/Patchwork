@@ -1,5 +1,6 @@
 import 'package:drp/screens/event_cancellation_popup.dart';
 import 'package:drp/screens/event_registered_popup.dart';
+import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
 import '../services/registration_service.dart';
@@ -25,8 +26,10 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
   }
 
   Future<void> _checkIfAlreadyRegistered() async {
+    final userId = await loadUserId();
     final isRegistered = await registrationService.hasRegistered(
       widget.card.eventId,
+      userId
     );
 
     if (mounted) {

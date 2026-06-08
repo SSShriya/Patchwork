@@ -1,38 +1,41 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'supabase_client.dart';
 
 class SessionManager {
   static const _storage = FlutterSecureStorage();
-
-  // Keys
   static const String _userIdKey = 'user_id';
-  static const String _authTokenKey = 'auth_token';
 
-  // Save session after login
-  static Future<void> saveSession({
-    required String userId,
-    required String authToken,
-  }) async {
+  /// Save only the userId — Supabase handles token persistence itself
+  static Future<void> saveSession({required String userId}) async {
     await _storage.write(key: _userIdKey, value: userId);
-    await _storage.write(key: _authTokenKey, value: authToken);
   }
 
-  // Obtain user ID
   static Future<String?> getUserId() async {
     return await _storage.read(key: _userIdKey);
   }
 
-  // Read auth token
-  static Future<String?> getAuthToken() async {
-    return await _storage.read(key: _authTokenKey);
-  }
-
-  // Check if user is logged in
+  // Check Supabase's live session
   static Future<bool> isLoggedIn() async {
-    final token = await _storage.read(key: _authTokenKey);
-    return token != null && token.isNotEmpty;
+    final session = supabase.auth.currentSession;
+
+    if (session == null) {
+      await clearSession();
+      return false;
+    }
+
+    // Check if the token is expired
+    final expiresAt = session.expiresAt; // Unix timestamp (int)
+    if (expiresAt != null) {
+      final expiry = DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000);
+      if (DateTime.now().isAfter(expiry)) {
+        await clearSession();
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  // Clear session on logout
   static Future<void> clearSession() async {
     await _storage.deleteAll();
   }

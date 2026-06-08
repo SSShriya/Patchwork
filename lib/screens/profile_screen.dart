@@ -3,7 +3,6 @@ import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
 import '../services/profile_service.dart';
 import '../services/session_manager.dart';
 
@@ -16,8 +15,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Controllers for text fields based on your schema
+
   final _nameController = TextEditingController();
   final _universityController = TextEditingController();
   final _courseController = TextEditingController();
@@ -27,8 +25,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _interestInputController = TextEditingController();
 
   File? _imageFile;
+  String? _existingAvatarUrl;
   final List<String> _interests = [];
   bool _isLoading = false;
+
+  // Max interest cap to prevent abuse / matching issues
+  static const int _maxInterests = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingProfile();
+  }
+
+  Future<void> _loadExistingProfile() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Fetch user row from your users table
+      final userdata = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
+
+      // Fetch existing interests
+      final interestsData = await Supabase.instance.client
+          .from('user_interests')
+          .select('interest')
+          .eq('user_id', userId);
+
+      if (userdata != null) {
+        setState(() {
+          _nameController.text = userdata['name'] ?? '';
+          _universityController.text = userdata['university'] ?? '';
+          _courseController.text = userdata['course'] ?? '';
+          _bioController.text = userdata['bio'] ?? '';
+          _yearGroupController.text = userdata['year_group'] ?? '';
+          _locationController.text = userdata['location'] ?? '';
+
+          // Pre-populate avatar if one already exists
+          _existingAvatarUrl = userdata['avatar_url'];
+
+          // Pre-populate interests list
+          _interests.clear();
+          _interests.addAll(
+            (interestsData as List).map((e) => e['interest'] as String),
+          );
+        });
+      }
+    } on PostgrestException catch (e) {
+      if (mounted) _showError('Failed to load profile: ${e.message}');
+    } catch (e) {
+      if (mounted) _showError('Unexpected error loading profile.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -42,65 +98,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // Pick an image from the mobile device gallery
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70, // Compresses image slightly for faster mobile uploads
+      imageQuality: 70,
     );
-
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+      setState(() => _imageFile = File(pickedFile.path));
     }
   }
 
-  // Method to append a new interest string to the local list
   void _addInterest() {
-    final text = _interestInputController.text.trim();
-    if (text.isNotEmpty && !_interests.contains(text)) {
-      setState(() {
-        _interests.add(text);
-        _interestInputController.clear();
-      });
+    // Normalise to lowercase to prevent duplicate mismatches
+    final text = _interestInputController.text.trim().toLowerCase();
+
+    if (text.isEmpty) return;
+
+    if (_interests.length >= _maxInterests) {
+      _showError('You can add a maximum of $_maxInterests interests.');
+      return;
     }
+
+    if (_interests.contains(text)) {
+      _showError('You\'ve already added "$text".');
+      return;
+    }
+
+    setState(() {
+      _interests.add(text);
+      _interestInputController.clear();
+    });
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final userId = currentUserId;
+    // Use Supabase live session
+    final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: User session not found.')),
-      );
+      _showError('User session not found. Please log in again.');
+      setState(() => _isLoading = false); // Reset spinner
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // update details
     try {
       if (_imageFile != null) {
         await uploadProfilePicture(_imageFile!, userId);
       }
 
-      await updateDetails(userId, 
-                          _nameController.text.trim(), 
-                          _universityController.text.trim(), 
-                          _courseController.text.trim(),
-                          _bioController.text.trim(),
-                          _yearGroupController.text.trim(),
-                          _locationController.text.trim(),
-                          _interests);      
+      await updateDetails(
+        userId,
+        _nameController.text.trim(),
+        _universityController.text.trim(),
+        _courseController.text.trim(),
+        _bioController.text.trim(),
+        _yearGroupController.text.trim(),
+        _locationController.text.trim(),
+        _interests,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile saved successfully!')),
         );
-        // Take them straight to the main app dashboard
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainShell()),
         );
@@ -120,8 +183,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Logout now signs out from Supabase + confirms with user first
   Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log Out'),
+        content: const Text(
+          'Are you sure you want to log out? Any unsaved changes will be lost.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Log Out',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Sign out from Supabase so StreamBuilder in main.dart reacts
+    await Supabase.instance.client.auth.signOut();
     await SessionManager.clearSession();
+
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');
   }
 
@@ -130,14 +222,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Setup Profile', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Setup Profile',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0XFF84DCC6))))
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0XFF84DCC6)),
+                ),
+              )
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Form(
@@ -145,7 +244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Profile Picture Picker UI Component
+                      // Profile Picture
                       Center(
                         child: GestureDetector(
                           onTap: _pickImage,
@@ -154,9 +253,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               CircleAvatar(
                                 radius: 60,
                                 backgroundColor: Colors.grey.shade200,
-                                backgroundImage: _imageFile != null ? FileImage(_imageFile!) : null,
-                                child: _imageFile == null
-                                    ? Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey.shade600)
+                                backgroundImage: _imageFile != null
+                                    ? FileImage(_imageFile!) as ImageProvider
+                                    : _existingAvatarUrl != null
+                                    ? NetworkImage(_existingAvatarUrl!)
+                                    : null,
+                                child:
+                                    (_imageFile == null &&
+                                        _existingAvatarUrl == null)
+                                    ? Icon(
+                                        Icons.camera_alt_outlined,
+                                        size: 40,
+                                        color: Colors.grey.shade600,
+                                      )
                                     : null,
                               ),
                               Positioned(
@@ -164,35 +273,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 right: 4,
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(color: Color(0XFF84DCC6), shape: BoxShape.circle),
-                                  child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0XFF84DCC6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              )
+                              ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 32),
 
-                      // Input Text Fields
-                      _buildTextField(controller: _nameController, label: 'Full Name', icon: Icons.person_outline),
+                      // Required fields only
+                      _buildTextField(
+                        controller: _nameController,
+                        label: 'Full Name',
+                        icon: Icons.person_outline,
+                        required: true,
+                      ),
                       const SizedBox(height: 16),
-                      _buildTextField(controller: _universityController, label: 'University', icon: Icons.school_outlined),
+                      _buildTextField(
+                        controller: _universityController,
+                        label: 'University',
+                        icon: Icons.school_outlined,
+                        required: true,
+                      ),
                       const SizedBox(height: 16),
-                      _buildTextField(controller: _courseController, label: 'Course / Major', icon: Icons.book_outlined),
+                      // Optional fields — no validator block
+                      _buildTextField(
+                        controller: _courseController,
+                        label: 'Course / Major',
+                        icon: Icons.book_outlined,
+                        required: false,
+                      ),
                       const SizedBox(height: 16),
-                      _buildTextField(controller: _yearGroupController, label: 'Year Group (e.g. Year 2, Alumnus)', icon: Icons.calendar_today_outlined),
+                      _buildTextField(
+                        controller: _yearGroupController,
+                        label: 'Year Group (e.g. Year 2, Alumnus)',
+                        icon: Icons.calendar_today_outlined,
+                        required: false,
+                      ),
                       const SizedBox(height: 16),
-                      _buildTextField(controller: _locationController, label: 'Location', icon: Icons.location_on_outlined),
+                      _buildTextField(
+                        controller: _locationController,
+                        label: 'Location',
+                        icon: Icons.location_on_outlined,
+                        required: false,
+                      ),
                       const SizedBox(height: 16),
-                      
-                      // Custom Multi-Line Bio Field
+
+                      // Bio
                       TextFormField(
                         controller: _bioController,
                         maxLines: 3,
                         keyboardType: TextInputType.multiline,
                         decoration: InputDecoration(
-                          labelText: 'Bio',
+                          labelText: 'Bio (optional)',
                           alignLabelWithHint: true,
                           prefixIcon: const Padding(
                             padding: EdgeInsets.only(bottom: 40.0),
@@ -200,26 +342,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           filled: true,
                           fillColor: Colors.grey.shade100,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      // Dynamic Interests Input Title
-                      const Text('Your Interests', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      // Interests
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Your Interests',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            '${_interests.length}/$_maxInterests',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 8),
 
-                      // Custom Interest Tag Row Input View
                       Row(
                         children: [
                           Expanded(
                             child: TextFormField(
                               controller: _interestInputController,
                               decoration: InputDecoration(
-                                hintText: 'Add an interest (e.g. Tennis)',
+                                hintText: 'Add an interest (e.g. tennis)',
                                 filled: true,
                                 fillColor: Colors.grey.shade100,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
                               ),
                               onFieldSubmitted: (_) => _addInterest(),
                             ),
@@ -229,60 +395,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: _addInterest,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0XFF84DCC6),
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 0,
                             ),
                             child: const Icon(Icons.add, color: Colors.white),
-                          )
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
 
-                      // Wrap widget to dynamically stack interactive Interest Chips
                       Wrap(
                         spacing: 8.0,
                         runSpacing: 4.0,
                         children: _interests.map((interest) {
                           return Chip(
-                            label: Text(interest, style: const TextStyle(color: Colors.black87)),
+                            label: Text(
+                              interest,
+                              style: const TextStyle(color: Colors.black87),
+                            ),
                             backgroundColor: Colors.grey.shade200,
-                            deleteIcon: const Icon(Icons.cancel, size: 18, color: Colors.grey),
-                            onDeleted: () {
-                              setState(() {
-                                _interests.remove(interest);
-                              });
-                            },
+                            deleteIcon: const Icon(
+                              Icons.cancel,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            onDeleted: () =>
+                                setState(() => _interests.remove(interest)),
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 40),
 
-                      // Submit Configuration Profile Button
                       ElevatedButton(
-                        onPressed: _saveProfile,
+                        onPressed: _isLoading ? null : _saveProfile,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0XFF84DCC6),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
-                        child: const Text('SAVE PROFILE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                        child: const Text(
+                          'SAVE PROFILE',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Logout button
                       ElevatedButton(
-                        onPressed: _logout,
+                        onPressed: _isLoading ? null : _logout,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0XFFFD5757),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 0,
                         ),
-                        child: const Text('LOG OUT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                        child: const Text(
+                          'LOG OUT',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -292,23 +482,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Small helper block builder function to clean up layout repetition
+  // Required flag controls whether validator fires
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    required bool required,
   }) {
     return TextFormField(
       controller: controller,
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: required ? label : '$label (optional)',
         prefixIcon: Icon(icon),
         filled: true,
         fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
       ),
-      validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter your $label' : null,
+      validator: required
+          ? (value) => (value == null || value.trim().isEmpty)
+                ? 'Please enter your $label'
+                : null
+          : null,
     );
   }
 }

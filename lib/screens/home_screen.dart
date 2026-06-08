@@ -1,3 +1,4 @@
+import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import '../models/event_card.dart';
@@ -54,17 +55,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   Future<void> _loadMatches() async {
     setState(() => _loading = true);
-    final matches = await _matchService.getPendingMatches();
-    final events = await _eventService.getInterestedEvents();
-    final awaiting = await _matchService.getAwaitingResponseMatches();
-    setState(() {
-      _pendingMatches = matches;
-      _awaitingMatches = awaiting;
-      _loading = false;
-      _notificationSeen = false;
-      _interestedEvents = events
-        ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    });
+    try {
+      final userId = await loadUserId();
+
+      final matches = await _matchService.getPendingMatches(userId);
+      final events = await _eventService.getInterestedEvents(userId);
+      final awaiting = await _matchService.getAwaitingResponseMatches(userId);
+      setState(() {
+        _pendingMatches = matches;
+        _awaitingMatches = awaiting;
+        _loading = false;
+        _notificationSeen = false;
+        _interestedEvents = events
+          ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+      });
+    } catch (e) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/signup');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An issue has occurred: for your security, you have been logged out.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   // Called by UserProfileScreen via callback
@@ -99,6 +114,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
 
     // sort by date time
+    if (_interestedEvents.isEmpty) return {}; 
+
     final sorted = Map.fromEntries(
       map.entries.toList()..sort((a, b) {
         final aEvent = _interestedEvents.firstWhere(
