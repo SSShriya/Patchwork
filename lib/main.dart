@@ -6,10 +6,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/signup_screen.dart'; 
 
 final supabase = Supabase.instance.client;
+bool? holdsEvents;
 
 class AppState {
   static String? currentUserId;
-  static bool? holdsEvents;
 }
 
 class AuthGuardObserver extends NavigatorObserver {
