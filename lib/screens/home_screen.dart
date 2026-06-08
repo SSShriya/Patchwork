@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
       final matches = await _matchService.getPendingMatches(userId);
       final events = await _eventService.getInterestedEvents(userId);
-      final awaiting = await _matchService.getAwaitingResponseMatches();
+      final awaiting = await _matchService.getAwaitingResponseMatches(userId);
       setState(() {
         _pendingMatches = matches;
         _awaitingMatches = awaiting;

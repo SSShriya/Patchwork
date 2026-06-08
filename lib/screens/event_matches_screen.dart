@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
@@ -44,11 +46,15 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
     for (final event in widget.allEvents) {
       _loadMatchesFor(event.eventId);
     }
+    log("Successfully initialized page");
   }
 
   Future<void> _loadMatchesFor(String eventId) async {
+    if (!mounted) return;
     setState(() => _loadingByEvent[eventId] = true);
     final matches = await _matchService.getConfirmedMatchesForEvent(eventId);
+
+    if (!mounted) return; 
     setState(() {
       _matchesByEvent[eventId] = matches;
       _loadingByEvent[eventId] = false;
@@ -72,7 +78,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
     final matches = _matchesByEvent[event.eventId] ?? [];
     final loading = _loadingByEvent[event.eventId] ?? true;
 
-    return SingleChildScrollView(
+    final built = SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,6 +403,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
         ],
       ),
     );
+    return built;
   }
 
   @override
