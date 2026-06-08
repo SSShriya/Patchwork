@@ -1,7 +1,7 @@
 import 'package:drp/services/conversation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart'; 
+import '../services/session_manager.dart';
 import 'home_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -56,18 +56,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
       }
 
-      if (response.user != null) {
-        AppState.currentUserId = response.user!.id;
+      final user = response.user;
+      final session = response.session;
+
+      if (user != null && session != null) {
+        final currentUserId = user.id;
 
         if (_isSignUpMode) {
           await supabase.from('users').insert({
-            'id': AppState.currentUserId, // Must match the Auth UUID exactly
+            'id': currentUserId, // Must match the Auth UUID exactly
             'name': name,
             'university': '',
             'course': '',
             'bio': '',
           });
         }
+
+        await SessionManager.saveSession(
+          userId: currentUserId,
+          authToken: session.accessToken,
+        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
