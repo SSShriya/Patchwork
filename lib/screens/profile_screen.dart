@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -101,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
         // Take them straight to the main app dashboard
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainShell()),
         );
       }
     } on PostgrestException catch (e) {

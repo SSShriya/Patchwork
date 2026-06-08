@@ -144,7 +144,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                 ],
               ),
             ),
-      bottomNavigationBar: AppNavigationBar(currentIndex: 2),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart'; 
@@ -81,7 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
 
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const MainLayout()),
+            MaterialPageRoute(builder: (context) => const MainShell()),
             (route) => false,
           );
         }

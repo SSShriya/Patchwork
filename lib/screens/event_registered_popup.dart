@@ -66,7 +66,7 @@ class EventRegisteredPopup extends StatelessWidget {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  MaterialPageRoute(builder: (context) => const MainShell()),
                 );
               },
               style: TextButton.styleFrom(
