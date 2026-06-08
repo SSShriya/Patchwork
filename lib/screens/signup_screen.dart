@@ -1,8 +1,6 @@
-import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/session_manager.dart';
-import '../services/supabase_client.dart';
+import '../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -12,15 +10,14 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordFocusNode = FocusNode();
-
   final _nameController = TextEditingController();
-  // uni, course and bio will default to empty strings - ask users if they prefer all to be mandatory on signup
 
-  bool _isSignUpMode = true; // Tracks whether showing Sign Up or Login view
+  bool _isSignUpMode = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _holdsEvents = false;
@@ -36,57 +33,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
 
     try {
-      final AuthResponse response;
-
       if (_isSignUpMode) {
-        response = await supabase.auth.signUp(email: email, password: password);
+        await _authService.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          name: _nameController.text.trim(),
+          isCommitteeMember: _holdsEvents,
+        );
       } else {
-        response = await supabase.auth.signInWithPassword(
-          email: email,
-          password: password,
+        await _authService.signIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
         );
       }
 
-      final user = response.user;
-      final session = response.session;
-
-      if (user != null && session != null) {
-        final currentUserId = user.id;
-
-        if (_isSignUpMode) {
-          await supabase.from('users').insert({
-            'id': currentUserId,
-            'name': name,
-            'university': '',
-            'course': '',
-            'bio': '',
-          });
-
-          await supabase.from('user_purpose').insert({
-            'user_id': currentUserId,
-            'is_committee_member': _holdsEvents,
-          });
-        }
-
-        await SessionManager.saveSession(userId: currentUserId);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _isSignUpMode ? 'Account created!' : 'Welcome back!',
-              ),
-            ),
-          );
-          // StreamBuilder in main.dart reacts to signIn and routes automatically
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isSignUpMode ? 'Account created!' : 'Welcome back!'),
+          ),
+        );
+        // StreamBuilder in main.dart reacts to auth change and routes automatically
       }
     } on AuthException catch (e) {
       if (mounted) _showErrorSnackBar(e.message);
@@ -148,7 +118,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 32),
 
                   if (_isSignUpMode)
-                    // Name
                     TextFormField(
                       controller: _nameController,
                       keyboardType: TextInputType.name,
@@ -165,14 +134,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       validator: (value) {
                         if (_isSignUpMode &&
-                            (value == null || value.trim().isEmpty))
+                            (value == null || value.trim().isEmpty)) {
                           return 'Please enter your name';
+                        }
                         return null;
                       },
                     ),
                   const SizedBox(height: 16),
 
-                  // Email
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -203,7 +172,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password
                   TextFormField(
                     controller: _passwordController,
                     focusNode: _passwordFocusNode,
@@ -244,7 +212,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 32),
 
                   if (_isSignUpMode) ...[
-                    // Determine purpose of using app
                     Row(
                       children: [
                         const Expanded(
@@ -253,26 +220,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ),
-
-                        // "YES" Button
                         TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _holdsEvents = true;
-                            });
-                          },
+                          onPressed: () => setState(() => _holdsEvents = true),
                           style: TextButton.styleFrom(
-                            // If selected: Solid teal/green highlight, otherwise clean light gray tint
-                            backgroundColor: _holdsEvents == true
+                            backgroundColor: _holdsEvents
                                 ? const Color(0XFF84DCC6)
                                 : Colors.grey.shade100,
-                            foregroundColor: _holdsEvents == true
+                            foregroundColor: _holdsEvents
                                 ? Colors.white
                                 : Colors.black87,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
-                                color: _holdsEvents == true
+                                color: _holdsEvents
                                     ? const Color(0XFF84DCC6)
                                     : Colors.grey.shade300,
                               ),
@@ -280,28 +240,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           child: const Text("Yes"),
                         ),
-
                         const SizedBox(width: 8),
-
-                        // "NO" Button
                         TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _holdsEvents = false;
-                            });
-                          },
+                          onPressed: () => setState(() => _holdsEvents = false),
                           style: TextButton.styleFrom(
-                            // If selected: Dark slate/red highlight, otherwise clean light gray tint
-                            backgroundColor: _holdsEvents == false
+                            backgroundColor: !_holdsEvents
                                 ? const Color.fromARGB(255, 238, 48, 48)
                                 : Colors.grey.shade100,
-                            foregroundColor: _holdsEvents == false
+                            foregroundColor: !_holdsEvents
                                 ? Colors.white
                                 : Colors.black87,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                               side: BorderSide(
-                                color: _holdsEvents == false
+                                color: !_holdsEvents
                                     ? Colors.grey.shade700
                                     : Colors.grey.shade300,
                               ),
@@ -314,7 +266,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Action Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleSubmit,
                     style: ElevatedButton.styleFrom(
@@ -348,7 +299,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Dynamic Auth Mode Toggle
                   TextButton(
                     onPressed: () =>
                         setState(() => _isSignUpMode = !_isSignUpMode),
