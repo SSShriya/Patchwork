@@ -19,12 +19,12 @@ class DMScreen extends StatefulWidget {
 class _DMScreenState extends State<DMScreen> {
   final TextEditingController _controller = TextEditingController();
   final ConversationService _conversationService = ConversationService();
-  late final String myUserId;     // initialized in loadMessages()
+  late final String myUserId; // initialized in loadMessages()
   List<_Message> _messages = [];
   bool _isLoading = true;
   bool _isReady = false;
   late final ScrollController _scrollController;
-  
+
   // 2. Reference link tracker for the periodic interval hook
   Timer? _pollingTimer;
 
@@ -40,7 +40,7 @@ class _DMScreenState extends State<DMScreen> {
     myUserId = await loadUserId();
     // Immediate initial sync pull
     await _loadMessages(forceScroll: true);
-    
+
     // Periodically execution block firing precisely down to 1-second ticks
     _pollingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _loadMessages(forceScroll: false);
@@ -63,14 +63,12 @@ class _DMScreenState extends State<DMScreen> {
         myUserId,
         widget.chat.otherUserId,
       );
-      
+
       final List<_Message> freshMessages = fetchedMaps.map((row) {
         final senderId = row['sender_id'] as String;
         final content = row['content'] ?? '';
 
-        final isInvite =
-            content.startsWith('INVITATION_DATA:') ||
-            content == 'Invitation sent.';
+        final isInvite = content.startsWith('INVITATION_DATA:');
 
         return _Message(
           text: content,
@@ -145,13 +143,14 @@ class _DMScreenState extends State<DMScreen> {
             invitationStatus: 'pending',
           ),
         );
-
-        _conversationService.recordMessage(
-          'Invitation sent.',
-          myUserId,
-          widget.chat.otherUserId,
-        );
       });
+
+      await _conversationService.recordMessage(
+        rawInvitePayload,
+        myUserId,
+        widget.chat.otherUserId,
+      );
+
       _scrollToBottom();
     }
   }
@@ -282,9 +281,9 @@ class _DMScreenState extends State<DMScreen> {
                   random: false,
                   img:
                       widget.chat.imageUrl != null &&
-                              widget.chat.imageUrl!.isNotEmpty
-                          ? widget.chat.imageUrl
-                          : null,
+                          widget.chat.imageUrl!.isNotEmpty
+                      ? widget.chat.imageUrl
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Text(widget.chat.name),
@@ -527,32 +526,26 @@ class _DMScreenState extends State<DMScreen> {
   Widget _buildInvitationBox(_Message msg, int index) {
     final String cleanData = msg.text.replaceFirst('INVITATION_DATA:', '');
 
-    String extractedDate = "Details saved";
-    String extractedTime = "Details saved";
-    String extractedLoc = "Check event panel updates";
+    String extractedDate = "Not specified";
+    String extractedTime = "Not specified";
+    String extractedLoc = "Not specified";
 
-    if (msg.text == 'Invitation sent.') {
-      extractedDate = "Details in notification";
-      extractedTime = "Details in notification";
-      extractedLoc = "Check your system alerts";
-    } else {
-      try {
-        final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
-        final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
-        final RegExp locRegex = RegExp(r'"location":"([^"]*)"');
+    try {
+      final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
+      final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
+      final RegExp locRegex = RegExp(r'"location":"([^"]*)"');
 
-        if (dateRegex.hasMatch(cleanData)) {
-          extractedDate = dateRegex.firstMatch(cleanData)!.group(1)!;
-        }
-        if (timeRegex.hasMatch(cleanData)) {
-          extractedTime = timeRegex.firstMatch(cleanData)!.group(1)!;
-        }
-        if (locRegex.hasMatch(cleanData)) {
-          final locVal = locRegex.firstMatch(cleanData)!.group(1)!;
-          if (locVal.isNotEmpty) extractedLoc = locVal;
-        }
-      } catch (_) {}
-    }
+      if (dateRegex.hasMatch(cleanData)) {
+        extractedDate = dateRegex.firstMatch(cleanData)!.group(1)!;
+      }
+      if (timeRegex.hasMatch(cleanData)) {
+        extractedTime = timeRegex.firstMatch(cleanData)!.group(1)!;
+      }
+      if (locRegex.hasMatch(cleanData)) {
+        final locVal = locRegex.firstMatch(cleanData)!.group(1)!;
+        if (locVal.isNotEmpty) extractedLoc = locVal;
+      }
+    } catch (_) {}
 
     final bool isPending = msg.invitationStatus == 'pending';
 

@@ -82,12 +82,24 @@ class ConversationService {
         imageUrl: otherUser['avatar_url'] as String? ?? '',
       );
 
+      // Helper to clean message content for preview display
+      String previewText(String content) {
+        if (content.startsWith('INVITATION_DATA:')) {
+          return '📅 Invitation sent.';
+        }
+        if (content == 'Invitation sent.') return '📅 Invitation sent.';
+        if (content.startsWith('=== ') && content.endsWith(' ===')) {
+          return content.replaceAll('=== ', '').replaceAll(' ===', '');
+        }
+        return content;
+      }
+
       // ── Build ChatConversation from matchCard only ──
       return ChatConversation(
         matchCard: matchCard,
         numMessages: messageCount,
         lastMessage: hasHistory
-            ? directMessages.last['content'] ?? ''
+            ? previewText(directMessages.last['content'] ?? '')
             : 'Interests: ${interestsList.join(', ')}',
         time: hasHistory ? 'Active' : '',
         unreadCount: 0,
