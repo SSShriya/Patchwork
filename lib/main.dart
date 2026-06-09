@@ -63,13 +63,16 @@ class MainApp extends StatelessWidget {
 }
 
 Future<bool> _isCommitteeMember(String userId) async {
-  try {
-    final result = await supabase
-        .from('societies')
-        .select()
-        .eq('id', userId);
-    return result.isNotEmpty;
-  } catch (_) {
-    return false;
+  // Retry up to 3 times with a short delay to handle post-signup race condition
+  for (int attempt = 0; attempt < 3; attempt++) {
+    try {
+      final result = await supabase
+          .from('societies')
+          .select()
+          .eq('id', userId);
+      if (result.isNotEmpty) return true;
+    } catch (_) {}
+    if (attempt < 2) await Future.delayed(const Duration(milliseconds: 500));
   }
+  return false;
 }
