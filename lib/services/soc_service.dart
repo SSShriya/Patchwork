@@ -2,8 +2,11 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_client.dart';
 
-Future<void> updateSocDetails({String? about}) async {
-  await supabase.from('societies').insert({'description': about});
+Future<void> updateSocDetails({required String id, String? about, String? uni}) async {
+  await supabase
+  .from('societies')
+  .update({'description': about, 'university': uni})
+  .eq('id', id);
 }
 
 Future<void> uploadSocImage(File imageFile, String socId) async {

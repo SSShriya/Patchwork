@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drp/services/session_manager.dart';
 import 'package:drp/services/soc_service.dart';
 import 'package:drp/services/supabase_client.dart';
+import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,20 +29,30 @@ class _SocietyScreenState extends State<SocietyScreen> {
   final _aboutController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  String societyId = '';
 
   @override
   void initState() {
     super.initState();
-    _loadExistingProfile();
+    _initializeSociety();
+  }
+
+  Future<void> _initializeSociety() async {
+    setState(() => _isLoading = true);
+    societyId = await loadUserId();
+    await _loadExistingProfile();
   }
 
   Future<void> _loadExistingProfile() async {
+    if (societyId == null) {
+      if (mounted) _showError('User session not found. Please log in again.');
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final societyId = supabase.auth.currentUser?.id;
-      if (societyId == null) return;
-
       // Fetch user row from your users table
       final socData = await supabase
           .from('societies')
@@ -117,7 +128,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
             onPressed: () {
               setState(() {
                 _aboutText = aboutController.text.trim();
-                updateSocDetails(about: _aboutText);
+                updateSocDetails(id: societyId, about: _aboutText);
               });
               Navigator.pop(context);
             },
@@ -132,9 +143,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
   Future<void> _saveSocDetails() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Use Supabase live session
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) {
+    if (societyId == null) {
       _showError('User session not found. Please log in again.');
       setState(() => _isLoading = false); // Reset spinner
       return;
@@ -144,10 +153,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
 
     try {
       if (_imageFile != null) {
-        await uploadSocImage(_imageFile!, userId);
+        await uploadSocImage(_imageFile!, societyId);
       }
 
-      updateSocDetails(about: _aboutController.text.trim());
+      updateSocDetails(id: societyId, about: _aboutController.text.trim());
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

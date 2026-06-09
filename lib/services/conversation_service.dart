@@ -3,7 +3,6 @@ import 'supabase_client.dart';
 import '../models/match_convo.dart';
 import '../models/match_card.dart';
 import 'utils.dart';
-// import 'session_manager.dart';
 
 class ConversationService {
   Future<List<ChatConversation>> getConversations() async {
