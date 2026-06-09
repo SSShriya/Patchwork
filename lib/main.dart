@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/signup_screen.dart';
+import 'services/supabase_client.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -28,7 +29,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       navigatorObservers: [routeObserver],
       home: StreamBuilder<AuthState>(
-        stream: Supabase.instance.client.auth.onAuthStateChange,
+        stream: supabase.auth.onAuthStateChange,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
@@ -62,14 +63,16 @@ class MainApp extends StatelessWidget {
 }
 
 Future<bool> _isCommitteeMember(String userId) async {
-  try {
-    final result = await Supabase.instance.client
-        .from('user_purpose')
-        .select('is_committee_member')
-        .eq('user_id', userId)
-        .maybeSingle();
-    return result?['is_committee_member'] == true;
-  } catch (_) {
-    return false;
+  // Retry up to 3 times with a short delay to handle post-signup race condition
+  for (int attempt = 0; attempt < 3; attempt++) {
+    try {
+      final result = await supabase
+          .from('societies')
+          .select()
+          .eq('id', userId);
+      if (result.isNotEmpty) return true;
+    } catch (_) {}
+    if (attempt < 2) await Future.delayed(const Duration(milliseconds: 500));
   }
+  return false;
 }

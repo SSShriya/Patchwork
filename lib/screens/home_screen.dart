@@ -101,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           cards: groupCards,
           initialIndex: initialIndex < 0 ? 0 : initialIndex,
           onDecision: _handleDecision,
+          onGoHome: () {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
         ),
       ),
     );
@@ -317,15 +320,28 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           padding: EdgeInsets.zero,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-              child: Text(
-                'Your Upcoming Events',
-                style: GoogleFonts.lora(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
+              child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Your Upcoming Events",
+                        style: GoogleFonts.lora(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Click to see event details and your existing friends!',
+                        style: GoogleFonts.merriweather(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  )
               ),
-            ),
             SizedBox(
               height: 140,
               child: ListView.builder(
@@ -347,15 +363,28 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
-              child: Text(
-                'Matches to Review',
-                style: GoogleFonts.lora(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
+              child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "People to Review",
+                        style: GoogleFonts.lora(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Curated people who are also interested in your events!',
+                        style: GoogleFonts.merriweather(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  )
               ),
-            ),
             // one MatchRow per event
             // one MatchRow per event — with matches first, then without
             if (_pendingMatches.isEmpty)

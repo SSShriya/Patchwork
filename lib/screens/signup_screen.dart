@@ -41,7 +41,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
-          isCommitteeMember: _holdsEvents,
+          isSociety: _holdsEvents,
         );
       } else {
         await _authService.signIn(
@@ -61,7 +61,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } on AuthException catch (e) {
       if (mounted) _showErrorSnackBar(e.message);
     } catch (e) {
-      if (mounted) _showErrorSnackBar('An unexpected error occurred.');
+      if (mounted) _showErrorSnackBar('An unexpected error occurred: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

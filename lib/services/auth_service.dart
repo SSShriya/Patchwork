@@ -6,7 +6,7 @@ class AuthService {
     required String email,
     required String password,
     required String name,
-    required bool isCommitteeMember,
+    required bool isSociety,
   }) async {
     final response = await supabase.auth.signUp(
       email: email,
@@ -20,14 +20,24 @@ class AuthService {
       throw Exception('Sign up failed. Please try again.');
     }
 
+
+    if(isSociety) {
+
+      await supabase.from('societies').insert({
+        'id': user.id,
+        'name': name,
+      });
+
+    } 
+
     await supabase.from('users').insert({
       'id': user.id,
       'name': name,
       'university': '',
       'course': '',
       'bio': '',
-      'is_committee_member': isCommitteeMember,
-    });
+      'is_committee_member': isSociety,
+    });  
 
     await SessionManager.saveSession(userId: user.id);
   }

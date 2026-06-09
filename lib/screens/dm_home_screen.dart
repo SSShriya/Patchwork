@@ -60,10 +60,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: const Color(0XFF222222),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
           'Messages',
           style: TextStyle(
@@ -72,16 +68,13 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             fontSize: 22,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black, size: 28),
-            onPressed: _loadConversations,
-          ),
-        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : RefreshIndicator(
+            onRefresh: _loadConversations, 
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -139,10 +132,11 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                         conversations: filteredOldConvos,
                         onRefresh: _loadConversations,
                       ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-    );
+            )
+          );
   }
 }
