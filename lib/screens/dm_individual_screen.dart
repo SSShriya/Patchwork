@@ -150,7 +150,6 @@ class _DMScreenState extends State<DMScreen> {
     if (text.isEmpty) return;
 
     _controller.clear();
-    _scrollToBottom();
 
     final id = await _conversationService.recordMessage(
       text,
@@ -164,6 +163,7 @@ class _DMScreenState extends State<DMScreen> {
       );
       _messageKeys.add(GlobalKey());
     });
+    _scrollToBottom();
   }
 
   void _suggestMeeting() async {
