@@ -49,7 +49,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           password: _passwordController.text.trim(),
         );
       }
-
     } on AuthException catch (e) {
       if (mounted) _showErrorSnackBar(e.message);
     } catch (e) {
@@ -116,12 +115,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const Expanded(
                           child: Text(
                             "Are you a CLUB/SOCIETY?",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                         TextButton(
                           onPressed: () {
-                            setState(() => _holdsEvents = true); 
+                            setState(() => _holdsEvents = true);
                             _nameController.clear();
                             _emailController.clear();
                             _passwordController.clear();
@@ -147,7 +149,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const SizedBox(width: 8),
                         TextButton(
                           onPressed: () {
-                            setState(() => _holdsEvents = false); 
+                            setState(() => _holdsEvents = false);
                             _nameController.clear();
                             _emailController.clear();
                             _passwordController.clear();

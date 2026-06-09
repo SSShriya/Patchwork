@@ -6,6 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/profile_service.dart';
 import '../services/session_manager.dart';
+import '../models/useful_data.dart';
+import '../models/interest_data.dart';
+import '../services/interest_suggestion_service.dart';
+import '../widgets/interests_categories.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,21 +20,21 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
-  final _universityController = TextEditingController();
   final _courseController = TextEditingController();
   final _bioController = TextEditingController();
-  final _yearGroupController = TextEditingController();
-  final _locationController = TextEditingController();
   final _interestInputController = TextEditingController();
+
+  // All three dropdowns managed as plain Strings
+  String? _selectedUniversity;
+  String? _selectedBorough;
+  String? _selectedYearGroup;
 
   File? _imageFile;
   String? _existingAvatarUrl;
   final List<String> _interests = [];
   bool _isLoading = false;
 
-  // Max interest cap to prevent abuse / matching issues
   static const int _maxInterests = 10;
 
   @override
@@ -46,14 +50,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // Fetch user row from your users table
       final userdata = await supabase
           .from('users')
           .select()
           .eq('id', userId)
           .maybeSingle();
 
-      // Fetch existing interests
       final interestsData = await supabase
           .from('user_interests')
           .select('interest')
@@ -62,16 +64,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userdata != null) {
         setState(() {
           _nameController.text = userdata['name'] ?? '';
-          _universityController.text = userdata['university'] ?? '';
           _courseController.text = userdata['course'] ?? '';
           _bioController.text = userdata['bio'] ?? '';
-          _yearGroupController.text = userdata['year_group'] ?? '';
-          _locationController.text = userdata['location'] ?? '';
 
-          // Pre-populate avatar if one already exists
+          // University — only accept known values
+          final savedUniversity = userdata['university'] as String?;
+          _selectedUniversity = londonUniversities.contains(savedUniversity)
+              ? savedUniversity
+              : null;
+
+          // Borough — only accept known values
+          final savedLocation = userdata['location'] as String?;
+          _selectedBorough = londonBoroughs.contains(savedLocation)
+              ? savedLocation
+              : null;
+
+          // Year group — only accept known values
+          final savedYear = userdata['year_group'] as String?;
+          _selectedYearGroup = yearGroups.contains(savedYear)
+              ? savedYear
+              : null;
+
           _existingAvatarUrl = userdata['avatar_url'];
 
-          // Pre-populate interests list
           _interests.clear();
           _interests.addAll(
             (interestsData as List).map((e) => e['interest'] as String),
@@ -90,11 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _universityController.dispose();
     _courseController.dispose();
     _bioController.dispose();
-    _yearGroupController.dispose();
-    _locationController.dispose();
     _interestInputController.dispose();
     super.dispose();
   }
@@ -110,36 +122,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _addInterest() {
-    // Normalise to lowercase to prevent duplicate mismatches
-    final text = _interestInputController.text.trim().toLowerCase();
-
-    if (text.isEmpty) return;
-
-    if (_interests.length >= _maxInterests) {
-      _showError('You can add a maximum of $_maxInterests interests.');
-      return;
-    }
-
-    if (_interests.contains(text)) {
-      _showError('You\'ve already added "$text".');
-      return;
-    }
-
-    setState(() {
-      _interests.add(text);
-      _interestInputController.clear();
-    });
-  }
-
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Use Supabase live session
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
       _showError('User session not found. Please log in again.');
-      setState(() => _isLoading = false); // Reset spinner
+      return;
+    }
+
+    // University is required — guard here too in case form validator is bypassed
+    if (_selectedUniversity == null) {
+      _showError('Please select your university.');
       return;
     }
 
@@ -153,11 +147,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await updateDetails(
         userId,
         _nameController.text.trim(),
-        _universityController.text.trim(),
+        _selectedUniversity!, // ← university
         _courseController.text.trim(),
         _bioController.text.trim(),
-        _yearGroupController.text.trim(),
-        _locationController.text.trim(),
+        _selectedYearGroup ?? '', // ← year group
+        _selectedBorough ?? '', // ← borough
         _interests,
       );
 
@@ -184,7 +178,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Logout now signs out from Supabase + confirms with user first
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -211,11 +204,190 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirmed != true) return;
 
-    // Sign out from Supabase so StreamBuilder in main.dart reacts
     await supabase.auth.signOut();
     await SessionManager.clearSession();
 
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');
+  }
+
+  // ── Shared Autocomplete builder ───────────────────────────────────────────
+  // Reusable so borough and university stay visually identical
+  Widget _buildAutocompleteField({
+    required String initialValue,
+    required List<String> options,
+    required String label,
+    required IconData prefixIcon,
+    required IconData itemIcon,
+    required Color itemIconColor,
+    required ValueChanged<String> onSelected,
+    // Pass a key so Flutter can distinguish the two Autocomplete widgets
+    Key? key,
+    // Optional form validator — supply for required fields
+    String? Function(String?)? validator,
+  }) {
+    return Autocomplete<String>(
+      key: key,
+      initialValue: TextEditingValue(text: initialValue),
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) return options;
+        return options.where(
+          (option) => option.toLowerCase().contains(
+            textEditingValue.text.toLowerCase(),
+          ),
+        );
+      },
+      optionsViewBuilder: (context, onSelectedOption, filteredOptions) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: filteredOptions.length,
+                itemBuilder: (context, index) {
+                  final option = filteredOptions.elementAt(index);
+                  return InkWell(
+                    onTap: () => onSelectedOption(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(itemIcon, size: 18, color: itemIconColor),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: const TextStyle(fontSize: 15),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+      fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(prefixIcon),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey.shade100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          // Wire up the validator so the Form key catches it on save
+          validator: validator,
+        );
+      },
+      onSelected: (String value) {
+        onSelected(value);
+        FocusScope.of(context).unfocus();
+      },
+    );
+  }
+
+  // ── University Field ──────────────────────────────────────────────────────
+  Widget _buildUniversityField() {
+    return _buildAutocompleteField(
+      key: const ValueKey('university'),
+      initialValue: _selectedUniversity ?? '',
+      options: londonUniversities,
+      label: 'University',
+      prefixIcon: Icons.school_outlined,
+      itemIcon: Icons.school_outlined,
+      itemIconColor: const Color(0xFF84DCC6),
+      onSelected: (value) => setState(() => _selectedUniversity = value),
+      // Required — must pick a university before saving
+      validator: (value) => (value == null || value.trim().isEmpty)
+          ? 'Please select your university'
+          : null,
+    );
+  }
+
+  // ── Borough Field ─────────────────────────────────────────────────────────
+  Widget _buildBoroughField() {
+    return _buildAutocompleteField(
+      key: const ValueKey('borough'),
+      initialValue: _selectedBorough ?? '',
+      options: londonBoroughs,
+      label: 'Borough (optional)',
+      prefixIcon: Icons.location_on_outlined,
+      itemIcon: Icons.location_on_outlined,
+      itemIconColor: const Color(0xFF84DCC6),
+      onSelected: (value) => setState(() => _selectedBorough = value),
+    );
+  }
+
+  // ── Year Group Dropdown ───────────────────────────────────────────────────
+  Widget _buildYearGroupField() {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedYearGroup,
+      decoration: InputDecoration(
+        labelText: 'Year Group (optional)',
+        prefixIcon: const Icon(Icons.calendar_today_outlined),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      borderRadius: BorderRadius.circular(12),
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+      style: const TextStyle(fontSize: 15, color: Colors.black87),
+      hint: const Text('Select year group'),
+      items: yearGroups.map((year) {
+        final bool isPostgrad = year == 'Masters' || year == 'PhD';
+        return DropdownMenuItem<String>(
+          value: year,
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isPostgrad
+                      ? const Color(0xFF84DCC6)
+                      : year == 'Alumnus'
+                      ? Colors.grey.shade400
+                      : Colors.blue.shade200,
+                ),
+              ),
+              Text(year),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (value) => setState(() => _selectedYearGroup = value),
+    );
   }
 
   @override
@@ -245,7 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Profile Picture
+                      // ── Profile Picture ──────────────────────────────────
                       Center(
                         child: GestureDetector(
                           onTap: _pickImage,
@@ -291,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Required fields only
+                      // ── Name ─────────────────────────────────────────────
                       _buildTextField(
                         controller: _nameController,
                         label: 'Full Name',
@@ -299,14 +471,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         required: true,
                       ),
                       const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _universityController,
-                        label: 'University',
-                        icon: Icons.school_outlined,
-                        required: true,
-                      ),
+
+                      // ── University Autocomplete ──────────────────────────
+                      _buildUniversityField(),
                       const SizedBox(height: 16),
-                      // Optional fields — no validator block
+
+                      // ── Course ───────────────────────────────────────────
                       _buildTextField(
                         controller: _courseController,
                         label: 'Course / Major',
@@ -314,44 +484,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         required: false,
                       ),
                       const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _yearGroupController,
-                        label: 'Year Group (e.g. Year 2, Alumnus)',
-                        icon: Icons.calendar_today_outlined,
-                        required: false,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _locationController,
-                        label: 'Location',
-                        icon: Icons.location_on_outlined,
-                        required: false,
-                      ),
+
+                      // ── Year Group ───────────────────────────────────────
+                      _buildYearGroupField(),
                       const SizedBox(height: 16),
 
-                      // Bio
-                      TextFormField(
-                        controller: _bioController,
-                        maxLines: 3,
-                        keyboardType: TextInputType.multiline,
-                        decoration: InputDecoration(
-                          labelText: 'Bio (optional)',
-                          alignLabelWithHint: true,
-                          prefixIcon: const Padding(
-                            padding: EdgeInsets.only(bottom: 40.0),
-                            child: Icon(Icons.description_outlined),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      // ── Borough ──────────────────────────────────────────
+                      _buildBoroughField(),
+                      const SizedBox(height: 16),
 
-                      // Interests
+                      // ── Interests ────────────────────────────────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -372,67 +514,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Pick categories to explore interests',
+                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 10),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _interestInputController,
-                              decoration: InputDecoration(
-                                hintText: 'Add an interest (e.g. tennis)',
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
+                      // Category chips — tap to open subcategory sheet
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: interestCategories.map((category) {
+                          return GestureDetector(
+                            onTap: () => _openCategorySheet(category),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1.5,
                                 ),
                               ),
-                              onFieldSubmitted: (_) => _addInterest(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: _addInterest,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0XFF84DCC6),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    category.emoji,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    category.name,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
                             ),
-                            child: const Icon(Icons.add, color: Colors.white),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: _interests.map((interest) {
-                          return Chip(
-                            label: Text(
-                              interest,
-                              style: const TextStyle(color: Colors.black87),
-                            ),
-                            backgroundColor: Colors.grey.shade200,
-                            deleteIcon: const Icon(
-                              Icons.cancel,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            onDeleted: () =>
-                                setState(() => _interests.remove(interest)),
                           );
                         }).toList(),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 12),
 
+                      // Selected interest chips
+                      if (_interests.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: _interests.map((interest) {
+                            return Chip(
+                              label: Text(
+                                interest,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              backgroundColor: Colors.grey.shade200,
+                              deleteIcon: const Icon(
+                                Icons.cancel,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              onDeleted: () =>
+                                  setState(() => _interests.remove(interest)),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+
+                      // ── Bio ──────────────────────────────────────────────────────────
+                      const Text(
+                        'Bio',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Introduce yourself!',
+                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      TextFormField(
+                        controller: _bioController,
+                        maxLines: 3,
+                        keyboardType: TextInputType.multiline,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey.shade100,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Save Button ──────────────────────────────────────
                       ElevatedButton(
                         onPressed: _isLoading ? null : _saveProfile,
                         style: ElevatedButton.styleFrom(
@@ -455,6 +646,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 20),
 
+                      // ── Logout Button ────────────────────────────────────
                       ElevatedButton(
                         onPressed: _isLoading ? null : _logout,
                         style: ElevatedButton.styleFrom(
@@ -483,7 +675,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Required flag controls whether validator fires
+  Future<void> _openCategorySheet(InterestCategory category) async {
+    // Fetch promoted interests before opening sheet
+    List<String> promotedInterests = [];
+    try {
+      promotedInterests = await fetchPromotedInterests(category.name);
+    } catch (_) {}
+
+    final allOptions = [
+      ...category.subcategories,
+      ...promotedInterests.where(
+        (p) => !category.subcategories
+            .map((s) => s.toLowerCase())
+            .contains(p.toLowerCase()),
+      ),
+    ];
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => CategorySheet(
+        category: category,
+        allOptions: allOptions,
+        promotedInterests: promotedInterests,
+        selectedInterests: _interests,
+        maxInterests: _maxInterests,
+        onToggle: (interest) {
+          final normalised = interest.toLowerCase();
+          setState(() {
+            if (_interests.contains(normalised)) {
+              _interests.remove(normalised);
+            } else if (_interests.length < _maxInterests) {
+              _interests.add(normalised);
+            } else {
+              _showError('Maximum of $_maxInterests interests reached.');
+            }
+          });
+        },
+        onCustomAdd: (text) async {
+          if (_interests.contains(text)) {
+            _showError('You\'ve already added "$text".');
+            return;
+          }
+          if (_interests.length >= _maxInterests) {
+            _showError('Maximum of $_maxInterests interests reached.');
+            return;
+          }
+          try {
+            await suggestInterest(interest: text, category: category.name);
+          } catch (_) {}
+          setState(() => _interests.add(text));
+        },
+      ),
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,

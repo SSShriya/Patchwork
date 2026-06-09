@@ -1,4 +1,5 @@
 import 'package:drp/screens/main_shell.dart';
+import 'package:drp/screens/profile_screen.dart';
 import 'package:drp/screens/society_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,7 +30,7 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  Future<bool>? _committeeFuture;
+  Future<_UserRouteInfo>? _routeFuture;
   String? _lastUserId;
 
   @override
@@ -40,25 +41,38 @@ class _MainAppState extends State<MainApp> {
         stream: supabase.auth.onAuthStateChange,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
 
           final session = snapshot.data?.session;
           if (session == null) return const SignUpScreen();
 
-          // Only re-fetch if the user changed
+          // Only re-fetch if the user actually changed
           if (_lastUserId != session.user.id) {
             _lastUserId = session.user.id;
-            _committeeFuture = _isCommitteeMember(session.user.id);
+            _routeFuture = _getUserRouteInfo(session.user.id);
           }
 
-          return FutureBuilder<bool>(
-            future: _committeeFuture,
+          return FutureBuilder<_UserRouteInfo>(
+            future: _routeFuture,
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
               }
-              return snap.data == true ? const SocietyScreen() : const MainShell();
+
+              final info = snap.data;
+
+              // Profile incomplete → always go to profile setup first
+              if (info == null || !info.hasCompletedProfile) {
+                return const ProfileScreen();
+              }
+
+              // Profile complete → route by account type
+              return info.isSociety ? const SocietyScreen() : const MainShell();
             },
           );
         },
@@ -71,17 +85,38 @@ class _MainAppState extends State<MainApp> {
   }
 }
 
-Future<bool> _isCommitteeMember(String userId) async {
-  // Retry up to 3 times with a short delay to handle post-signup race condition
+// Holds everything the StreamBuilder needs to make a routing decision
+class _UserRouteInfo {
+  final bool isSociety;
+  final bool hasCompletedProfile;
+
+  const _UserRouteInfo({
+    required this.isSociety,
+    required this.hasCompletedProfile,
+  });
+}
+
+Future<_UserRouteInfo> _getUserRouteInfo(String userId) async {
   for (int attempt = 0; attempt < 3; attempt++) {
     try {
       final result = await supabase
           .from('users')
-          .select()
-          .eq('id', userId);
-      return result[0]['is_society'];
+          .select('is_society, name, university')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (result != null) {
+        final university = result['university'] as String?;
+        return _UserRouteInfo(
+          isSociety: result['is_society'] == true,
+          // University can only be set from ProfileScreen — safe completion check
+          hasCompletedProfile:
+              university != null && university.trim().isNotEmpty,
+        );
+      }
     } catch (_) {}
     if (attempt < 2) await Future.delayed(const Duration(milliseconds: 500));
   }
-  return false;
+
+  return const _UserRouteInfo(isSociety: false, hasCompletedProfile: false);
 }

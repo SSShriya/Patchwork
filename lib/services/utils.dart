@@ -75,3 +75,4 @@ String buildInvitePayload(Map result) =>
     location: loc.isEmpty ? 'Not specified' : loc,
   );
 }
+
