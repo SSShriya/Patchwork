@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drp/services/event_service.dart';
 import 'package:drp/services/session_manager.dart';
 import 'package:drp/services/soc_service.dart';
 import 'package:drp/services/supabase_client.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../widgets/create_event.dart';
 
 class SocietyScreen extends StatefulWidget {
   const SocietyScreen({super.key});
@@ -62,7 +64,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
       // Fetch existing events
       final eventsData = await supabase
           .from('events')
-          .select('event_name')
+          .select()
           .eq('society_id', societyId);
 
       if (socData != null) {
@@ -78,11 +80,12 @@ class _SocietyScreenState extends State<SocietyScreen> {
           _events.clear();
           _events.addAll(
             (eventsData as List).map((e) => 
-              {'title': e['event_name'], 
-               'start_date': '${e['start_day']} ${e['start_time']}',
+              {'id': '${e['event_id']}',
+               'title': e['event_name'], 
+               'start_date': '${e['start_day']} at ${e['start_time']}',
                'end_date': '${e['end_day']} ${e['end_time']}',
                'location': e['location'],
-               'cost': e['cost']})
+               'cost': '${e['cost']}'})
           );
 
         });
@@ -90,7 +93,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
     } on PostgrestException catch (e) {
       if (mounted) _showError('Failed to load society profile: ${e.message}');
     } catch (e) {
-      if (mounted) _showError('Unexpected error loading society profile.');
+      if (mounted) _showError('Unexpected error loading society profile: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -138,6 +141,88 @@ class _SocietyScreenState extends State<SocietyScreen> {
     ),
   );
 }
+
+
+void _editEvent(Map<String, String> event) async {
+  final eventId = event['id'];
+  if (eventId == null || eventId.isEmpty) return;
+
+  DateTime? parsedStartDate;
+  TimeOfDay? parsedStartTime;
+  DateTime? parsedEndDate;
+  TimeOfDay? parsedEndTime;
+  
+  try {
+    // Stored parsing from your format: "2026-06-09 at 16:30"
+    final startParts = event['start_date']!.split(' at ');
+    if (startParts.length == 2) {
+      parsedStartDate = DateTime.parse(startParts[0]);
+      final timeParts = startParts[1].split(':');
+      parsedStartTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+    }
+    
+    // Stored parsing from your format: "2026-06-09 18:30"
+    final endParts = event['end_date']!.split(' ');
+    if (endParts.length == 2) {
+      parsedEndDate = DateTime.parse(endParts[0]);
+      final timeParts = endParts[1].split(':');
+      parsedEndTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+    }
+  } catch (e) {
+    // Clean fallback parameters
+    parsedStartDate = DateTime.now();
+    parsedStartTime = const TimeOfDay(hour: 9, minute: 0);
+    parsedEndDate = DateTime.now().add(const Duration(hours: 2));
+    parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
+  }
+
+  // Pass everything cleanly into the updated parameter structure
+  final result = await showNewEventPopup(
+    context,
+    existingName: event['title'],
+    existingLocation: event['location'],
+    existingPrice: double.tryParse(event['cost'] ?? '0') ?? 0.0,
+    existingStartDate: parsedStartDate,
+    existingStartTime: parsedStartTime,
+    existingEndDate: parsedEndDate,
+    existingEndTime: parsedEndTime,
+    existingDescription: event['description'], // Safely handled if saved in state map
+  ); 
+
+  if (result == null) return;
+
+  setState(() => _isLoading = true);
+  try {
+    if (result.image != null) {
+      await EventService.uploadEventImage(result.image, societyId);
+    }
+
+    await supabase.from('events').update({
+      'event_name': result.name,
+      'start_day': result.startDate.toIso8601String().split('T').first,
+      'start_time': '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
+      'end_day': result.endDate.toIso8601String().split('T').first,
+      'end_time': '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
+      'location': result.location,
+      'cost': result.price,
+      if (result.description != null) 'description': result.description,
+    }).eq('event_id', eventId);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event updated successfully!')),
+      );
+    }
+
+    await _loadExistingProfile(); 
+  } catch (e) {
+    _showError('Failed to update event: $e');
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+
   Future<void> _saveSocDetails() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -183,11 +268,34 @@ class _SocietyScreenState extends State<SocietyScreen> {
   }
 
   // Method placeholder for creating a new event
-  void _addNewEvent() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('TODO')),
-    );
+void _addNewEvent() async {
+  final result = await showNewEventPopup(context);
+  if (result == null) return;
+
+  // Upload image if provided, then insert into DB
+  setState(() => _isLoading = true);
+  try {
+    await EventService.uploadEventImage(result.image, societyId);
+
+    await supabase.from('events').insert({
+      'society_id': societyId,
+      'event_name': result.name,
+      'start_day': result.startDate.toIso8601String().split('T').first,
+      'start_time': '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
+      'end_day': result.endDate.toIso8601String().split('T').first,
+      'end_time': '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
+      'location': result.location,
+      'cost': result.price,
+      if (result.description != null) 'description': result.description,
+    });
+
+    await _loadExistingProfile(); // refresh events list
+  } catch (e) {
+    _showError('Failed to create event: $e');
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
    // Logout now signs out from Supabase + confirms with user first
   Future<void> _logout() async {
@@ -400,6 +508,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           color: Colors.white,
                           child: ListTile(
+                            onTap: () => _editEvent(event),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             leading: Container(
                               padding: const EdgeInsets.all(10),
@@ -410,13 +519,13 @@ class _SocietyScreenState extends State<SocietyScreen> {
                               child: const Icon(Icons.calendar_today, color: Color(0XFF84DCC6)),
                             ),
                             title: Text(
-                              event["title"]!,
+                              event['title']!,
                               style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15),
                             ),
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 4.0),
                               child: Text(
-                                "${event['date']} • ${event['location']}",
+                                "${event['start_date']} • ${event['location']}",
                                 style: GoogleFonts.montserrat(fontSize: 12, color: Colors.grey.shade600),
                               ),
                             ),
