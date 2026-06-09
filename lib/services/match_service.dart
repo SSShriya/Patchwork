@@ -255,7 +255,7 @@ class MatchService {
     return rows.map((row) => _rowToConfirmedMatchCard(row, currentUserId)).toList();
   }
 
-  Future<List<MatchCard>> getConfirmedMatches(String eventId) async {
+  Future<List<MatchCard>> getMutualMatches(String eventId) async {
     final currentUserId = await loadUserId();
     final rows = await _getConfirmedMatchRows(currentUserId, eventId: eventId);
     return rows.map((row) => _rowToConfirmedMatchCard(row, currentUserId)).toList();
