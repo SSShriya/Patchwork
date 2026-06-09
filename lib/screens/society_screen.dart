@@ -80,7 +80,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
           _events.clear();
           _events.addAll(
             (eventsData as List).map((e) => 
-              {'title': e['event_name'], 
+              {'id': '${e['event_id']}',
+               'title': e['event_name'], 
                'start_date': '${e['start_day']} at ${e['start_time']}',
                'end_date': '${e['end_day']} ${e['end_time']}',
                'location': e['location'],
@@ -140,6 +141,88 @@ class _SocietyScreenState extends State<SocietyScreen> {
     ),
   );
 }
+
+
+void _editEvent(Map<String, String> event) async {
+  final eventId = event['id'];
+  if (eventId == null || eventId.isEmpty) return;
+
+  DateTime? parsedStartDate;
+  TimeOfDay? parsedStartTime;
+  DateTime? parsedEndDate;
+  TimeOfDay? parsedEndTime;
+  
+  try {
+    // Stored parsing from your format: "2026-06-09 at 16:30"
+    final startParts = event['start_date']!.split(' at ');
+    if (startParts.length == 2) {
+      parsedStartDate = DateTime.parse(startParts[0]);
+      final timeParts = startParts[1].split(':');
+      parsedStartTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+    }
+    
+    // Stored parsing from your format: "2026-06-09 18:30"
+    final endParts = event['end_date']!.split(' ');
+    if (endParts.length == 2) {
+      parsedEndDate = DateTime.parse(endParts[0]);
+      final timeParts = endParts[1].split(':');
+      parsedEndTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+    }
+  } catch (e) {
+    // Clean fallback parameters
+    parsedStartDate = DateTime.now();
+    parsedStartTime = const TimeOfDay(hour: 9, minute: 0);
+    parsedEndDate = DateTime.now().add(const Duration(hours: 2));
+    parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
+  }
+
+  // Pass everything cleanly into the updated parameter structure
+  final result = await showNewEventPopup(
+    context,
+    existingName: event['title'],
+    existingLocation: event['location'],
+    existingPrice: double.tryParse(event['cost'] ?? '0') ?? 0.0,
+    existingStartDate: parsedStartDate,
+    existingStartTime: parsedStartTime,
+    existingEndDate: parsedEndDate,
+    existingEndTime: parsedEndTime,
+    existingDescription: event['description'], // Safely handled if saved in state map
+  ); 
+
+  if (result == null) return;
+
+  setState(() => _isLoading = true);
+  try {
+    if (result.image != null) {
+      await EventService.uploadEventImage(result.image, societyId);
+    }
+
+    await supabase.from('events').update({
+      'event_name': result.name,
+      'start_day': result.startDate.toIso8601String().split('T').first,
+      'start_time': '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
+      'end_day': result.endDate.toIso8601String().split('T').first,
+      'end_time': '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
+      'location': result.location,
+      'cost': result.price,
+      if (result.description != null) 'description': result.description,
+    }).eq('event_id', eventId);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event updated successfully!')),
+      );
+    }
+
+    await _loadExistingProfile(); 
+  } catch (e) {
+    _showError('Failed to update event: $e');
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+
   Future<void> _saveSocDetails() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -425,6 +508,7 @@ void _addNewEvent() async {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           color: Colors.white,
                           child: ListTile(
+                            onTap: () => _editEvent(event),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             leading: Container(
                               padding: const EdgeInsets.all(10),

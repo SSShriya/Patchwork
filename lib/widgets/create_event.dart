@@ -31,18 +31,56 @@ class NewEventData {
 }
 
 /// Shows the popup and returns [NewEventData] if the user saves, or null if cancelled.
-Future<NewEventData?> showNewEventPopup(BuildContext context) {
+/// Optional named parameters handle autofilling when editing an existing event.
+Future<NewEventData?> showNewEventPopup(
+  BuildContext context, {
+  String? existingName,
+  DateTime? existingStartDate,
+  TimeOfDay? existingStartTime,
+  DateTime? existingEndDate,
+  TimeOfDay? existingEndTime,
+  String? existingLocation,
+  double? existingPrice,
+  String? existingDescription,
+}) {
   return showDialog<NewEventData>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const _CreateEventForm(),
+    builder: (_) => _CreateEventForm(
+      existingName: existingName,
+      existingStartDate: existingStartDate,
+      existingStartTime: existingStartTime,
+      existingEndDate: existingEndDate,
+      existingEndTime: existingEndTime,
+      existingLocation: existingLocation,
+      existingPrice: existingPrice,
+      existingDescription: existingDescription,
+    ),
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CreateEventForm extends StatefulWidget {
-  const _CreateEventForm();
+  final String? existingName;
+  final DateTime? existingStartDate;
+  final TimeOfDay? existingStartTime;
+  final DateTime? existingEndDate;
+  final TimeOfDay? existingEndTime;
+  final String? existingLocation;
+  final double? existingPrice;
+  final String? existingDescription;
+
+  const _CreateEventForm({
+    this.existingName,
+    this.existingStartDate,
+    this.existingStartTime,
+    this.existingEndDate,
+    this.existingEndTime,
+    this.existingLocation,
+    this.existingPrice,
+    this.existingDescription,
+  });
 
   @override
   State<_CreateEventForm> createState() => _CreateEventFormState();
@@ -55,10 +93,10 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
-  final _nameController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _descController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _priceController;
+  late final TextEditingController _descController;
 
   // Date / time state
   DateTime? _startDate;
@@ -68,6 +106,24 @@ class _CreateEventFormState extends State<_CreateEventForm> {
 
   File? _imageFile;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-populate text controllers with existing data or default to empty strings
+    _nameController = TextEditingController(text: widget.existingName ?? '');
+    _locationController = TextEditingController(text: widget.existingLocation ?? '');
+    _priceController = TextEditingController(
+      text: widget.existingPrice != null ? widget.existingPrice!.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '') : '',
+    );
+    _descController = TextEditingController(text: widget.existingDescription ?? '');
+
+    // Pre-populate dates and times
+    _startDate = widget.existingStartDate;
+    _startTime = widget.existingStartTime;
+    _endDate = widget.existingEndDate;
+    _endTime = widget.existingEndTime;
+  }
 
   @override
   void dispose() {
@@ -89,7 +145,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   Future<void> _pickDate({required bool isStart}) async {
     final now = DateTime.now();
     final initial = isStart ? (_startDate ?? now) : (_endDate ?? _startDate ?? now);
-    final first = isStart ? now : (_startDate ?? now);
+    final first = isStart ? (widget.existingStartDate ?? now) : (_startDate ?? now);
 
     final picked = await showDatePicker(
       context: context,
@@ -107,7 +163,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() {
       if (isStart) {
         _startDate = picked;
-        // Reset end date if it's now before start
         if (_endDate != null && _endDate!.isBefore(picked)) _endDate = null;
       } else {
         _endDate = picked;
@@ -143,7 +198,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Manual date/time validation
     if (_startDate == null || _startTime == null) {
       _snack('Please set a start date and time.');
       return;
@@ -190,10 +244,10 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
+    final bool isEditingMode = widget.existingName != null;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
@@ -202,13 +256,13 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Header ──
+            // Header adapts conditionally based on mode
             Container(
               width: double.infinity,
               color: _teal,
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
-                'NEW EVENT',
+                isEditingMode ? 'EDIT EVENT' : 'NEW EVENT',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.lora(
                   fontSize: 22,
@@ -219,7 +273,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
               ),
             ),
 
-            // ── Scrollable body ──
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -228,12 +281,9 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-
-                      // Banner image picker
                       _ImagePicker(file: _imageFile, onTap: _pickImage),
                       const SizedBox(height: 20),
 
-                      // Event name
                       _field(
                         controller: _nameController,
                         label: 'Event Name',
@@ -243,7 +293,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Start row
                       _SectionLabel(label: 'START', color: _teal),
                       const SizedBox(height: 8),
                       Row(children: [
@@ -265,7 +314,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ]),
                       const SizedBox(height: 14),
 
-                      // End row
                       _SectionLabel(label: 'END', color: _teal),
                       const SizedBox(height: 8),
                       Row(children: [
@@ -287,7 +335,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ]),
                       const SizedBox(height: 14),
 
-                      // Location
                       _field(
                         controller: _locationController,
                         label: 'Location',
@@ -297,7 +344,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Price
                       _field(
                         controller: _priceController,
                         label: 'Price (£)',
@@ -314,7 +360,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Optional description
                       _field(
                         controller: _descController,
                         label: 'Description (optional)',
@@ -323,9 +368,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Buttons
                       _ActionButton(
-                        label: _isSaving ? '' : 'CREATE EVENT',
+                        label: _isSaving ? '' : (isEditingMode ? 'SAVE CHANGES' : 'CREATE EVENT'),
                         color: _teal,
                         onPressed: _isSaving ? null : _save,
                         child: _isSaving
@@ -401,8 +445,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   }
 }
 
-// ── Small reusable sub-widgets ────────────────────────────────────────────────
-
+// (Keep all your small reusable sub-widgets exactly the same below)
 class _SectionLabel extends StatelessWidget {
   final String label;
   final Color color;
