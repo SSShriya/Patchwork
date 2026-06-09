@@ -1,6 +1,9 @@
 // lib/services/event_service.dart
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/event_card.dart';
 import 'supabase_client.dart';
 
@@ -81,6 +84,35 @@ class EventService {
         imageUrl: e['image_url'] ?? '',
       );
     }).toList();
+  }
+
+  static Future<void> uploadEventImage(File? imageFile, String eventId) async {
+    if(imageFile == null) return;
+
+    final String filePath = '$eventId/profile.jpg';
+
+    try {
+      await supabase.storage
+          .from('avatars')
+          .upload(
+            filePath,
+            imageFile,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      final String publicUrl = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+      await supabase
+          .from('events')
+          .update({'image_url': publicUrl})
+          .eq('event_id', eventId);
+    } on StorageException catch (e) {
+      throw Exception('Failed to upload profile picture: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error during profile picture upload: $e');
+    }
   }
 }
 
