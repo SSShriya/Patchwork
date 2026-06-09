@@ -60,10 +60,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: const Color(0XFF222222),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
           'Messages',
           style: TextStyle(
