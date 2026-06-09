@@ -7,6 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/profile_service.dart';
 import '../services/session_manager.dart';
 import '../models/useful_data.dart';
+import '../models/interest_data.dart';
+import '../services/interest_suggestion_service.dart';
+import '../widgets/interests_categories.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,7 +20,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _courseController = TextEditingController();
   final _bioController = TextEditingController();
@@ -118,25 +120,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (pickedFile != null) {
       setState(() => _imageFile = File(pickedFile.path));
     }
-  }
-
-  void _addInterest() {
-    final text = _interestInputController.text.trim().toLowerCase();
-    if (text.isEmpty) return;
-
-    if (_interests.length >= _maxInterests) {
-      _showError('You can add a maximum of $_maxInterests interests.');
-      return;
-    }
-    if (_interests.contains(text)) {
-      _showError('You\'ve already added "$text".');
-      return;
-    }
-
-    setState(() {
-      _interests.add(text);
-      _interestInputController.clear();
-    });
   }
 
   Future<void> _saveProfile() async {
@@ -533,66 +516,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Add things you enjoy - e.g. tennis',
+                        'Pick categories to explore interests',
                         style: TextStyle(fontSize: 13, color: Colors.grey),
                       ),
                       const SizedBox(height: 10),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _interestInputController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
+                      // Category chips — tap to open subcategory sheet
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: interestCategories.map((category) {
+                          return GestureDetector(
+                            onTap: () => _openCategorySheet(category),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1.5,
                                 ),
                               ),
-                              onFieldSubmitted: (_) => _addInterest(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: _addInterest,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0XFF84DCC6),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    category.emoji,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    category.name,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
                             ),
-                            child: const Icon(Icons.add, color: Colors.white),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: _interests.map((interest) {
-                          return Chip(
-                            label: Text(
-                              interest,
-                              style: const TextStyle(color: Colors.black87),
-                            ),
-                            backgroundColor: Colors.grey.shade200,
-                            deleteIcon: const Icon(
-                              Icons.cancel,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            onDeleted: () =>
-                                setState(() => _interests.remove(interest)),
                           );
                         }).toList(),
                       ),
+                      const SizedBox(height: 12),
+
+                      // Selected interest chips
+                      if (_interests.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children: _interests.map((interest) {
+                            return Chip(
+                              label: Text(
+                                interest,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              backgroundColor: Colors.grey.shade200,
+                              deleteIcon: const Icon(
+                                Icons.cancel,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              onDeleted: () =>
+                                  setState(() => _interests.remove(interest)),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                       const SizedBox(height: 16),
 
                       // ── Bio ──────────────────────────────────────────────────────────
@@ -673,6 +671,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+      ),
+    );
+  }
+
+  Future<void> _openCategorySheet(InterestCategory category) async {
+    // Fetch promoted interests before opening sheet
+    List<String> promotedInterests = [];
+    try {
+      promotedInterests = await fetchPromotedInterests(category.name);
+    } catch (_) {}
+
+    final allOptions = [
+      ...category.subcategories,
+      ...promotedInterests.where(
+        (p) => !category.subcategories
+            .map((s) => s.toLowerCase())
+            .contains(p.toLowerCase()),
+      ),
+    ];
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => CategorySheet(
+        category: category,
+        allOptions: allOptions,
+        promotedInterests: promotedInterests,
+        selectedInterests: _interests,
+        maxInterests: _maxInterests,
+        onToggle: (interest) {
+          final normalised = interest.toLowerCase();
+          setState(() {
+            if (_interests.contains(normalised)) {
+              _interests.remove(normalised);
+            } else if (_interests.length < _maxInterests) {
+              _interests.add(normalised);
+            } else {
+              _showError('Maximum of $_maxInterests interests reached.');
+            }
+          });
+        },
+        onCustomAdd: (text) async {
+          if (_interests.contains(text)) {
+            _showError('You\'ve already added "$text".');
+            return;
+          }
+          if (_interests.length >= _maxInterests) {
+            _showError('Maximum of $_maxInterests interests reached.');
+            return;
+          }
+          try {
+            await suggestInterest(interest: text, category: category.name);
+          } catch (_) {}
+          setState(() => _interests.add(text));
+        },
       ),
     );
   }
