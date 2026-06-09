@@ -67,7 +67,6 @@ class _DMScreenState extends State<DMScreen> {
       final List<_Message> freshMessages = fetchedMaps.map((row) {
         final senderId = row['sender_id'] as String;
         final content = row['content'] ?? '';
-        final createdAt = DateTime.parse(row['created_at']);
         final isInvite = content.startsWith('INVITATION_DATA:');
 
         return _Message(
