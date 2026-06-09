@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import '../screens/profile_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -48,15 +49,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isSignUpMode ? 'Account created!' : 'Welcome back!'),
-          ),
-        );
-        // StreamBuilder in main.dart reacts to auth change and routes automatically
       }
     } on AuthException catch (e) {
       if (mounted) _showErrorSnackBar(e.message);
@@ -124,12 +116,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const Expanded(
                           child: Text(
                             "Are you a CLUB/SOCIETY?",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                         TextButton(
                           onPressed: () {
-                            setState(() => _holdsEvents = true); 
+                            setState(() => _holdsEvents = true);
                             _nameController.clear();
                             _emailController.clear();
                             _passwordController.clear();
@@ -155,7 +150,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const SizedBox(width: 8),
                         TextButton(
                           onPressed: () {
-                            setState(() => _holdsEvents = false); 
+                            setState(() => _holdsEvents = false);
                             _nameController.clear();
                             _emailController.clear();
                             _passwordController.clear();
