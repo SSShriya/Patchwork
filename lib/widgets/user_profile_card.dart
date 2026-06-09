@@ -1,4 +1,3 @@
-import 'package:drp/services/conversation_service.dart';
 import 'package:drp/services/match_service.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
