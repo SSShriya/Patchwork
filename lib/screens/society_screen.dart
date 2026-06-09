@@ -126,9 +126,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
         ),
         ElevatedButton(
           onPressed: () async {
+            final nav = Navigator.of(context); // capture before await
             setState(() => _aboutController.text = tempController.text.trim());
             await updateSocDetails(id: societyId, about: _aboutController.text);
-            if (mounted) Navigator.pop(context);
+            nav.pop(); // safe — no BuildContext used after async gap
           },
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0XFF84DCC6)),
           child: const Text('Save', style: TextStyle(color: Colors.white)),
