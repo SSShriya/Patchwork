@@ -9,7 +9,7 @@ import '../widgets/user_profile_card.dart';
 
 class DMScreen extends StatefulWidget {
   final ChatConversation chat;
-  final bool suggestMeeting; 
+  final bool suggestMeeting;
 
   const DMScreen({super.key, required this.chat, this.suggestMeeting = false});
 
@@ -136,7 +136,9 @@ class _DMScreenState extends State<DMScreen> {
     );
 
     setState(() {
-      _messages.add(_Message(id: id, text: text, fromMe: true, createdAt: DateTime.now()));
+      _messages.add(
+        _Message(id: id, text: text, fromMe: true, createdAt: DateTime.now()),
+      );
     });
   }
 
@@ -174,6 +176,65 @@ class _DMScreenState extends State<DMScreen> {
       });
 
       _scrollToBottom();
+    }
+  }
+
+  void _editMeeting(int messageIndex) async {
+    final msg = _messages[messageIndex];
+    final String cleanData = msg.text.replaceFirst('INVITATION_DATA:', '');
+
+    String? existingDate;
+    String? existingTime;
+    String? existingLocation;
+
+    try {
+      final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
+      final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
+      final RegExp locRegex = RegExp(r'"location":"([^"]*)"');
+
+      if (dateRegex.hasMatch(cleanData)) {
+        existingDate = dateRegex.firstMatch(cleanData)!.group(1)!;
+      }
+      if (timeRegex.hasMatch(cleanData)) {
+        existingTime = timeRegex.firstMatch(cleanData)!.group(1)!;
+      }
+      if (locRegex.hasMatch(cleanData)) {
+        existingLocation = locRegex.firstMatch(cleanData)!.group(1)!;
+      }
+    } catch (_) {}
+
+    final result = await showDialog(
+      context: context,
+      builder: (context) => DMMeetingPopup(
+        initialDate: existingDate,
+        initialTime: existingTime,
+        initialLocation: existingLocation,
+      ),
+    );
+
+    if (result != null) {
+      final String updatedPayload =
+          "INVITATION_DATA:{"
+          "\"date\":\"${result['date']}\","
+          "\"time\":\"${result['time']}\","
+          "\"location\":\"${result['location'] ?? ''}\""
+          "}";
+
+      await _conversationService.updateInvitationContent(
+        msg.id,
+        updatedPayload,
+      );
+
+      setState(() {
+        _messages[messageIndex] = _Message(
+          createdAt: DateTime.now(),
+          id: msg.id,
+          text: updatedPayload,
+          fromMe: msg.fromMe,
+          isInvitation: true,
+          invitationStatus: null,
+        );
+      });
     }
   }
 
@@ -290,7 +351,7 @@ class _DMScreenState extends State<DMScreen> {
                       foregroundColor: Colors.white,
                       title: Text(card.title),
                     ),
-                    body: UserProfileCard(card: card, accepted: true,),
+                    body: UserProfileCard(card: card, accepted: true),
                   ),
                 ),
               );
@@ -581,6 +642,26 @@ class _DMScreenState extends State<DMScreen> {
                   const Divider(height: 16),
 
                   if (isPending) ...[
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () => _editMeeting(index),
+                        icon: const Icon(Icons.edit, size: 14),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0XFF8789C0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
                     if (!msg.fromMe) ...[
                       Row(
                         children: [
@@ -682,7 +763,8 @@ class _DMScreenState extends State<DMScreen> {
       final msg = _messages[i];
       final prev = i > 0 ? _messages[i - 1] : null;
 
-      final showDateHeader = prev == null ||
+      final showDateHeader =
+          prev == null ||
           formatGroupDate(prev.createdAt) != formatGroupDate(msg.createdAt);
 
       if (showDateHeader) {
@@ -729,7 +811,9 @@ class _DMScreenState extends State<DMScreen> {
                 // bubble
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: msg.fromMe
                         ? const Color(0XFF8789C0)
@@ -756,8 +840,7 @@ class _DMScreenState extends State<DMScreen> {
     return widgets;
   }
 
-
-  // helpers for timestamps 
+  // helpers for timestamps
   String formatGroupDate(DateTime dt) {
     final now = DateTime.now();
 
@@ -775,17 +858,27 @@ class _DMScreenState extends State<DMScreen> {
 
   String _month(int m) {
     const months = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return months[m - 1];
   }
 
   String formatTime(DateTime dt) {
-  final h = dt.hour.toString().padLeft(2, '0');
-  final m = dt.minute.toString().padLeft(2, '0');
-  return "$h:$m";
-}
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return "$h:$m";
+  }
 }
 
 class _Message {

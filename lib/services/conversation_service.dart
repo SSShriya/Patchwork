@@ -159,4 +159,19 @@ class ConversationService {
       debugPrint('updateInvitationStatus error: $e');
     }
   }
+
+  Future<void> updateInvitationContent(
+    String messageId,
+    String newContent,
+  ) async {
+    try {
+      await supabase
+          .from('messages')
+          .update({'content': newContent, 'invitation_status': null})
+          .eq('message_id', messageId);
+      debugPrint('updateInvitationContent successful');
+    } catch (e) {
+      debugPrint('updateInvitationContent error: $e');
+    }
+  }
 }

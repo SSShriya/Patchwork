@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class DMMeetingPopup extends StatefulWidget {
-  const DMMeetingPopup({super.key});
+  final String? initialDate;
+  final String? initialTime;
+  final String? initialLocation;
+
+  const DMMeetingPopup({
+    super.key,
+    this.initialDate,
+    this.initialTime,
+    this.initialLocation,
+  });
 
   @override
   State<DMMeetingPopup> createState() => _DMMeetingPopupState();
@@ -13,6 +22,26 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = DateTime.tryParse(widget.initialDate!);
+    }
+    if (widget.initialTime != null) {
+      final parts = widget.initialTime!.split(':');
+      if (parts.length == 2) {
+        _selectedTime = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 0,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+    }
+    if (widget.initialLocation != null) {
+      _locationController.text = widget.initialLocation!;
+    }
+  }
 
   @override
   void dispose() {
@@ -119,22 +148,36 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
               const SizedBox(height: 6),
               OutlinedButton.icon(
                 onPressed: _pickDate,
-                icon: const Icon(Icons.calendar_month, color: Color(0XFF8789C0)),
+                icon: const Icon(
+                  Icons.calendar_month,
+                  color: Color(0XFF8789C0),
+                ),
                 label: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     dateButtonText,
                     style: TextStyle(
-                      color: _selectedDate != null ? const Color(0XFF222222) : Colors.grey[600],
-                      fontWeight: _selectedDate != null ? FontWeight.w500 : FontWeight.normal,
+                      color: _selectedDate != null
+                          ? const Color(0XFF222222)
+                          : Colors.grey[600],
+                      fontWeight: _selectedDate != null
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   side: BorderSide(
-                    color: _selectedDate != null ? Colors.grey[400]! : const Color(0XFF8789C0).withValues(alpha: 0.5),
+                    color: _selectedDate != null
+                        ? Colors.grey[400]!
+                        : const Color(0XFF8789C0).withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -148,22 +191,36 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
               const SizedBox(height: 6),
               OutlinedButton.icon(
                 onPressed: _pickTime,
-                icon: const Icon(Icons.access_time_filled, color: Color(0XFF8789C0)),
+                icon: const Icon(
+                  Icons.access_time_filled,
+                  color: Color(0XFF8789C0),
+                ),
                 label: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     timeButtonText,
                     style: TextStyle(
-                      color: _selectedTime != null ? const Color(0XFF222222) : Colors.grey[600],
-                      fontWeight: _selectedTime != null ? FontWeight.w500 : FontWeight.normal,
+                      color: _selectedTime != null
+                          ? const Color(0XFF222222)
+                          : Colors.grey[600],
+                      fontWeight: _selectedTime != null
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   side: BorderSide(
-                    color: _selectedTime != null ? Colors.grey[400]! : const Color(0XFF8789C0).withValues(alpha: 0.5),
+                    color: _selectedTime != null
+                        ? Colors.grey[400]!
+                        : const Color(0XFF8789C0).withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -179,8 +236,13 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                 controller: _locationController,
                 decoration: InputDecoration(
                   hintText: 'Enter a venue or postcode...',
-                  prefixIcon: const Icon(Icons.location_on, color: Color(0XFF8789C0)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  prefixIcon: const Icon(
+                    Icons.location_on,
+                    color: Color(0XFF8789C0),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -190,10 +252,16 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   // Dynamic color tuning based on complete status
-                  backgroundColor: isFormValid ? const Color(0XFF8789C0) : Colors.grey[300],
-                  foregroundColor: isFormValid ? Colors.white : Colors.grey[600],
+                  backgroundColor: isFormValid
+                      ? const Color(0XFF8789C0)
+                      : Colors.grey[300],
+                  foregroundColor: isFormValid
+                      ? Colors.white
+                      : Colors.grey[600],
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   elevation: isFormValid ? 2 : 0,
                 ),
                 onPressed: () {
@@ -205,7 +273,9 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                           children: [
                             Icon(Icons.error_outline, color: Colors.white),
                             SizedBox(width: 10),
-                            Text('Please select both a Date and Time to continue.'),
+                            Text(
+                              'Please select both a Date and Time to continue.',
+                            ),
                           ],
                         ),
                         backgroundColor: Colors.red[700],
@@ -217,7 +287,9 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                   }
 
                   // Safe formatting execution block
-                  final String finalDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
+                  final String finalDate = DateFormat(
+                    'yyyy-MM-dd',
+                  ).format(_selectedDate!);
                   final String finalTime = _selectedTime!.format(context);
 
                   Navigator.pop(context, {
@@ -226,7 +298,15 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                     'location': _locationController.text.trim(),
                   });
                 },
-                child: const Text('Send Invitation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(
+                  widget.initialDate != null
+                      ? 'Update Invitation'
+                      : 'Send Invitation',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
