@@ -163,11 +163,16 @@ class ConversationService {
   Future<void> updateInvitationContent(
     String messageId,
     String newContent,
+    String editedBy,
   ) async {
     try {
       await supabase
           .from('messages')
-          .update({'content': newContent, 'invitation_status': null})
+          .update({
+            'content': newContent,
+            'invitation_status': null,
+            'last_edited_by': editedBy,
+          })
           .eq('message_id', messageId);
       debugPrint('updateInvitationContent successful');
     } catch (e) {

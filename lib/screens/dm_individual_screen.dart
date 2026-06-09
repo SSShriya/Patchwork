@@ -84,6 +84,7 @@ class _DMScreenState extends State<DMScreen> {
           invitationStatus: isInvite
               ? (row['invitation_status'] as bool?)
               : null,
+          lastEditedBy: row['last_edited_by'] as String?,
         );
       }).toList();
 
@@ -223,6 +224,7 @@ class _DMScreenState extends State<DMScreen> {
       await _conversationService.updateInvitationContent(
         msg.id,
         updatedPayload,
+        myUserId,
       );
 
       setState(() {
@@ -233,6 +235,7 @@ class _DMScreenState extends State<DMScreen> {
           fromMe: msg.fromMe,
           isInvitation: true,
           invitationStatus: null,
+          lastEditedBy: myUserId,
         );
       });
     }
@@ -546,6 +549,11 @@ class _DMScreenState extends State<DMScreen> {
     String extractedTime = "Not specified";
     String extractedLoc = "Not specified";
 
+    final bool lastEditedByMe = msg.lastEditedBy == myUserId;
+    final bool originalReceiver = !msg.fromMe && msg.lastEditedBy == null;
+    final bool shouldShowButtons =
+        !lastEditedByMe && (msg.lastEditedBy != null || originalReceiver);
+
     try {
       final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
       final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
@@ -662,7 +670,7 @@ class _DMScreenState extends State<DMScreen> {
                     ),
                     const SizedBox(height: 4),
 
-                    if (!msg.fromMe) ...[
+                    if (shouldShowButtons) ...[
                       Row(
                         children: [
                           Expanded(
@@ -887,6 +895,7 @@ class _Message {
   final bool fromMe;
   final bool isInvitation;
   final DateTime createdAt;
+  final String? lastEditedBy;
   bool? invitationStatus;
 
   _Message({
@@ -896,5 +905,6 @@ class _Message {
     required this.createdAt,
     this.isInvitation = false,
     this.invitationStatus,
+    this.lastEditedBy,
   });
 }
