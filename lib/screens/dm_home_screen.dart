@@ -68,12 +68,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
             fontSize: 22,
           ),
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.refresh, color: Colors.black, size: 28),
-        //     onPressed: _loadConversations,
-        //   ),
-        // ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
