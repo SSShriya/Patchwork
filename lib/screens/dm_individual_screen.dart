@@ -67,12 +67,14 @@ class _DMScreenState extends State<DMScreen> {
       final List<_Message> freshMessages = fetchedMaps.map((row) {
         final senderId = row['sender_id'] as String;
         final content = row['content'] ?? '';
+        final createdAt = DateTime.parse(row['created_at']);
         final isInvite = content.startsWith('INVITATION_DATA:');
 
         return _Message(
           id: row['message_id']?.toString() ?? '',
           text: content,
           fromMe: senderId == myUserId,
+          createdAt: DateTime.parse(row['created_at']),
           isInvitation: isInvite,
           invitationStatus: isInvite
               ? (row['invitation_status'] as bool?)
@@ -129,7 +131,7 @@ class _DMScreenState extends State<DMScreen> {
     );
 
     setState(() {
-      _messages.add(_Message(id: id, text: text, fromMe: true));
+      _messages.add(_Message(id: id, text: text, fromMe: true, createdAt: DateTime.now()));
     });
   }
 
@@ -161,6 +163,7 @@ class _DMScreenState extends State<DMScreen> {
             fromMe: true,
             isInvitation: true,
             invitationStatus: null,
+            createdAt: DateTime.now(),
           ),
         );
       });
@@ -415,59 +418,7 @@ class _DMScreenState extends State<DMScreen> {
                           ),
 
                           // Messages
-                          ...List.generate(_messages.length, (index) {
-                            final msg = _messages[index];
-                            if (msg.isInvitation) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: _buildInvitationBox(msg, index),
-                              );
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              child: Align(
-                                alignment: msg.fromMe
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 4),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: msg.fromMe
-                                        ? const Color(0XFF8789C0)
-                                        : Colors.grey.shade200,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(16),
-                                      topRight: const Radius.circular(16),
-                                      bottomLeft: Radius.circular(
-                                        msg.fromMe ? 16 : 0,
-                                      ),
-                                      bottomRight: Radius.circular(
-                                        msg.fromMe ? 0 : 16,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    msg.text,
-                                    style: TextStyle(
-                                      color: msg.fromMe
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
+                          ...buildGroupedMessages(),
                         ],
                       ),
                     ),
@@ -718,6 +669,118 @@ class _DMScreenState extends State<DMScreen> {
       ),
     );
   }
+
+  List<Widget> buildGroupedMessages() {
+    final widgets = <Widget>[];
+
+    for (int i = 0; i < _messages.length; i++) {
+      final msg = _messages[i];
+      final prev = i > 0 ? _messages[i - 1] : null;
+
+      final showDateHeader = prev == null ||
+          formatGroupDate(prev.createdAt) != formatGroupDate(msg.createdAt);
+
+      if (showDateHeader) {
+        widgets.add(
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                formatGroupDate(msg.createdAt),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+              ),
+            ),
+          ),
+        );
+      }
+
+      if (msg.isInvitation) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: _buildInvitationBox(msg, i),
+          ),
+        );
+        continue;
+      }
+
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Align(
+            alignment: msg.fromMe
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: msg.fromMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              children: [
+                // bubble
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: msg.fromMe
+                        ? const Color(0XFF8789C0)
+                        : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(msg.text),
+                ),
+
+                const SizedBox(height: 2),
+
+                // timestamp
+                Text(
+                  formatTime(msg.createdAt),
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+
+  // helpers for timestamps 
+  String formatGroupDate(DateTime dt) {
+    final now = DateTime.now();
+
+    bool isSameDay(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month && a.day == b.day;
+
+    if (isSameDay(dt, now)) return "Today";
+    if (isSameDay(dt, now.subtract(const Duration(days: 1)))) {
+      return "Yesterday";
+    }
+
+    return "${dt.day.toString().padLeft(2, '0')} "
+        "${_month(dt.month)} ${dt.year}";
+  }
+
+  String _month(int m) {
+    const months = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+    return months[m - 1];
+  }
+
+  String formatTime(DateTime dt) {
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  return "$h:$m";
+}
 }
 
 class _Message {
@@ -725,12 +788,14 @@ class _Message {
   final String text;
   final bool fromMe;
   final bool isInvitation;
+  final DateTime createdAt;
   bool? invitationStatus;
 
   _Message({
     required this.id,
     required this.text,
     required this.fromMe,
+    required this.createdAt,
     this.isInvitation = false,
     this.invitationStatus,
   });
