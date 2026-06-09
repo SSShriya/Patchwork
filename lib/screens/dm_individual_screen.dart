@@ -6,6 +6,7 @@ import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';
 import '../services/conversation_service.dart';
 import '../widgets/user_profile_card.dart';
+import 'package:intl/intl.dart';
 
 class DMScreen extends StatefulWidget {
   final ChatConversation chat;
@@ -25,6 +26,7 @@ class _DMScreenState extends State<DMScreen> {
   bool _isLoading = true;
   bool _isReady = false;
   late final ScrollController _scrollController;
+  final List<GlobalKey> _messageKeys = [];
 
   // 2. Reference link tracker for the periodic interval hook
   Timer? _pollingTimer;
@@ -38,6 +40,19 @@ class _DMScreenState extends State<DMScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _suggestMeeting();
       });
+    }
+  }
+
+  void _scrollToMessage(int index) {
+    final key = _messageKeys[index];
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.3,
+      );
     }
   }
 
@@ -103,6 +118,13 @@ class _DMScreenState extends State<DMScreen> {
         setState(() {
           _messages = freshMessages;
           _isLoading = false;
+
+          while (_messageKeys.length < _messages.length) {
+            _messageKeys.add(GlobalKey());
+          }
+          while (_messageKeys.length > _messages.length) {
+            _messageKeys.removeLast();
+          }
         });
 
         // Only move focus down if forced or when a novel string entry appears
@@ -140,6 +162,7 @@ class _DMScreenState extends State<DMScreen> {
       _messages.add(
         _Message(id: id, text: text, fromMe: true, createdAt: DateTime.now()),
       );
+      _messageKeys.add(GlobalKey());
     });
   }
 
@@ -174,6 +197,7 @@ class _DMScreenState extends State<DMScreen> {
             createdAt: DateTime.now(),
           ),
         );
+        _messageKeys.add(GlobalKey());
       });
 
       _scrollToBottom();
@@ -402,6 +426,8 @@ class _DMScreenState extends State<DMScreen> {
                 duration: const Duration(milliseconds: 150),
                 child: Column(
                   children: [
+                    _buildPinnedInviteBanner(),
+
                     Expanded(
                       child: ListView(
                         controller: _scrollController,
@@ -486,8 +512,65 @@ class _DMScreenState extends State<DMScreen> {
                             ),
                           ),
 
-                          // Messages
-                          ...buildGroupedMessages(),
+                          ...List.generate(_messages.length, (index) {
+                            final msg = _messages[index];
+                            if (msg.isInvitation) {
+                              return KeyedSubtree(
+                                key: _messageKeys[index],
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: _buildInvitationBox(msg, index),
+                                ),
+                              );
+                            }
+                            return KeyedSubtree(
+                              key: _messageKeys[index],
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                child: Align(
+                                  alignment: msg.fromMe
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: msg.fromMe
+                                          ? const Color(0XFF8789C0)
+                                          : Colors.grey.shade200,
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: const Radius.circular(16),
+                                        topRight: const Radius.circular(16),
+                                        bottomLeft: Radius.circular(
+                                          msg.fromMe ? 16 : 0,
+                                        ),
+                                        bottomRight: Radius.circular(
+                                          msg.fromMe ? 0 : 16,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      msg.text,
+                                      style: TextStyle(
+                                        color: msg.fromMe
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -848,6 +931,101 @@ class _DMScreenState extends State<DMScreen> {
     return widgets;
   }
 
+  Widget _buildPinnedInviteBanner() {
+    final inviteIndex = _messages.lastIndexWhere(
+      (m) => m.isInvitation && m.invitationStatus != false,
+    );
+    if (inviteIndex == -1) return const SizedBox.shrink();
+
+    final msg = _messages[inviteIndex];
+    final String cleanData = msg.text.replaceFirst('INVITATION_DATA:', '');
+
+    String extractedDate = "Not specified";
+    String extractedTime = "Not specified";
+
+    try {
+      final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
+      final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
+      if (dateRegex.hasMatch(cleanData)) {
+        extractedDate = dateRegex.firstMatch(cleanData)!.group(1)!;
+      }
+      if (timeRegex.hasMatch(cleanData)) {
+        extractedTime = timeRegex.firstMatch(cleanData)!.group(1)!;
+      }
+    } catch (_) {}
+
+    String statusText = 'Pending';
+    Color statusColor = Colors.orange;
+    if (msg.invitationStatus == true) {
+      statusText = 'Accepted ✓';
+      statusColor = const Color(0XFF409A83);
+    } else if (msg.invitationStatus == false) {
+      statusText = 'Declined ✕';
+      statusColor = Colors.red;
+    }
+
+    return GestureDetector(
+      onTap: () => _scrollToMessage(inviteIndex),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0XFF8789C0).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0XFF8789C0).withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.push_pin, size: 16, color: Color(0XFF8789C0)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Pinned Meeting',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0XFF8789C0),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '📅 ${_formatDate(extractedDate)}  ⏰ $extractedTime',
+                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
   // helpers for timestamps
   String formatGroupDate(DateTime dt) {
     final now = DateTime.now();
@@ -886,6 +1064,17 @@ class _DMScreenState extends State<DMScreen> {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return "$h:$m";
+  }
+
+  String _formatDate(String rawDate) {
+    try {
+      final parsed = DateTime.parse(rawDate);
+      return DateFormat(
+        'EEE, MMM d yyyy',
+      ).format(parsed); // e.g. Tue, Jun 16 2026
+    } catch (_) {
+      return rawDate; // fallback to raw if parsing fails
+    }
   }
 }
 
