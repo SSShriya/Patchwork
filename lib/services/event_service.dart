@@ -18,8 +18,18 @@ class EventService {
           'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url)',
         )
         .eq('user_id', currentUserId);
+    
+    final today = DateTime.now();
+    final validRows = (rows as List)
+      .where((r) {
+        if (r['events'] == null) return false;
+        final e = r['events'] as Map<String, dynamic>;
+        final endDay = DateTime.tryParse(e['end_day'] ?? '');
+        return endDay != null && endDay.isAfter(today);
+      })
+      .toList();
 
-    final eventIds = (rows as List)
+    final eventIds = validRows
         .map((r) => (r['events'] as Map<String, dynamic>)['event_id'] as String)
         .toList();
 
@@ -42,7 +52,7 @@ class EventService {
     }
 
     // build EventCards using the count map
-    return rows.map((row) {
+    return validRows.map((row) {
       final e = row['events'] as Map<String, dynamic>;
       final eventId = e['event_id'] as String;
 
@@ -64,7 +74,7 @@ class EventService {
 
   Future<List<EventCard>> getAllEvents() async {
     final rows = await supabase
-        .from('events')
+        .from('active_events')
         .select(
           'event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url',
         );
