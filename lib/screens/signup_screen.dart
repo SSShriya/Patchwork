@@ -115,7 +115,73 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
+
                   const SizedBox(height: 32),
+
+                  if (_isSignUpMode) ...[
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            "Are you a CLUB/SOCIETY?",
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() => _holdsEvents = true); 
+                            _nameController.clear();
+                            _emailController.clear();
+                            _passwordController.clear();
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: _holdsEvents
+                                ? const Color(0XFF84DCC6)
+                                : Colors.grey.shade100,
+                            foregroundColor: _holdsEvents
+                                ? Colors.white
+                                : Colors.black87,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: _holdsEvents
+                                    ? const Color(0XFF84DCC6)
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                          ),
+                          child: const Text("Yes"),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            setState(() => _holdsEvents = false); 
+                            _nameController.clear();
+                            _emailController.clear();
+                            _passwordController.clear();
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: !_holdsEvents
+                                ? const Color.fromARGB(255, 238, 48, 48)
+                                : Colors.grey.shade100,
+                            foregroundColor: !_holdsEvents
+                                ? Colors.white
+                                : Colors.black87,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: !_holdsEvents
+                                    ? Colors.grey.shade700
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                          ),
+                          child: const Text("No"),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   if (_isSignUpMode)
                     TextFormField(
@@ -123,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       keyboardType: TextInputType.name,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'Name',
+                        labelText: _holdsEvents ? 'Society Name' : 'Your Name',
                         prefixIcon: const Icon(Icons.person),
                         filled: true,
                         fillColor: Colors.grey.shade100,
@@ -210,61 +276,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
-
-                  if (_isSignUpMode) ...[
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            "Are you signing up as a CLUB/SOCIETY?",
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => setState(() => _holdsEvents = true),
-                          style: TextButton.styleFrom(
-                            backgroundColor: _holdsEvents
-                                ? const Color(0XFF84DCC6)
-                                : Colors.grey.shade100,
-                            foregroundColor: _holdsEvents
-                                ? Colors.white
-                                : Colors.black87,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: _holdsEvents
-                                    ? const Color(0XFF84DCC6)
-                                    : Colors.grey.shade300,
-                              ),
-                            ),
-                          ),
-                          child: const Text("Yes"),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () => setState(() => _holdsEvents = false),
-                          style: TextButton.styleFrom(
-                            backgroundColor: !_holdsEvents
-                                ? const Color.fromARGB(255, 238, 48, 48)
-                                : Colors.grey.shade100,
-                            foregroundColor: !_holdsEvents
-                                ? Colors.white
-                                : Colors.black87,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(
-                                color: !_holdsEvents
-                                    ? Colors.grey.shade700
-                                    : Colors.grey.shade300,
-                              ),
-                            ),
-                          ),
-                          child: const Text("No"),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
 
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleSubmit,
