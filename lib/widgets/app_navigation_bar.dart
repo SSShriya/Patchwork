@@ -1,4 +1,4 @@
-import 'package:drp/screens/events_screen.dart';
+/*import 'package:drp/screens/events_screen.dart';
 import 'package:drp/screens/profile_screen.dart';
 import 'package:drp/screens/home_screen.dart';
 import 'package:flutter/material.dart';
@@ -66,3 +66,4 @@ class AppNavigationBar extends StatelessWidget {
     );
   }
 }
+*/

@@ -1,4 +1,3 @@
-import 'package:drp/screens/events_screen.dart';
 import 'package:drp/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 
@@ -48,7 +47,7 @@ class EventRegisteredPopup extends StatelessWidget {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const EventsScreen()),
+                  MaterialPageRoute(builder: (context) => const MainShell(initialIndex: 1)),
                 );
               },
               style: TextButton.styleFrom(
