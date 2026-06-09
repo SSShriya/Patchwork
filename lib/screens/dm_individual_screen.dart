@@ -3,10 +3,96 @@ import 'package:drp/services/utils.dart';
 import 'package:drp/widgets/dm_meeting_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
+import 'package:intl/intl.dart';
 import '../models/match_convo.dart';
 import '../services/conversation_service.dart';
 import '../widgets/user_profile_card.dart';
-import 'package:intl/intl.dart';
+
+// ─────────────────────────────────────────────
+// Data model
+// ─────────────────────────────────────────────
+
+class _Message {
+  final String id;
+  final String text;
+  final bool fromMe;
+  final bool isInvitation;
+  final DateTime createdAt;
+  final String? lastEditedBy;
+  bool? invitationStatus;
+
+  _Message({
+    required this.id,
+    required this.text,
+    required this.fromMe,
+    required this.createdAt,
+    this.isInvitation = false,
+    this.invitationStatus,
+    this.lastEditedBy,
+  });
+}
+
+// ─────────────────────────────────────────────
+// Tracked message widget
+// Records its global Y offset once rendered so
+// we can scroll to it even when off-screen.
+// ─────────────────────────────────────────────
+
+class _TrackedMessage extends StatefulWidget {
+  final GlobalKey messageKey;
+  final Widget child;
+  final void Function(double globalY) onOffset;
+
+  const _TrackedMessage({
+    required this.messageKey,
+    required this.child,
+    required this.onOffset,
+  });
+
+  @override
+  State<_TrackedMessage> createState() => _TrackedMessageState();
+}
+
+class _TrackedMessageState extends State<_TrackedMessage> {
+  void _recordOffset() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = context.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) return;
+
+      final scrollable = Scrollable.of(context);
+      final viewportBox = scrollable.context.findRenderObject() as RenderBox?;
+      if (viewportBox == null) return;
+
+      final offsetInViewport = box
+          .localToGlobal(Offset.zero, ancestor: viewportBox)
+          .dy;
+      final scrollOffset = scrollable.position.pixels + offsetInViewport;
+
+      widget.onOffset(scrollOffset);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _recordOffset();
+  }
+
+  @override
+  void didUpdateWidget(_TrackedMessage old) {
+    super.didUpdateWidget(old);
+    _recordOffset(); // Re-record if widget was rebuilt in place
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      KeyedSubtree(key: widget.messageKey, child: widget.child);
+}
+
+// ─────────────────────────────────────────────
+// Screen
+// ─────────────────────────────────────────────
 
 class DMScreen extends StatefulWidget {
   final ChatConversation chat;
@@ -19,141 +105,214 @@ class DMScreen extends StatefulWidget {
 }
 
 class _DMScreenState extends State<DMScreen> {
-  final TextEditingController _controller = TextEditingController();
-  final ConversationService _conversationService = ConversationService();
-  late final String myUserId; // initialized in loadMessages()
+  // ── Controllers & services ──────────────────
+  final _textController = TextEditingController();
+  final _scrollController = ScrollController();
+  final _conversationService = ConversationService();
+
+  // ── State ───────────────────────────────────
+  late final String _myUserId;
   List<_Message> _messages = [];
+  final List<GlobalKey> _messageKeys = [];
   bool _isLoading = true;
   bool _isReady = false;
-  late final ScrollController _scrollController;
-  final List<GlobalKey> _messageKeys = [];
-
-  // 2. Reference link tracker for the periodic interval hook
   Timer? _pollingTimer;
+
+  // ── Constants ───────────────────────────────
+  static const _primaryColor = Color(0xFF8789C0);
+  static const _accentColor = Color(0xFF84DCC6);
+  static const _accentDark = Color(0xFF409A83);
+  static const _invitePrefix = 'INVITATION_DATA:';
+
+  // ── Lifecycle ───────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
     _initChatAndStartPolling();
     if (widget.suggestMeeting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _suggestMeeting();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _suggestMeeting());
     }
   }
 
-  void _scrollToMessage(int index) {
-    final key = _messageKeys[index];
-    final context = key.currentContext;
-    if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-        alignment: 0.3,
-      );
-    }
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  // 3. Setup sequential initialization: get userId background values, pull historical UI data, then spin loop
+  // ── Initialisation ──────────────────────────
+
   Future<void> _initChatAndStartPolling() async {
-    myUserId = await loadUserId();
-    // Immediate initial sync pull
+    _myUserId = await loadUserId();
     await _loadMessages(forceScroll: true);
-
-    // Periodically execution block firing precisely down to 1-second ticks
-    _pollingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _loadMessages(forceScroll: false);
-    });
+    _pollingTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _loadMessages(),
+    );
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
-      if (!_isReady) setState(() => _isReady = true);
-    });
-  }
+  // ── Data loading ────────────────────────────
 
-  // 4. Enhanced database sync mechanism tracking length updates to conditionally slide screen focus
   Future<void> _loadMessages({bool forceScroll = false}) async {
     try {
-      final fetchedMaps = await _conversationService.getMessages(
-        myUserId,
+      final rows = await _conversationService.getMessages(
+        _myUserId,
         widget.chat.otherUserId,
       );
 
-      final List<_Message> freshMessages = fetchedMaps.map((row) {
-        final senderId = row['sender_id'] as String;
-        final content = row['content'] ?? '';
-        final isInvite = content.startsWith('INVITATION_DATA:');
-
+      final fresh = rows.map((row) {
+        final content = (row['content'] ?? '') as String;
+        final isInvite = content.startsWith(_invitePrefix);
         return _Message(
           id: row['message_id']?.toString() ?? '',
           text: content,
-          fromMe: senderId == myUserId,
-          createdAt: DateTime.parse(row['created_at']),
+          fromMe: row['sender_id'] == _myUserId,
+          createdAt: DateTime.parse(row['created_at'] as String),
           isInvitation: isInvite,
-          invitationStatus: isInvite
-              ? (row['invitation_status'] as bool?)
-              : null,
+          invitationStatus: isInvite ? row['invitation_status'] as bool? : null,
           lastEditedBy: row['last_edited_by'] as String?,
         );
       }).toList();
 
-      // Check if data metrics changed before updating visual element arrays
-      final bool hasNewMessages =
-          freshMessages.length != _messages.length ||
-          freshMessages.any((fresh) {
+      final hasChanges =
+          fresh.length != _messages.length ||
+          fresh.any((f) {
             final existing = _messages.firstWhere(
-              (m) => m.id == fresh.id,
-              orElse: () => fresh,
+              (m) => m.id == f.id,
+              orElse: () => f,
             );
-            return existing.invitationStatus != fresh.invitationStatus;
+            return existing.invitationStatus != f.invitationStatus;
           });
 
-      if (mounted) {
-        setState(() {
-          _messages = freshMessages;
-          _isLoading = false;
+      if (!mounted) return;
 
-          while (_messageKeys.length < _messages.length) {
-            _messageKeys.add(GlobalKey());
-          }
-          while (_messageKeys.length > _messages.length) {
-            _messageKeys.removeLast();
-          }
-        });
+      setState(() {
+        _messages = fresh;
+        _isLoading = false;
 
-        // Only move focus down if forced or when a novel string entry appears
-        if (forceScroll || hasNewMessages) {
-          _scrollToBottom();
-        } else if (!_isReady) {
-          setState(() => _isReady = true);
+        while (_messageKeys.length < _messages.length) {
+          _messageKeys.add(GlobalKey());
         }
+        while (_messageKeys.length > _messages.length) {
+          _messageKeys.removeLast();
+        }
+      });
+
+      if (forceScroll || hasChanges) {
+        _scrollToBottom();
+      } else if (!_isReady) {
+        setState(() => _isReady = true);
       }
     } catch (e) {
+      debugPrint('_loadMessages error: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
           _isReady = true;
         });
       }
-      debugPrint("Error fetching messages: $e");
     }
   }
 
-  void _send() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
+  // ── Scrolling ───────────────────────────────
 
-    _controller.clear();
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+      if (!_isReady && mounted) setState(() => _isReady = true);
+    });
+  }
+
+  void _scrollToMessage(int index) {
+    if (index < 0 || index >= _messageKeys.length) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      // Path 1: widget is mounted — ensureVisible handles it precisely
+      final ctx = _messageKeys[index].currentContext;
+      if (ctx != null) {
+        await Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.3,
+        );
+        return;
+      }
+
+      // Path 2: widget is off-screen — jump to proportional estimate
+      // to force it to mount, then ensureVisible corrects the position
+      final estimated =
+          (index / _messages.length) *
+          _scrollController.position.maxScrollExtent;
+
+      _scrollController.jumpTo(
+        estimated.clamp(
+          _scrollController.position.minScrollExtent,
+          _scrollController.position.maxScrollExtent,
+        ),
+      );
+
+      // Wait two frames for layout and paint to complete
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+
+      final mountedCtx = _messageKeys[index].currentContext;
+      if (mountedCtx != null) {
+        await Scrollable.ensureVisible(
+          mountedCtx,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.3,
+        );
+      }
+    });
+  }
+
+  // ── Invitation payload helpers ───────────────
+
+  /// Builds the raw INVITATION_DATA string from a result map.
+  String _buildInvitePayload(Map result) =>
+      '$_invitePrefix{'
+      '"date":"${result['date']}",'
+      '"time":"${result['time']}",'
+      '"location":"${result['location'] ?? ''}"'
+      '}';
+
+  /// Extracts date/time/location strings from a raw invite payload.
+  ({String date, String time, String location}) _parseInvitePayload(
+    String text,
+  ) {
+    final data = text.replaceFirst(_invitePrefix, '');
+    String pick(RegExp re) {
+      final m = re.firstMatch(data);
+      return m != null ? m.group(1)! : 'Not specified';
+    }
+
+    final loc = pick(RegExp(r'"location":"([^"]*)"'));
+    return (
+      date: pick(RegExp(r'"date":"([^"]+)"')),
+      time: pick(RegExp(r'"time":"([^"]+)"')),
+      location: loc.isEmpty ? 'Not specified' : loc,
+    );
+  }
+
+  // ── Actions ─────────────────────────────────
+
+  void _send() async {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+    _textController.clear();
 
     final id = await _conversationService.recordMessage(
       text,
-      myUserId,
+      _myUserId,
       widget.chat.otherUserId,
     );
 
@@ -167,133 +326,82 @@ class _DMScreenState extends State<DMScreen> {
   }
 
   void _suggestMeeting() async {
-    final result = await showDialog(
+    final result = await showDialog<Map>(
       context: context,
-      builder: (context) => const DMMeetingPopup(),
+      builder: (_) => const DMMeetingPopup(),
     );
+    if (result == null) return;
 
-    if (result != null) {
-      final String rawInvitePayload =
-          "INVITATION_DATA:{"
-          "\"date\":\"${result['date']}\","
-          "\"time\":\"${result['time']}\","
-          "\"location\":\"${result['location'] ?? ''}\""
-          "}";
-
-      final id = await _conversationService.recordMessage(
-        rawInvitePayload,
-        myUserId,
-        widget.chat.otherUserId,
-      );
-
-      setState(() {
-        _messages.add(
-          _Message(
-            id: id,
-            text: rawInvitePayload,
-            fromMe: true,
-            isInvitation: true,
-            invitationStatus: null,
-            createdAt: DateTime.now(),
-          ),
-        );
-        _messageKeys.add(GlobalKey());
-      });
-
-      _scrollToBottom();
-    }
-  }
-
-  void _editMeeting(int messageIndex) async {
-    final msg = _messages[messageIndex];
-    final String cleanData = msg.text.replaceFirst('INVITATION_DATA:', '');
-
-    String? existingDate;
-    String? existingTime;
-    String? existingLocation;
-
-    try {
-      final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
-      final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
-      final RegExp locRegex = RegExp(r'"location":"([^"]*)"');
-
-      if (dateRegex.hasMatch(cleanData)) {
-        existingDate = dateRegex.firstMatch(cleanData)!.group(1)!;
-      }
-      if (timeRegex.hasMatch(cleanData)) {
-        existingTime = timeRegex.firstMatch(cleanData)!.group(1)!;
-      }
-      if (locRegex.hasMatch(cleanData)) {
-        existingLocation = locRegex.firstMatch(cleanData)!.group(1)!;
-      }
-    } catch (_) {}
-
-    final result = await showDialog(
-      context: context,
-      builder: (context) => DMMeetingPopup(
-        initialDate: existingDate,
-        initialTime: existingTime,
-        initialLocation: existingLocation,
-      ),
-    );
-
-    if (result != null) {
-      final String updatedPayload =
-          "INVITATION_DATA:{"
-          "\"date\":\"${result['date']}\","
-          "\"time\":\"${result['time']}\","
-          "\"location\":\"${result['location'] ?? ''}\""
-          "}";
-
-      await _conversationService.updateInvitationContent(
-        msg.id,
-        updatedPayload,
-        myUserId,
-      );
-
-      setState(() {
-        _messages[messageIndex] = _Message(
-          createdAt: DateTime.now(),
-          id: msg.id,
-          text: updatedPayload,
-          fromMe: msg.fromMe,
-          isInvitation: true,
-          invitationStatus: null,
-          lastEditedBy: myUserId,
-        );
-      });
-    }
-  }
-
-  void _handleInvitationResponse(int messageIndex, bool accepted) async {
-    final id = _messages[messageIndex].id;
-
-    debugPrint(
-      'Handling response: index=$messageIndex id=$id status=$accepted',
+    final payload = _buildInvitePayload(result);
+    final id = await _conversationService.recordMessage(
+      payload,
+      _myUserId,
+      widget.chat.otherUserId,
     );
 
     setState(() {
-      _messages[messageIndex].invitationStatus = accepted;
+      _messages.add(
+        _Message(
+          id: id,
+          text: payload,
+          fromMe: true,
+          isInvitation: true,
+          createdAt: DateTime.now(),
+        ),
+      );
+      _messageKeys.add(GlobalKey());
     });
+    _scrollToBottom();
+  }
 
+  void _editMeeting(int index) async {
+    final msg = _messages[index];
+    final parsed = _parseInvitePayload(msg.text);
+
+    final result = await showDialog<Map>(
+      context: context,
+      builder: (_) => DMMeetingPopup(
+        initialDate: parsed.date == 'Not specified' ? null : parsed.date,
+        initialTime: parsed.time == 'Not specified' ? null : parsed.time,
+        initialLocation: parsed.location == 'Not specified'
+            ? null
+            : parsed.location,
+      ),
+    );
+    if (result == null) return;
+
+    final payload = _buildInvitePayload(result);
+    await _conversationService.updateInvitationContent(
+      msg.id,
+      payload,
+      _myUserId,
+    );
+
+    setState(() {
+      _messages[index] = _Message(
+        id: msg.id,
+        text: payload,
+        fromMe: msg.fromMe,
+        isInvitation: true,
+        createdAt: DateTime.now(),
+        lastEditedBy: _myUserId,
+      );
+    });
+  }
+
+  void _handleInvitationResponse(int index, bool accepted) async {
+    setState(() => _messages[index].invitationStatus = accepted);
     try {
-      await _conversationService.updateInvitationStatus(id, accepted);
-      debugPrint('Response handled successfully');
+      await _conversationService.updateInvitationStatus(
+        _messages[index].id,
+        accepted,
+      );
     } catch (e) {
       debugPrint('_handleInvitationResponse error: $e');
     }
   }
 
-  // 5. Explicit disposal cleanups ensuring garbage collecting clears the active continuous ticks
-  @override
-  void dispose() {
-    _pollingTimer?.cancel(); // Kill background timer interval
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _hints() {
+  void _showHints() {
     final interests = widget.chat.interests;
     final event = widget.chat.event;
 
@@ -305,9 +413,10 @@ class _DMScreenState extends State<DMScreen> {
         'Do you have any tips for someone getting into ${interests[2]}?',
       if (event.isNotEmpty) 'What made you interested in $event?',
     ];
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Prompts'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -321,8 +430,8 @@ class _DMScreenState extends State<DMScreen> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
                   onTap: () {
-                    Navigator.pop(context);
-                    _controller.text = prompt;
+                    Navigator.pop(ctx);
+                    _textController.text = prompt;
                     _send();
                   },
                   child: Container(
@@ -332,12 +441,9 @@ class _DMScreenState extends State<DMScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0XFF84DCC6).withValues(alpha: 0.2),
+                      color: _accentColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0XFF84DCC6),
-                        width: 1,
-                      ),
+                      border: Border.all(color: _accentColor),
                     ),
                     child: Text(prompt, style: const TextStyle(fontSize: 14)),
                   ),
@@ -348,7 +454,7 @@ class _DMScreenState extends State<DMScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('BACK'),
           ),
         ],
@@ -356,69 +462,53 @@ class _DMScreenState extends State<DMScreen> {
     );
   }
 
+  // ── Date / time formatters ───────────────────
+
+  String _formatGroupDate(DateTime dt) {
+    final now = DateTime.now();
+    bool sameDay(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month && a.day == b.day;
+    if (sameDay(dt, now)) return 'Today';
+    if (sameDay(dt, now.subtract(const Duration(days: 1)))) return 'Yesterday';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  String _formatTime(DateTime dt) =>
+      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+  String _formatDate(String raw) {
+    try {
+      return DateFormat('EEE, MMM d yyyy').format(DateTime.parse(raw));
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  // ── Build ────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        Navigator.pop(context, true);
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.pop(context, true);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: GestureDetector(
-            onTap: () {
-              final card = widget.chat.matchCard;
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Scaffold(
-                    appBar: AppBar(
-                      backgroundColor: const Color(0XFF84DCC6),
-                      foregroundColor: Colors.white,
-                      title: Text(card.title),
-                    ),
-                    body: UserProfileCard(card: card, accepted: true),
-                  ),
-                ),
-              );
-            },
-            child: Row(
-              children: [
-                ProfilePicture(
-                  name: widget.chat.name,
-                  radius: 20,
-                  fontsize: 16,
-                  random: false,
-                  img:
-                      widget.chat.imageUrl != null &&
-                          widget.chat.imageUrl!.isNotEmpty
-                      ? widget.chat.imageUrl
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Text(widget.chat.name),
-              ],
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.event),
-              onPressed: _suggestMeeting,
-              tooltip:
-                  'Suggest a time/place to meet ${widget.chat.name} before ${widget.chat.event}!',
-              iconSize: 36,
-            ),
-            IconButton(
-              icon: const Icon(Icons.lightbulb_outline),
-              onPressed: _hints,
-              tooltip: 'Prompts to help you chat with ${widget.chat.name}',
-              iconSize: 36,
-            ),
-          ],
-          backgroundColor: const Color(0XFF84DCC6),
-          foregroundColor: Colors.white,
-        ),
+        appBar: _buildAppBar(),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : AnimatedOpacity(
@@ -427,197 +517,8 @@ class _DMScreenState extends State<DMScreen> {
                 child: Column(
                   children: [
                     _buildPinnedInviteBanner(),
-
-                    Expanded(
-                      child: ListView(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.only(bottom: 8),
-                        children: [
-                          const SizedBox(height: 16),
-
-                          // Event banner
-                          if (widget.chat.event.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'You are both going to: ${widget.chat.event.toUpperCase()}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                          const SizedBox(height: 12),
-
-                          // Interests card
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0XFFEEC0C6),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${widget.chat.name}\'s Interests:',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  ...widget.chat.interests.map(
-                                    (interest) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 4),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            '★ ',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                              interest,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          ...List.generate(_messages.length, (index) {
-                            final msg = _messages[index];
-                            if (msg.isInvitation) {
-                              return KeyedSubtree(
-                                key: _messageKeys[index],
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  child: _buildInvitationBox(msg, index),
-                                ),
-                              );
-                            }
-                            return KeyedSubtree(
-                              key: _messageKeys[index],
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
-                                ),
-                                child: Align(
-                                  alignment: msg.fromMe
-                                      ? Alignment.centerRight
-                                      : Alignment.centerLeft,
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 4),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: msg.fromMe
-                                          ? const Color(0XFF8789C0)
-                                          : Colors.grey.shade200,
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: const Radius.circular(16),
-                                        topRight: const Radius.circular(16),
-                                        bottomLeft: Radius.circular(
-                                          msg.fromMe ? 16 : 0,
-                                        ),
-                                        bottomRight: Radius.circular(
-                                          msg.fromMe ? 0 : 16,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      msg.text,
-                                      style: TextStyle(
-                                        color: msg.fromMe
-                                            ? Colors.white
-                                            : Colors.black87,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-
-                    // Input bar — unchanged
-                    SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _controller,
-                                textCapitalization:
-                                    TextCapitalization.sentences,
-                                decoration: InputDecoration(
-                                  hintText: 'Message ${widget.chat.name}...',
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey.shade200,
-                                ),
-                                onSubmitted: (_) => _send(),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            CircleAvatar(
-                              backgroundColor: const Color(0XFF84DCC6),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.send,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                onPressed: _send,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    Expanded(child: _buildMessageList()),
+                    _buildInputBar(),
                   ],
                 ),
               ),
@@ -625,36 +526,235 @@ class _DMScreenState extends State<DMScreen> {
     );
   }
 
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: _accentColor,
+      foregroundColor: Colors.white,
+      title: GestureDetector(
+        onTap: () {
+          final card = widget.chat.matchCard;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => Scaffold(
+                appBar: AppBar(
+                  backgroundColor: _accentColor,
+                  foregroundColor: Colors.white,
+                  title: Text(card.title),
+                ),
+                body: UserProfileCard(card: card, accepted: true),
+              ),
+            ),
+          );
+        },
+        child: Row(
+          children: [
+            ProfilePicture(
+              name: widget.chat.name,
+              radius: 20,
+              fontsize: 16,
+              random: false,
+              img: (widget.chat.imageUrl?.isNotEmpty ?? false)
+                  ? widget.chat.imageUrl
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Text(widget.chat.name),
+          ],
+        ),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.event),
+          iconSize: 36,
+          tooltip:
+              'Suggest a time/place to meet ${widget.chat.name} before ${widget.chat.event}!',
+          onPressed: _suggestMeeting,
+        ),
+        IconButton(
+          icon: const Icon(Icons.lightbulb_outline),
+          iconSize: 36,
+          tooltip: 'Prompts to help you chat with ${widget.chat.name}',
+          onPressed: _showHints,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMessageList() {
+    return ListView(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(bottom: 8),
+      children: [
+        const SizedBox(height: 16),
+
+        // Event banner
+        if (widget.chat.event.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: Text(
+                'You are both going to: ${widget.chat.event.toUpperCase()}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+          ),
+
+        const SizedBox(height: 12),
+
+        // Interests card
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEC0C6),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${widget.chat.name}'s Interests:",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                ...widget.chat.interests.map(
+                  (interest) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '★ ',
+                          style: TextStyle(fontSize: 13, color: Colors.black),
+                        ),
+                        Expanded(
+                          child: Text(
+                            interest,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Messages with date headers
+        ..._buildGroupedMessages(),
+      ],
+    );
+  }
+
+  /// Builds message bubbles interleaved with date-group headers.
+  List<Widget> _buildGroupedMessages() {
+    final widgets = <Widget>[];
+
+    for (int i = 0; i < _messages.length; i++) {
+      final msg = _messages[i];
+      final prev = i > 0 ? _messages[i - 1] : null;
+
+      // Date header
+      if (prev == null ||
+          _formatGroupDate(prev.createdAt) != _formatGroupDate(msg.createdAt)) {
+        widgets.add(
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _formatGroupDate(msg.createdAt),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+              ),
+            ),
+          ),
+        );
+      }
+
+      // Message bubble or invitation card, both tracked for scroll
+      final Widget content = msg.isInvitation
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildInvitationBox(msg, i),
+            )
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Align(
+                alignment: msg.fromMe
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: msg.fromMe
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: msg.fromMe
+                            ? _primaryColor
+                            : Colors.grey.shade200,
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(16),
+                          topRight: const Radius.circular(16),
+                          bottomLeft: Radius.circular(msg.fromMe ? 16 : 0),
+                          bottomRight: Radius.circular(msg.fromMe ? 0 : 16),
+                        ),
+                      ),
+                      child: Text(
+                        msg.text,
+                        style: TextStyle(
+                          color: msg.fromMe ? Colors.white : Colors.black87,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatTime(msg.createdAt),
+                      style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+      widgets.add(KeyedSubtree(key: _messageKeys[i], child: content));
+    }
+
+    return widgets;
+  }
+
   Widget _buildInvitationBox(_Message msg, int index) {
-    final String cleanData = msg.text.replaceFirst('INVITATION_DATA:', '');
-
-    String extractedDate = "Not specified";
-    String extractedTime = "Not specified";
-    String extractedLoc = "Not specified";
-
-    final bool lastEditedByMe = msg.lastEditedBy == myUserId;
-    final bool originalReceiver = !msg.fromMe && msg.lastEditedBy == null;
-    final bool shouldShowButtons =
-        !lastEditedByMe && (msg.lastEditedBy != null || originalReceiver);
-
-    try {
-      final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
-      final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
-      final RegExp locRegex = RegExp(r'"location":"([^"]*)"');
-
-      if (dateRegex.hasMatch(cleanData)) {
-        extractedDate = dateRegex.firstMatch(cleanData)!.group(1)!;
-      }
-      if (timeRegex.hasMatch(cleanData)) {
-        extractedTime = timeRegex.firstMatch(cleanData)!.group(1)!;
-      }
-      if (locRegex.hasMatch(cleanData)) {
-        final locVal = locRegex.firstMatch(cleanData)!.group(1)!;
-        if (locVal.isNotEmpty) extractedLoc = locVal;
-      }
-    } catch (_) {}
-
-    final bool isPending = msg.invitationStatus == null;
+    final parsed = _parseInvitePayload(msg.text);
+    final isPending = msg.invitationStatus == null;
+    final lastEditedByMe = msg.lastEditedBy == _myUserId;
+    final shouldShowButtons =
+        !lastEditedByMe &&
+        (msg.lastEditedBy != null || (!msg.fromMe && msg.lastEditedBy == null));
 
     return Align(
       alignment: msg.fromMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -664,7 +764,7 @@ class _DMScreenState extends State<DMScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0XFF8789C0), width: 1.5),
+          border: Border.all(color: _primaryColor, width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -676,10 +776,11 @@ class _DMScreenState extends State<DMScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Header
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               decoration: const BoxDecoration(
-                color: Color(0XFF8789C0),
+                color: _primaryColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -704,13 +805,15 @@ class _DMScreenState extends State<DMScreen> {
                 ],
               ),
             ),
+
+            // Body
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "📅 Date: $extractedDate",
+                    '📅 Date: ${_formatDate(parsed.date)}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -718,7 +821,7 @@ class _DMScreenState extends State<DMScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "⏰ Time: $extractedTime",
+                    '⏰ Time: ${parsed.time}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -726,10 +829,9 @@ class _DMScreenState extends State<DMScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "📍 Location: $extractedLoc",
+                    '📍 Location: ${parsed.location}',
                     style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                   ),
-
                   const Divider(height: 16),
 
                   if (isPending) ...[
@@ -743,7 +845,7 @@ class _DMScreenState extends State<DMScreen> {
                           style: TextStyle(fontSize: 12),
                         ),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0XFF8789C0),
+                          foregroundColor: _primaryColor,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
@@ -752,8 +854,7 @@ class _DMScreenState extends State<DMScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-
-                    if (shouldShowButtons) ...[
+                    if (shouldShowButtons)
                       Row(
                         children: [
                           Expanded(
@@ -780,7 +881,7 @@ class _DMScreenState extends State<DMScreen> {
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0XFF84DCC6),
+                                backgroundColor: _accentColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
@@ -799,8 +900,8 @@ class _DMScreenState extends State<DMScreen> {
                             ),
                           ),
                         ],
-                      ),
-                    ] else ...[
+                      )
+                    else
                       const Center(
                         child: Text(
                           'Waiting for reply...',
@@ -810,8 +911,7 @@ class _DMScreenState extends State<DMScreen> {
                           ),
                         ),
                       ),
-                    ],
-                  ] else ...[
+                  ] else
                     Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -820,7 +920,7 @@ class _DMScreenState extends State<DMScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: msg.invitationStatus == true
-                              ? const Color(0XFF84DCC6).withValues(alpha: 0.2)
+                              ? _accentColor.withValues(alpha: 0.2)
                               : Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -831,13 +931,12 @@ class _DMScreenState extends State<DMScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: msg.invitationStatus == true
-                                ? const Color(0XFF409A83)
+                                ? _accentDark
                                 : Colors.red,
                           ),
                         ),
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -847,139 +946,37 @@ class _DMScreenState extends State<DMScreen> {
     );
   }
 
-  List<Widget> buildGroupedMessages() {
-    final widgets = <Widget>[];
-
-    for (int i = 0; i < _messages.length; i++) {
-      final msg = _messages[i];
-      final prev = i > 0 ? _messages[i - 1] : null;
-
-      final showDateHeader =
-          prev == null ||
-          formatGroupDate(prev.createdAt) != formatGroupDate(msg.createdAt);
-
-      if (showDateHeader) {
-        widgets.add(
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                formatGroupDate(msg.createdAt),
-                style: const TextStyle(fontSize: 12, color: Colors.black87),
-              ),
-            ),
-          ),
-        );
-      }
-
-      if (msg.isInvitation) {
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: _buildInvitationBox(msg, i),
-          ),
-        );
-        continue;
-      }
-
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Align(
-            alignment: msg.fromMe
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: msg.fromMe
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                // bubble
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: msg.fromMe
-                        ? const Color(0XFF8789C0)
-                        : Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(msg.text),
-                ),
-
-                const SizedBox(height: 2),
-
-                // timestamp
-                Text(
-                  formatTime(msg.createdAt),
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return widgets;
-  }
-
   Widget _buildPinnedInviteBanner() {
-    final inviteIndex = _messages.lastIndexWhere(
+    final index = _messages.lastIndexWhere(
       (m) => m.isInvitation && m.invitationStatus != false,
     );
-    if (inviteIndex == -1) return const SizedBox.shrink();
+    if (index == -1) return const SizedBox.shrink();
 
-    final msg = _messages[inviteIndex];
-    final String cleanData = msg.text.replaceFirst('INVITATION_DATA:', '');
+    final msg = _messages[index];
+    final parsed = _parseInvitePayload(msg.text);
 
-    String extractedDate = "Not specified";
-    String extractedTime = "Not specified";
-
-    try {
-      final RegExp dateRegex = RegExp(r'"date":"([^"]+)"');
-      final RegExp timeRegex = RegExp(r'"time":"([^"]+)"');
-      if (dateRegex.hasMatch(cleanData)) {
-        extractedDate = dateRegex.firstMatch(cleanData)!.group(1)!;
-      }
-      if (timeRegex.hasMatch(cleanData)) {
-        extractedTime = timeRegex.firstMatch(cleanData)!.group(1)!;
-      }
-    } catch (_) {}
-
-    String statusText = 'Pending';
-    Color statusColor = Colors.orange;
-    if (msg.invitationStatus == true) {
-      statusText = 'Accepted ✓';
-      statusColor = const Color(0XFF409A83);
-    } else if (msg.invitationStatus == false) {
-      statusText = 'Declined ✕';
-      statusColor = Colors.red;
-    }
+    final (statusText, statusColor) = switch (msg.invitationStatus) {
+      true => ('Accepted ✓', _accentDark),
+      false => ('Declined ✕', Colors.red),
+      _ => ('Pending', Colors.orange),
+    };
 
     return GestureDetector(
-      onTap: () => _scrollToMessage(inviteIndex),
+      onTap: () => _scrollToMessage(index),
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0XFF8789C0).withValues(alpha: 0.08),
+          color: _primaryColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: const Color(0XFF8789C0).withValues(alpha: 0.4),
+            color: _primaryColor.withValues(alpha: 0.4),
             width: 1,
           ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.push_pin, size: 16, color: Color(0XFF8789C0)),
+            const Icon(Icons.push_pin, size: 16, color: _primaryColor),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -990,12 +987,12 @@ class _DMScreenState extends State<DMScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0XFF8789C0),
+                      color: _primaryColor,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '📅 ${_formatDate(extractedDate)}  ⏰ $extractedTime',
+                    '📅 ${_formatDate(parsed.date)}  ⏰ ${parsed.time}',
                     style: const TextStyle(fontSize: 12, color: Colors.black87),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1026,74 +1023,43 @@ class _DMScreenState extends State<DMScreen> {
     );
   }
 
-  // helpers for timestamps
-  String formatGroupDate(DateTime dt) {
-    final now = DateTime.now();
-
-    bool isSameDay(DateTime a, DateTime b) =>
-        a.year == b.year && a.month == b.month && a.day == b.day;
-
-    if (isSameDay(dt, now)) return "Today";
-    if (isSameDay(dt, now.subtract(const Duration(days: 1)))) {
-      return "Yesterday";
-    }
-
-    return "${dt.day.toString().padLeft(2, '0')} "
-        "${_month(dt.month)} ${dt.year}";
+  Widget _buildInputBar() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                textCapitalization: TextCapitalization.sentences,
+                onSubmitted: (_) => _send(),
+                decoration: InputDecoration(
+                  hintText: 'Message ${widget.chat.name}...',
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            CircleAvatar(
+              backgroundColor: _accentColor,
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                onPressed: _send,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-
-  String _month(int m) {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return months[m - 1];
-  }
-
-  String formatTime(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return "$h:$m";
-  }
-
-  String _formatDate(String rawDate) {
-    try {
-      final parsed = DateTime.parse(rawDate);
-      return DateFormat(
-        'EEE, MMM d yyyy',
-      ).format(parsed); // e.g. Tue, Jun 16 2026
-    } catch (_) {
-      return rawDate; // fallback to raw if parsing fails
-    }
-  }
-}
-
-class _Message {
-  final String id;
-  final String text;
-  final bool fromMe;
-  final bool isInvitation;
-  final DateTime createdAt;
-  final String? lastEditedBy;
-  bool? invitationStatus;
-
-  _Message({
-    required this.id,
-    required this.text,
-    required this.fromMe,
-    required this.createdAt,
-    this.isInvitation = false,
-    this.invitationStatus,
-    this.lastEditedBy,
-  });
 }
