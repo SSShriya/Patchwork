@@ -9,12 +9,14 @@ class MatchProfileScreen extends StatefulWidget {
   final List<MatchCard> cards;
   final int initialIndex;
   final Future<void> Function(MatchCard, bool) onDecision;
+  final VoidCallback onGoHome;
 
   const MatchProfileScreen({
     super.key,
     required this.cards,
     required this.initialIndex,
     required this.onDecision,
+    required this.onGoHome,
   });
 
   @override
@@ -64,7 +66,11 @@ class _MatchProfileScreenState extends State<MatchProfileScreen> {
 
       showDialog(
         context: context,
-        builder: (context) => CongratsPopup(match: card, isMutual: isMutual),
+        builder: (context) => CongratsPopup(
+          match: card, 
+          isMutual: isMutual,
+          onGoHome: widget.onGoHome,
+          ),
       ).then((_) {
         if (!mounted) return;
         setState(() {

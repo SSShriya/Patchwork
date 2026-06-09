@@ -101,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           cards: groupCards,
           initialIndex: initialIndex < 0 ? 0 : initialIndex,
           onDecision: _handleDecision,
+          onGoHome: () {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
         ),
       ),
     );

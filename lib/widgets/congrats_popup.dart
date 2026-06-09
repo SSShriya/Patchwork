@@ -6,8 +6,14 @@ import 'package:flutter/material.dart';
 class CongratsPopup extends StatelessWidget {
   final MatchCard match;
   final bool isMutual;
+  final VoidCallback onGoHome;
 
-  const CongratsPopup({super.key, required this.match, required this.isMutual});
+  const CongratsPopup({
+    super.key, 
+    required this.match, 
+    required this.isMutual,
+    required this.onGoHome,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +115,7 @@ class CongratsPopup extends StatelessWidget {
               label: 'Back to Home',
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.popUntil(context, (route) => route.isFirst);
+                onGoHome();
               },
             ),
           ],
