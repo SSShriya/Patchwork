@@ -1,4 +1,4 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class SocietyScreen extends StatefulWidget {
   const SocietyScreen({super.key});
@@ -17,8 +17,9 @@ class _SocietyScreenState extends State<SocietyScreen> {
     );
   }
  }
- */
+ 
 
+/*
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -34,8 +35,8 @@ class SocietyScreen extends StatefulWidget {
 
 class _SocietyScreenState extends State<SocietyScreen> {
   // Temporary mock data for state management
-  String _societyName = "Alex Morgan";
-  String _aboutText = "Final year Computer Science student at UCL. Looking to join coding hackathons, board game nights, and casual coffee meetups around London! Hit me up if you want to pair up for society events.";
+  final String _societyName = "Sci-Fi";
+  String _aboutText = "";
   File? _imageFile;
   
   // Dummy event list
@@ -276,3 +277,4 @@ class _SocietyScreenState extends State<SocietyScreen> {
     );
   }
 }
+*/
