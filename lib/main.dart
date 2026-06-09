@@ -64,9 +64,9 @@ class MainApp extends StatelessWidget {
 Future<bool> _isCommitteeMember(String userId) async {
   try {
     final result = await Supabase.instance.client
-        .from('user_purpose')
+        .from('users')
         .select('is_committee_member')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .maybeSingle();
     return result?['is_committee_member'] == true;
   } catch (_) {

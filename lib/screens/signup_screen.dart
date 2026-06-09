@@ -41,7 +41,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           name: _nameController.text.trim(),
-          isCommitteeMember: _holdsEvents,
+          isSociety: _holdsEvents,
         );
       } else {
         await _authService.signIn(
