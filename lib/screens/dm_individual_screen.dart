@@ -9,8 +9,9 @@ import '../widgets/user_profile_card.dart';
 
 class DMScreen extends StatefulWidget {
   final ChatConversation chat;
+  final bool suggestMeeting; 
 
-  const DMScreen({super.key, required this.chat});
+  const DMScreen({super.key, required this.chat, this.suggestMeeting = false});
 
   @override
   State<DMScreen> createState() => _DMScreenState();
@@ -33,6 +34,11 @@ class _DMScreenState extends State<DMScreen> {
     super.initState();
     _scrollController = ScrollController();
     _initChatAndStartPolling();
+    if (widget.suggestMeeting) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _suggestMeeting();
+      });
+    }
   }
 
   // 3. Setup sequential initialization: get userId background values, pull historical UI data, then spin loop

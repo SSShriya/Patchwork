@@ -1,3 +1,4 @@
+import 'package:drp/services/conversation_service.dart';
 import 'package:drp/services/match_service.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
@@ -80,27 +81,53 @@ class UserProfileCard extends StatelessWidget {
                   ],
                 ),
 
-                if (accepted) const SizedBox(height: 10),
+                if (accepted) const SizedBox(height: 14),
                 if (accepted) 
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DMScreen(
-                            chat: ChatConversation(matchCard: card),
-                          ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 10,
+                    children: [
+                      ElevatedButton( // Messages Button
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DMScreen(
+                                chat: ChatConversation(matchCard: card),
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color.fromARGB(197, 199, 162, 251),
+                          foregroundColor: Colors.black,
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(143, 186, 164, 214),
-                      foregroundColor: Colors.black,
-                    ),
-                    child: Text(
-                      "Message"
-                    ),
-                  )
+                        child: Text(
+                          "Message"
+                        ),
+                      ),
+                      ElevatedButton( // Meeting invite button
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DMScreen(
+                                chat: ChatConversation(matchCard: card),
+                                suggestMeeting: true,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color.fromARGB(197, 199, 162, 251),
+                          foregroundColor: Colors.black,
+                        ),
+                        child: Text(
+                          "Invite to Meet"
+                        ),
+                      )
+                    ],
+                  ),
               ],
             )
           ),
