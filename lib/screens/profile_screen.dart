@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:drp/screens/main_shell.dart';
+import 'package:drp/services/supabase_client.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -42,18 +43,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
+      final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
       // Fetch user row from your users table
-      final userdata = await Supabase.instance.client
+      final userdata = await supabase
           .from('users')
           .select()
           .eq('id', userId)
           .maybeSingle();
 
       // Fetch existing interests
-      final interestsData = await Supabase.instance.client
+      final interestsData = await supabase
           .from('user_interests')
           .select('interest')
           .eq('user_id', userId);
@@ -135,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // Use Supabase live session
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
       _showError('User session not found. Please log in again.');
       setState(() => _isLoading = false); // Reset spinner
@@ -211,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed != true) return;
 
     // Sign out from Supabase so StreamBuilder in main.dart reacts
-    await Supabase.instance.client.auth.signOut();
+    await supabase.auth.signOut();
     await SessionManager.clearSession();
 
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');

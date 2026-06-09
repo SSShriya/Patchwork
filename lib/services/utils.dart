@@ -1,8 +1,8 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:drp/services/supabase_client.dart';
 import 'session_manager.dart';
 
 Future<String> loadUserId() async {
-  final user = Supabase.instance.client.auth.currentUser;
+  final user = supabase.auth.currentUser;
   if (user != null) return user.id;
 
   // Fallback to secure storage

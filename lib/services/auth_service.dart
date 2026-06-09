@@ -22,23 +22,22 @@ class AuthService {
 
 
     if(isSociety) {
+
       await supabase.from('societies').insert({
         'id': user.id,
         'name': name,
       });
 
-    } else {
+    } 
 
-      await supabase.from('users').insert({
-        'id': user.id,
-        'name': name,
-        'university': '',
-        'course': '',
-        'bio': '',
-        'is_committee_member': isSociety,
-      });
-      
-    }
+    await supabase.from('users').insert({
+      'id': user.id,
+      'name': name,
+      'university': '',
+      'course': '',
+      'bio': '',
+      'is_committee_member': isSociety,
+    });  
 
     await SessionManager.saveSession(userId: user.id);
   }

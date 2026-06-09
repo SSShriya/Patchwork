@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:drp/services/session_manager.dart';
 import 'package:drp/services/soc_service.dart';
+import 'package:drp/services/supabase_client.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,18 +39,18 @@ class _SocietyScreenState extends State<SocietyScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final societyId = Supabase.instance.client.auth.currentUser?.id;
+      final societyId = supabase.auth.currentUser?.id;
       if (societyId == null) return;
 
       // Fetch user row from your users table
-      final socData = await Supabase.instance.client
+      final socData = await supabase
           .from('societies')
           .select()
           .eq('id', societyId)
           .maybeSingle();
 
       // Fetch existing events
-      final eventsData = await Supabase.instance.client
+      final eventsData = await supabase
           .from('events')
           .select('event_name')
           .eq('society_id', societyId);
@@ -131,7 +133,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // Use Supabase live session
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
       _showError('User session not found. Please log in again.');
       setState(() => _isLoading = false); // Reset spinner
@@ -179,6 +181,41 @@ class _SocietyScreenState extends State<SocietyScreen> {
       const SnackBar(content: Text('TODO')),
     );
   }
+
+   // Logout now signs out from Supabase + confirms with user first
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log Out'),
+        content: const Text(
+          'Are you sure you want to log out? Any unsaved changes will be lost.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Log Out',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Sign out from Supabase so StreamBuilder in main.dart reacts
+    await supabase.auth.signOut();
+    await SessionManager.clearSession();
+
+    if (mounted) Navigator.pushReplacementNamed(context, '/signup');
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -381,6 +418,26 @@ class _SocietyScreenState extends State<SocietyScreen> {
                         );
                       },
                     ),
+                    ElevatedButton(
+                        onPressed: _isLoading ? null : _logout,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0XFFFD5757),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'LOG OUT',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
             ],
           ),
         ),

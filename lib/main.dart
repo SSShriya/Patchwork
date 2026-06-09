@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/signup_screen.dart';
+import 'services/supabase_client.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -28,7 +29,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       navigatorObservers: [routeObserver],
       home: StreamBuilder<AuthState>(
-        stream: Supabase.instance.client.auth.onAuthStateChange,
+        stream: supabase.auth.onAuthStateChange,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
@@ -63,12 +64,11 @@ class MainApp extends StatelessWidget {
 
 Future<bool> _isCommitteeMember(String userId) async {
   try {
-    final result = await Supabase.instance.client
-        .from('users')
-        .select('is_committee_member')
-        .eq('id', userId)
-        .maybeSingle();
-    return result?['is_committee_member'] == true;
+    final result = await supabase
+        .from('societies')
+        .select()
+        .eq('id', userId);
+    return result.isNotEmpty;
   } catch (_) {
     return false;
   }
