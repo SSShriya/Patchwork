@@ -1,10 +1,12 @@
 import 'package:drp/screens/event_cancellation_popup.dart';
 import 'package:drp/screens/event_registered_popup.dart';
+import 'package:drp/screens/society_info_screen.dart';
 import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
 import '../services/registration_service.dart';
 import 'package:intl/intl.dart';
+import '../services/event_service.dart';
 
 class EventProfileScreen extends StatefulWidget {
   final EventCard card;
@@ -18,11 +20,32 @@ class EventProfileScreen extends StatefulWidget {
 class _EventProfileScreenState extends State<EventProfileScreen> {
   RegistrationService registrationService = RegistrationService();
   bool _isRegistered = false; 
+  EventService eventService = EventService();
+  String societyName = '';
 
   @override
   void initState() {
     super.initState();
     _checkIfAlreadyRegistered(); 
+    _setupSocName();
+  }
+
+  Future<void> _setupSocName() async {
+    try {
+      final name = await eventService.getSocietyName(widget.card.societyId);
+      if(mounted) {
+        setState( () => societyName = name );
+      }
+    } catch(e) {
+      if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Couldn\'t get society name: $e'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+    }
   }
 
   Future<void> _checkIfAlreadyRegistered() async {
@@ -182,6 +205,28 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   widget.card.cost > 0 ? '£${widget.card.cost.toStringAsFixed(2)}' : 'Free',
                   style: const TextStyle(fontSize: 15, color: Colors.grey),
                 ),
+              ],
+            ),
+
+            SizedBox(height: 8),
+
+            Row(
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0XFFEEC0C6),
+                    foregroundColor: Colors.black,
+                    textStyle: TextStyle(fontWeight: FontWeight.bold)
+                  ),
+                  onPressed: () => Navigator.push (
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                        SocietyInfoScreen(societyId: widget.card.societyId)
+                    )
+                  ),
+                  child: Text('More About $societyName'),
+                )
               ],
             ),
 
