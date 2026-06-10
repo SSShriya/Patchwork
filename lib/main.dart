@@ -91,11 +91,6 @@ class _MainAppState extends State<MainApp> {
           final user =
               snapshot.data?.session?.user ?? supabase.auth.currentUser;
 
-          print('🔐 Auth state: event=${snapshot.data?.event}');
-          print('🔐 User: ${user?.email}');
-          print('🔐 Email confirmed: ${user?.emailConfirmedAt}');
-          print('🔐 Session: $session');
-
           // ── User exists but email not verified ──────────────────────
           if (user != null && user.emailConfirmedAt == null) {
             return VerifyEmailScreen(email: user.email ?? '');
