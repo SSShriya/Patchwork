@@ -1,3 +1,4 @@
+import '../main.dart';
 import 'package:drp/widgets/chat_section.dart';
 import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
@@ -10,7 +11,7 @@ class DMOverviewScreen extends StatefulWidget {
   State<DMOverviewScreen> createState() => _DMOverviewScreenState();
 }
 
-class _DMOverviewScreenState extends State<DMOverviewScreen> {
+class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   final _conversationService = ConversationService();
   List<ChatConversation> _conversations = [];
   bool isLoading = true;
@@ -25,6 +26,31 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
   @override
   void initState() {
     super.initState();
+    _loadConversations();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    // Always unsubscribe to avoid memory leaks
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// Called when this screen is popped back to (e.g. user navigates back)
+  @override
+  void didPopNext() {
+    _loadConversations(); // reload every time the screen is returned to
+  }
+
+  /// Called when this screen is first pushed onto the stack
+  @override
+  void didPush() {
     _loadConversations();
   }
 

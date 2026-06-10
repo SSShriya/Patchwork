@@ -110,7 +110,7 @@ jobs:
   # BUILD JOB FOR ANDROID - only runs on main branch
   build_android:
     needs: [lint, test]
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
