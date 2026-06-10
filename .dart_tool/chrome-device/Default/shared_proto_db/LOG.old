@@ -1,0 +1,37 @@
+2026/06/09-16:11:59.681 5664 Reusing MANIFEST C:\Users\ashow\AppData\Local\Temp\flutter_tools.f45f6903\flutter_tools_chrome_device.a574a876\Default\shared_proto_db/MANIFEST-000001
+2026/06/09-16:11:59.682 5664 Recovering log #41
+2026/06/09-16:11:59.685 5664 Reusing old log C:\Users\ashow\AppData\Local\Temp\flutter_tools.f45f6903\flutter_tools_chrome_device.a574a876\Default\shared_proto_db/000041.log 
+2026/06/09-16:11:59.686 5664 Delete type=0 #3
+2026/06/09-16:11:59.686 5664 Delete type=0 #4
+2026/06/09-16:11:59.687 5664 Delete type=0 #7
+2026/06/09-16:11:59.687 5664 Delete type=2 #8
+2026/06/09-16:11:59.687 5664 Delete type=0 #10
+2026/06/09-16:11:59.687 5664 Delete type=2 #11
+2026/06/09-16:11:59.687 5664 Delete type=2 #13
+2026/06/09-16:11:59.687 5664 Delete type=0 #13
+2026/06/09-16:11:59.689 5664 Delete type=2 #14
+2026/06/09-16:11:59.689 5664 Delete type=0 #15
+2026/06/09-16:11:59.689 5664 Delete type=2 #16
+2026/06/09-16:11:59.689 5664 Delete type=0 #18
+2026/06/09-16:11:59.689 5664 Delete type=2 #20
+2026/06/09-16:11:59.689 5664 Delete type=0 #22
+2026/06/09-16:11:59.689 5664 Delete type=2 #23
+2026/06/09-16:11:59.689 5664 Delete type=0 #25
+2026/06/09-16:11:59.689 5664 Delete type=2 #26
+2026/06/09-16:11:59.689 5664 Delete type=0 #28
+2026/06/09-16:11:59.689 5664 Delete type=2 #29
+2026/06/09-16:11:59.689 5664 Delete type=0 #31
+2026/06/09-16:11:59.689 5664 Delete type=0 #35
+2026/06/09-16:11:59.689 5664 Delete type=0 #38
+2026/06/09-16:12:13.092 3e58 Level-0 table #45: started
+2026/06/09-16:12:13.098 3e58 Level-0 table #45: 137957 bytes OK
+2026/06/09-16:12:13.102 3e58 Delete type=0 #41
+2026/06/09-16:12:13.103 3e58 Compacting 4@0 + 1@1 files
+2026/06/09-16:12:13.115 3e58 Generated table #46@0: 2179 keys, 269924 bytes
+2026/06/09-16:12:13.115 3e58 Compacted 4@0 + 1@1 files => 269924 bytes
+2026/06/09-16:12:13.116 3e58 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/06/09-16:12:13.117 3e58 Delete type=2 #33
+2026/06/09-16:12:13.117 3e58 Delete type=2 #36
+2026/06/09-16:12:13.117 3e58 Delete type=2 #39
+2026/06/09-16:12:13.117 3e58 Delete type=2 #42
+2026/06/09-16:12:13.117 3e58 Delete type=2 #45
