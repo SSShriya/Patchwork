@@ -83,6 +83,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
           final today = DateTime(now.year, now.month, now.day);
 
           for (final e in (eventsData as List)) {
+            debugPrint('Raw events data: $eventsData');
             final endDay = DateTime.tryParse(e['end_day'] ?? '');
             final isPast = endDay != null && endDay.isBefore(today);
             final entry = <String, String>{
@@ -92,13 +93,15 @@ class _SocietyScreenState extends State<SocietyScreen> {
                   '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['start_time']}'))}',
               'end_date':
                   '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(e['end_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['end_time']}'))}',
+              'end_day_raw': e['end_day'] ?? '',
+              'end_time_raw': e['end_time'] ?? '',
               'location': e['location'] ?? '',
               'cost': '${e['cost']}',
-              'latitude': '${e['latitude'] ?? ''}',
-              'longitude': '${e['longitude'] ?? ''}',
+              // 'latitude': '${e['latitude'] ?? ''}',
+              // 'longitude': '${e['longitude'] ?? ''}',
+              'latitude': e['latitude'] != null ? '${e['latitude']}' : '',
+              'longitude': e['longitude'] != null ? '${e['longitude']}' : '',
               'is_past': isPast ? 'true' : 'false',
-              'end_day_raw': e['end_day'] ?? '',
-              'start_day_raw': e['start_day'] ?? '',
             };
             _events.add(entry);
           }
@@ -185,6 +188,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
 
   void _editEvent(Map<String, String> event) async {
     final eventId = event['id'];
+    debugPrint('eventId: "$eventId"');
     if (eventId == null || eventId.isEmpty) return;
 
     DateTime? parsedStartDate;
@@ -246,7 +250,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
         await EventService.uploadEventImage(result.image, societyId);
       }
 
-      await supabase
+      debugPrint('lat from result: ${result.latitude}');
+      debugPrint('lng from result: ${result.longitude}');
+
+      final updateResponse = await supabase
           .from('events')
           .update({
             'event_name': result.name,
@@ -262,7 +269,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
             if (result.latitude != null) 'latitude': result.latitude,
             if (result.longitude != null) 'longitude': result.longitude,
           })
-          .eq('event_id', eventId);
+          .eq('event_id', eventId)
+          .select();
+
+      debugPrint('update response: $updateResponse');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -7,6 +7,7 @@ import '../models/event_card.dart';
 import '../services/registration_service.dart';
 import 'package:intl/intl.dart';
 import '../services/event_service.dart';
+import '../widgets/map_preview.dart';
 
 class EventProfileScreen extends StatefulWidget {
   final EventCard card;
@@ -19,32 +20,32 @@ class EventProfileScreen extends StatefulWidget {
 
 class _EventProfileScreenState extends State<EventProfileScreen> {
   RegistrationService registrationService = RegistrationService();
-  bool _isRegistered = false; 
+  bool _isRegistered = false;
   EventService eventService = EventService();
   String societyName = '';
 
   @override
   void initState() {
     super.initState();
-    _checkIfAlreadyRegistered(); 
+    _checkIfAlreadyRegistered();
     _setupSocName();
   }
 
   Future<void> _setupSocName() async {
     try {
       final name = await eventService.getSocietyName(widget.card.societyId);
-      if(mounted) {
-        setState( () => societyName = name );
-      }
-    } catch(e) {
       if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Couldn\'t get society name: $e'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
+        setState(() => societyName = name);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Couldn\'t get society name: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -52,7 +53,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
     final userId = await loadUserId();
     final isRegistered = await registrationService.hasRegistered(
       widget.card.eventId,
-      userId
+      userId,
     );
 
     if (mounted) {
@@ -69,32 +70,35 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
       if (mounted) {
         showDialog(
           context: context,
-          builder: (context) => EventRegisteredPopup(eventName: widget.card.title),
+          builder: (context) =>
+              EventRegisteredPopup(eventName: widget.card.title),
         );
       }
     } catch (e) {
       if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Registration failed, please try again later.'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed, please try again later.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _unregister() async {
     try {
-      final confirmed = await showDialog(
-        context: context,
-        builder: (context) => EventCancellationPopup(),
-      ) ?? false;
+      final confirmed =
+          await showDialog(
+            context: context,
+            builder: (context) => EventCancellationPopup(),
+          ) ??
+          false;
 
-      if (!confirmed) return; 
-      
+      if (!confirmed) return;
+
       await registrationService.unregisterForEvent(widget.card.eventId);
-      
+
       if (mounted) {
         setState(() => _isRegistered = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,13 +111,13 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
       setState(() => _isRegistered = false);
     } catch (e) {
       if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Cancellation failed, please try again later'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cancellation failed, please try again later'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -129,7 +133,6 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ── Event image, name & datetime ──
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -138,11 +141,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 CircleAvatar(
                   radius: 36,
                   backgroundColor: Colors.grey[300],
-                  child: Icon(
-                    Icons.person,
-                    size: 36,
-                    color: Colors.grey[600],
-                  ),
+                  child: Icon(Icons.event, size: 36, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 16),
 
@@ -161,7 +160,11 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                          const Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
@@ -194,15 +197,32 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
               ],
             ),
 
+            // ── Map preview (only if coordinates exist) ──
+            if (widget.card.latitude != null &&
+                widget.card.longitude != null) ...[
+              const SizedBox(height: 10),
+              MapPreview(
+                latitude: widget.card.latitude!,
+                longitude: widget.card.longitude!,
+                previewHeight: 140,
+              ),
+            ],
+
             const SizedBox(height: 8),
 
             // ── Cost ──
             Row(
               children: [
-                const Icon(Icons.confirmation_num, size: 18, color: Colors.grey),
+                const Icon(
+                  Icons.confirmation_num,
+                  size: 18,
+                  color: Colors.grey,
+                ),
                 const SizedBox(width: 6),
                 Text(
-                  widget.card.cost > 0 ? '£${widget.card.cost.toStringAsFixed(2)}' : 'Free',
+                  widget.card.cost > 0
+                      ? '£${widget.card.cost.toStringAsFixed(2)}'
+                      : 'Free',
                   style: const TextStyle(fontSize: 15, color: Colors.grey),
                 ),
               ],
@@ -216,17 +236,19 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0XFFEEC0C6),
                     foregroundColor: Colors.black,
-                    textStyle: TextStyle(fontWeight: FontWeight.bold)
+                    textStyle: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  onPressed: () => Navigator.push (
+                  onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                        SocietyInfoScreen(societyId: widget.card.societyId, eventId: widget.card.eventId)
-                    )
+                      builder: (context) => SocietyInfoScreen(
+                        societyId: widget.card.societyId,
+                        eventId: widget.card.eventId,
+                      ),
+                    ),
                   ),
                   child: Text('More About $societyName'),
-                )
+                ),
               ],
             ),
 
@@ -235,10 +257,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             // ── Description ──
             const Text(
               'Description',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -250,7 +269,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 32),
 
             // ------ Registration Button ------
             SizedBox(
@@ -258,32 +277,36 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
               child: ElevatedButton(
                 onPressed: () => (_isRegistered ? _unregister() : _register()),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isRegistered ? const Color(0XFFFD5757) : const Color(0XFF84DCC6),
+                  backgroundColor: _isRegistered
+                      ? const Color(0XFFFD5757)
+                      : const Color(0XFF84DCC6),
                   foregroundColor: const Color(0XFF222222),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: _isRegistered ? const Text(
-                    "Cancel Registration",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ) : const Text(
-                    "I'm going!",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                child: _isRegistered
+                    ? const Text(
+                        "Cancel Registration",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : const Text(
+                        "I'm going!",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 32),
-          ]
-        )
-      )
+          ],
+        ),
+      ),
     );
   }
 }

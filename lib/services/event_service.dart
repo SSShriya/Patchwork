@@ -18,16 +18,14 @@ class EventService {
           'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, society_id)',
         )
         .eq('user_id', currentUserId);
-    
+
     final today = DateTime.now();
-    final validRows = (rows as List)
-      .where((r) {
-        if (r['events'] == null) return false;
-        final e = r['events'] as Map<String, dynamic>;
-        final endDay = DateTime.tryParse(e['end_day'] ?? '');
-        return endDay != null && endDay.isAfter(today);
-      })
-      .toList();
+    final validRows = (rows as List).where((r) {
+      if (r['events'] == null) return false;
+      final e = r['events'] as Map<String, dynamic>;
+      final endDay = DateTime.tryParse(e['end_day'] ?? '');
+      return endDay != null && endDay.isAfter(today);
+    }).toList();
 
     final eventIds = validRows
         .map((r) => (r['events'] as Map<String, dynamic>)['event_id'] as String)
@@ -63,6 +61,8 @@ class EventService {
         startDateTime: _parseDateTime(e['start_day'], e['start_time']),
         endDateTime: _parseDateTime(e['end_day'], e['end_time']),
         location: e['location'] ?? '',
+        latitude: (e['latitude'] as num?)?.toDouble(),
+        longitude: (e['longitude'] as num?)?.toDouble(),
         cost: (e['cost'] as num?)?.toDouble() ?? 0.0,
         eventId: eventId,
         societyId: e['society_id'] ?? '',
@@ -77,7 +77,7 @@ class EventService {
     final rows = await supabase
         .from('active_events')
         .select(
-          'event_id, society_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url',
+          'event_id, society_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, latitude, longitude',
         );
 
     return (rows as List).map((e) {
@@ -91,6 +91,8 @@ class EventService {
         endDateTime: _parseDateTime(e['end_day'], e['end_time']),
         cost: (e['cost'] as num?)?.toDouble() ?? 0.0,
         location: e['location'] ?? '',
+        latitude: (e['latitude'] as num?)?.toDouble(),
+        longitude: (e['longitude'] as num?)?.toDouble(),
         icon: Icons.event,
         color: const Color(0XFFFED766),
         imageUrl: e['image_url'] ?? '',
@@ -99,7 +101,7 @@ class EventService {
   }
 
   static Future<void> uploadEventImage(File? imageFile, String eventId) async {
-    if(imageFile == null) return;
+    if (imageFile == null) return;
 
     final String filePath = '$eventId/profile.jpg';
 
@@ -133,10 +135,10 @@ class EventService {
         .select('name, is_society')
         .eq('id', societyId);
 
-    if(rows.isEmpty) throw Exception('No societies found for id $societyId');
+    if (rows.isEmpty) throw Exception('No societies found for id $societyId');
 
     final result = rows[0];
-    if(!result['is_society']) return 'is_society is false for id $societyId';
+    if (!result['is_society']) return 'is_society is false for id $societyId';
     return result['name'];
   }
 }

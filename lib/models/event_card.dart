@@ -9,6 +9,8 @@ class EventCard extends BaseCard {
   final String subtitle;
   final int numMatches;
   final String location;
+  final double? latitude;
+  final double? longitude;
   final DateTime startDateTime;
   final DateTime endDateTime;
   final double cost;
@@ -25,6 +27,8 @@ class EventCard extends BaseCard {
     required this.subtitle,
     required this.numMatches,
     required this.location,
+    required this.latitude,
+    required this.longitude,
     required this.startDateTime,
     required this.endDateTime,
     required this.cost,
@@ -41,11 +45,13 @@ class EventCard extends BaseCard {
     subtitle: json['subtitle'] ?? '',
     numMatches: json['num_matches'] ?? 0,
     location: json['location'] ?? '',
+    latitude: json['latitude'],
+    longitude: json['longitude'],
     startDateTime: DateTime.parse(json['start_date_time']),
     endDateTime: DateTime.parse(json['end_date_time']),
     cost: (json['cost'] as num?)?.toDouble() ?? 0.0,
-    icon: Icons.event, 
-    color: const Color(0xFF000000), 
+    icon: Icons.event,
+    color: const Color(0xFF000000),
     imageUrl: json['image_url'] ?? '',
   );
 }

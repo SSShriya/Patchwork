@@ -249,8 +249,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     if (result != null) {
       setState(() {
         _pickedLocation = result;
-        _locationController.text =
-            '${result.latitude.toStringAsFixed(5)}, ${result.longitude.toStringAsFixed(5)}';
+        // _locationController.text =
+        //     '${result.latitude.toStringAsFixed(5)}, ${result.longitude.toStringAsFixed(5)}';
       });
     }
   }
@@ -304,6 +304,10 @@ class _CreateEventFormState extends State<_CreateEventForm> {
           : _descController.text.trim(),
       image: _imageFile,
     );
+
+    debugPrint('pickedLocation: $_pickedLocation');
+    debugPrint('result lat: ${result.latitude}');
+    debugPrint('result lng: ${result.longitude}');
 
     if (mounted) Navigator.of(context).pop(result);
   }

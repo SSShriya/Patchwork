@@ -12,7 +12,7 @@ class PickLocationMap extends StatefulWidget {
 
 class _PickLocationMapState extends State<PickLocationMap> {
   late final MapController _mapController;
-  LatLng _centre = const LatLng(51.5074, -0.1278);  // london default
+  LatLng _centre = const LatLng(51.5074, -0.1278); // london default
   bool _isMoving = false;
 
   @override
@@ -35,7 +35,11 @@ class _PickLocationMapState extends State<PickLocationMap> {
         foregroundColor: Colors.white,
         actions: [
           TextButton.icon(
-            onPressed: () => Navigator.pop(context, _centre),
+            onPressed: () {
+              final location = _mapController.camera.center;
+              debugPrint('confirming location: $location');
+              Navigator.pop(context, location);
+            },
             icon: const Icon(Icons.check, color: Colors.white),
             label: const Text('Confirm', style: TextStyle(color: Colors.white)),
           ),
@@ -48,6 +52,11 @@ class _PickLocationMapState extends State<PickLocationMap> {
             options: MapOptions(
               initialCenter: _centre,
               initialZoom: 14,
+              onMapReady: () {
+                setState(() {
+                  _centre = _mapController.camera.center;
+                });
+              },
               onMapEvent: (event) {
                 // Track centre as map moves
                 if (event is MapEventMove || event is MapEventScrollWheelZoom) {
@@ -56,7 +65,8 @@ class _PickLocationMapState extends State<PickLocationMap> {
                     _centre = _mapController.camera.center;
                   });
                 }
-                if (event is MapEventMoveEnd || event is MapEventFlingAnimationEnd) {
+                if (event is MapEventMoveEnd ||
+                    event is MapEventFlingAnimationEnd) {
                   setState(() {
                     _isMoving = false;
                     _centre = _mapController.camera.center;
@@ -114,11 +124,18 @@ class _PickLocationMapState extends State<PickLocationMap> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.my_location, size: 16, color: Color(0xFF84DCC6)),
+                  const Icon(
+                    Icons.my_location,
+                    size: 16,
+                    color: Color(0xFF84DCC6),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     '${_centre.latitude.toStringAsFixed(5)}, ${_centre.longitude.toStringAsFixed(5)}',
-                    style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ],
               ),
