@@ -426,41 +426,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Center(
                         child: GestureDetector(
                           onTap: _pickImage,
-                          child: Stack(
+                          child: Column(
                             children: [
-                              CircleAvatar(
-                                radius: 60,
-                                backgroundColor: Colors.grey.shade200,
-                                backgroundImage: _imageBytes != null
-                                    ? MemoryImage(_imageBytes!) as ImageProvider
-                                    : _existingAvatarUrl != null
-                                    ? NetworkImage(_existingAvatarUrl!)
-                                    : null,
-                                child:
-                                    (_imageBytes == null &&
-                                        _existingAvatarUrl == null)
-                                    ? Icon(
-                                        Icons.camera_alt_outlined,
-                                        size: 40,
-                                        color: Colors.grey.shade600,
-                                      )
-                                    : null,
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0XFF84DCC6),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
+                              Text(
+                                'Profile Picture',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade600,
                                 ),
+                              ),
+
+                              SizedBox(height: 4),
+
+                              Text(
+                                'Upload a picture, preferably with you in it!',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+
+                              Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 60,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: _imageBytes != null
+                                        ? MemoryImage(_imageBytes!)
+                                              as ImageProvider
+                                        : _existingAvatarUrl != null
+                                        ? NetworkImage(_existingAvatarUrl!)
+                                        : null,
+                                    child:
+                                        (_imageBytes == null &&
+                                            _existingAvatarUrl == null)
+                                        ? Icon(
+                                            Icons.camera_alt_outlined,
+                                            size: 40,
+                                            color: Colors.grey.shade600,
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0XFF84DCC6),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.edit,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
