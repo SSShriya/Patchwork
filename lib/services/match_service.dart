@@ -237,30 +237,33 @@ class MatchService {
     });
 
     // delete matches in both possible ID orderings
-    final a = currentUserId.compareTo(otherUserId) <= 0 ? currentUserId : otherUserId;
-    final b = currentUserId.compareTo(otherUserId) <= 0 ? otherUserId : currentUserId;
+    final a = currentUserId.compareTo(otherUserId) <= 0
+        ? currentUserId
+        : otherUserId;
+    final b = currentUserId.compareTo(otherUserId) <= 0
+        ? otherUserId
+        : currentUserId;
 
     // also delete all matches between these two users
-    await supabase
-        .from('matches')
-        .delete()
-        .eq('user1_id', a)
-        .eq('user2_id', b);
+    await supabase.from('matches').delete().eq('user1_id', a).eq('user2_id', b);
   }
 
   // for getting confirmed matches for an event
   Future<List<MatchCard>> getConfirmedMatchesForEvent(String eventId) async {
     final currentUserId = await loadUserId();
     final rows = await _getConfirmedMatchRows(currentUserId, eventId: eventId);
-    return rows.map((row) => _rowToConfirmedMatchCard(row, currentUserId)).toList();
+    return rows
+        .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
+        .toList();
   }
 
   Future<List<MatchCard>> getMutualMatches(String currentUserId) async {
     // final currentUserId = await loadUserId();
     final rows = await _getConfirmedMatchRows(currentUserId);
-    return rows.map((row) => _rowToConfirmedMatchCard(row, currentUserId)).toList();
+    return rows
+        .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
+        .toList();
   }
-  
 
   Future<String?> getProfilePictureUrl(String userId) async {
     final String publicUrl = supabase.storage
@@ -270,33 +273,52 @@ class MatchService {
     return publicUrl;
   }
 
-
   // ----- private helpers ------
   // fetches the rows
-  Future<List<Map<String, dynamic>>> _getConfirmedMatchRows(String currentUserId, {String? eventId}) async {
+  Future<List<Map<String, dynamic>>> _getConfirmedMatchRows(
+    String currentUserId, {
+    String? eventId,
+  }) async {
     var query = supabase
         .from('matches')
         .select(
-          'event_id, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
+          'event_id, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society)',
         )
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
-  
+
     if (eventId != null) query = query.eq('event_id', eventId);
 
-    return (await query);
+    final List<dynamic> results = await query;
+
+    // FILTER RULE: Filter out any row where user1 or user2 has is_society == true
+    return results
+        .where((row) {
+          final user1 = row['user1'] as Map<String, dynamic>?;
+          final user2 = row['user2'] as Map<String, dynamic>?;
+
+          final bool isUser1Society = user1?['is_society'] ?? false;
+          final bool isUser2Society = user2?['is_society'] ?? false;
+
+          return !isUser1Society && !isUser2Society;
+        })
+        .cast<Map<String, dynamic>>()
+        .toList();
   }
 
   // maps single row to a MatchCard
-  MatchCard _rowToConfirmedMatchCard(Map<String, dynamic> row, String currentUserId) {
+  MatchCard _rowToConfirmedMatchCard(
+    Map<String, dynamic> row,
+    String currentUserId,
+  ) {
     final user1Data = row['user1'] as Map<String, dynamic>;
     final user2Data = row['user2'] as Map<String, dynamic>;
-    final eventName = (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ?? '';
+    final eventName =
+        (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
+        '';
     final eventId = row['event_id'] as String;
-    final otherUser = user1Data['id'] == currentUserId
-        ? user2Data
-        : user1Data;
+    final otherUser = user1Data['id'] == currentUserId ? user2Data : user1Data;
 
     return MatchCard(
       id: otherUser['id'],
@@ -314,5 +336,4 @@ class MatchService {
       imageUrl: otherUser['avatar_url'] ?? '',
     );
   }
-
 }
