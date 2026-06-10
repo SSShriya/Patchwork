@@ -83,10 +83,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
               (e) => {
                 'id': '${e['event_id']}',
                 'title': e['event_name'],
-                // 'start_date':
-                //     '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse(e['start_time']))}',
-                // 'end_date':
-                //     '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['end_day']))} at ${DateFormat('HH:mm').format(DateTime.parse(e['end_time']))}',
+                // for start date and end date the 1970 thing is just for dummy dont panic
                 'start_date':
                     '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['start_time']}'))}',
                 'end_date':
@@ -481,7 +478,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "ABOUT ME",
+                            "ABOUT THE SOCIETY",
                             style: GoogleFonts.montserrat(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
