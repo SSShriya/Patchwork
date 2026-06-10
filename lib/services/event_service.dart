@@ -77,7 +77,7 @@ class EventService {
     final rows = await supabase
         .from('active_events')
         .select(
-          'event_id, society_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url',
+          'event_id, society_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, latitude, longitude',
         );
 
     return (rows as List).map((e) {
