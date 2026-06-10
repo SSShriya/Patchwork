@@ -45,22 +45,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           name: _nameController.text.trim(),
           isSociety: _holdsEvents,
         );
-
-        // ── Immediately navigate to verify screen after sign-up ────────
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const MainShell(),
-              //VerifyEmailScreen(email: _emailController.text.trim()),
-            ),
-          );
-        }
       } else {
         await _authService.signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-        // Sign-in: StreamBuilder handles routing automatically
       }
     } on AuthException catch (e) {
       if (mounted) _showErrorSnackBar(e.message);
