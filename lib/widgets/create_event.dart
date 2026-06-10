@@ -512,8 +512,9 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                             : null,
                         onChanged: (_) {
                           // If user edits text manually, detach the map pin
-                          if (_pickedLocation != null)
+                          if (_pickedLocation != null) {
                             setState(() => _pickedLocation = null);
+                          }
                         },
                       ),
 

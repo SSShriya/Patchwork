@@ -111,10 +111,12 @@ class _SocietyScreenState extends State<SocietyScreen> {
                 DateTime.tryParse(b['start_day_raw']!) ?? DateTime.now();
             final aIsPast = a['is_past'] == 'true';
             final bIsPast = b['is_past'] == 'true';
-            if (aIsPast != bIsPast)
-              return aIsPast ? 1 : -1; // active before archived
-            if (!aIsPast)
-              return aDate.compareTo(bDate); // active: soonest first
+            if (aIsPast != bIsPast) {
+              return aIsPast ? 1 : -1;
+            } // active before archived
+            if (!aIsPast) {
+              return aDate.compareTo(bDate);
+            } // active: soonest first
             return bDate.compareTo(aDate); // archived: most recent first
           });
         });
