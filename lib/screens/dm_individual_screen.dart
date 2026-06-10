@@ -393,7 +393,7 @@ class _DMScreenState extends State<DMScreen> {
       children: [
         const SizedBox(height: 16),
 
-        if (widget.chat.event.isNotEmpty)
+        if (!widget.chat.isSociety && widget.chat.event.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(

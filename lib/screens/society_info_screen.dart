@@ -87,8 +87,8 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
             university: _uni,
             course: 'N/A',
             bio: _about,
-            eventId: _events.isNotEmpty ? (_events[0].eventId ?? 'N/A') : 'N/A',
-            eventName: _events.isNotEmpty ? (_events[0].title ?? 'N/A') : 'N/A',
+            eventId: _events.isNotEmpty ? _events[0].eventId : 'N/A',
+            eventName: _events.isNotEmpty ? _events[0].title : 'N/A',
             yearGroup: 'N/A',
             location: _location,
             interests: [],
@@ -255,7 +255,7 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _events.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, i) {
                             final event = _events[i];
