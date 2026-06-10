@@ -34,6 +34,7 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
   bool _isLoading = false;
   MatchCard? _societyCard;
   late final String userId;
+  final List<EventCard> _userInterestedEvents = [];
 
   final EventService eventService = EventService();
 
@@ -45,16 +46,31 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
     }
   }
 
-  // New consolidated sequential method
+  // Consolidated parallel loader
   Future<void> _loadScreenData() async {
     setState(() => _isLoading = true);
 
-    await _setupEvents();
-    await _getSocietyInfo();
-    userId = await loadUserId();
+    try {
+      // Fetch user ID first since checking interested events depends on it
+      userId = await loadUserId();
 
-    if (mounted) {
-      setState(() => _isLoading = false);
+      // Run independent network requests concurrently to optimize performance
+      await Future.wait([
+        _setupEvents(),
+        _getSocietyInfo(),
+        _checkUserInterestedEvents(),
+      ]);
+
+      // Re-build society card if events loaded successfully to ensure event data is linked
+      if (_name.isNotEmpty && _societyCard == null) {
+        _buildSocietyCard();
+      }
+    } catch (e) {
+      debugPrint("Error initializing screen data: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -73,42 +89,55 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
     }
   }
 
-  Future<void> _getSocietyInfo() async {
-    // Removed the extra setState updating _isLoading here,
-    // because _loadScreenData() already handles it cleanly!
+  Future<void> _checkUserInterestedEvents() async {
+    try {
+      List<EventCard> interestedEvents = await eventService.getInterestedEvents(userId);
+      if (mounted) {
+        setState(() {
+          _userInterestedEvents.clear();
+          _userInterestedEvents.addAll(interestedEvents);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching user's interested events: $e");
+    }
+  }
 
+  Future<void> _getSocietyInfo() async {
     try {
       final data = await getSocDetails(widget.societyId);
       if (data == null) return;
 
       if (mounted) {
         setState(() {
-          // Use ?? '' fallback to safely catch null values from your database map
           _name = data['name'] ?? 'Unknown Society';
           _uni = data['uni'] ?? '';
           _about = data['about'] ?? '';
           _location = data['location'] ?? '';
           _imageUrl = data['image_url'] ?? '';
-
-          _societyCard = MatchCard(
-            id: widget.societyId,
-            title: _name,
-            university: _uni,
-            course: 'N/A',
-            bio: _about,
-            eventId: _events.isNotEmpty ? _events[0].eventId : 'N/A',
-            eventName: _events.isNotEmpty ? _events[0].title : 'N/A',
-            yearGroup: 'N/A',
-            location: _location,
-            interests: [],
-            imageUrl: _imageUrl,
-          );
+          
+          _buildSocietyCard();
         });
       }
     } catch (e) {
       debugPrint("Error fetching society info: $e");
     }
-    // Removed the finally block here as well, let _loadScreenData manage state lifecycle!
+  }
+
+  void _buildSocietyCard() {
+    _societyCard = MatchCard(
+      id: widget.societyId,
+      title: _name,
+      university: _uni,
+      course: 'N/A',
+      bio: _about,
+      eventId: _events.isNotEmpty ? _events[0].eventId : 'N/A',
+      eventName: _events.isNotEmpty ? _events[0].title : 'N/A',
+      yearGroup: 'N/A',
+      location: _location,
+      interests: const [],
+      imageUrl: _imageUrl,
+    );
   }
 
   void _openEventSummary(EventCard card) {
@@ -119,7 +148,6 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
   }
 
   Future<void> _initiateSocietyChat() async {
-    // add to conversations list so society appears on dm homescreen
     await supabase.from('matches').insert({
       'user1_id': widget.societyId,
       'user2_id': userId,
@@ -127,6 +155,11 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
       'user1_accepted': true,
       'user2_accepted': true,
     });
+  }
+
+  // Helper check to see if the event item collection contains our current target ID
+  bool _isUserInterestedInCurrentEvent() {
+    return _userInterestedEvents.any((element) => element.eventId == widget.eventId);
   }
 
   @override
@@ -139,7 +172,6 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
         ),
         title: Text(_name.isEmpty ? 'Society' : _name),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -156,9 +188,7 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                     random: false,
                     img: _imageUrl.isNotEmpty ? _imageUrl : null,
                   ),
-
                   const SizedBox(height: 10),
-
                   Text(
                     _name,
                     textAlign: TextAlign.center,
@@ -167,9 +197,7 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -189,9 +217,7 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -221,7 +247,9 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                         child: Text(
                           (_isLoading || _societyCard == null)
                               ? "Loading..."
-                              : "Message",
+                              : (_isUserInterestedInCurrentEvent()
+                                  ? "Message"
+                                  : "Express interest in an event to message!"),
                         ),
                       ),
                     ],
@@ -229,7 +257,6 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
 
             // ── About ──
@@ -252,7 +279,6 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
 
             // ── Events section ──
@@ -273,84 +299,81 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : _events.isEmpty
-                      ? const Text('No events listed.')
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _events.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
-                          itemBuilder: (context, i) {
-                            final event = _events[i];
-                            return InkWell(
-                              onTap: () => _openEventSummary(event),
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.6),
+                          ? const Text('No events listed.')
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _events.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 8),
+                              itemBuilder: (context, i) {
+                                final event = _events[i];
+                                return InkWell(
+                                  onTap: () => _openEventSummary(event),
                                   borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  children: [
-                                    // Thumbnail
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: event.imageUrl.isNotEmpty
-                                          ? Image.network(
-                                              event.imageUrl,
-                                              width: 60,
-                                              height: 60,
-                                              fit: BoxFit.cover,
-                                            )
-                                          : Container(
-                                              width: 60,
-                                              height: 60,
-                                              color: const Color(0XFFC0EDF7),
-                                              child: const Icon(
-                                                Icons.event,
-                                                color: Colors.white,
-                                              ),
-                                            ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    const SizedBox(width: 12),
-                                    // Text
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            event.title,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                    child: Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: event.imageUrl.isNotEmpty
+                                              ? Image.network(
+                                                  event.imageUrl,
+                                                  width: 60,
+                                                  height: 60,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Container(
+                                                  width: 60,
+                                                  height: 60,
+                                                  color: const Color(0XFFC0EDF7),
+                                                  child: const Icon(
+                                                    Icons.event,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                event.title,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              if (event.subtitle.isNotEmpty) ...[
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  event.subtitle,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black54,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ],
                                           ),
-                                          if (event.subtitle.isNotEmpty) ...[
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              event.subtitle,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black54,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ],
-                                      ),
+                                        ),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.black38,
+                                        ),
+                                      ],
                                     ),
-                                    const Icon(
-                                      Icons.chevron_right,
-                                      color: Colors.black38,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                                  ),
+                                );
+                              },
+                            ),
                 ],
               ),
             ),
