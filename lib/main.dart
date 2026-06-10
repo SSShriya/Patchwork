@@ -2,7 +2,6 @@ import 'package:app_links/app_links.dart';
 import 'package:drp/screens/main_shell.dart';
 import 'package:drp/screens/profile_screen.dart';
 import 'package:drp/screens/society_screen.dart';
-import 'package:drp/screens/verify_email_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -131,7 +130,7 @@ class _MainAppState extends State<MainApp> {
               final info = snap.data;
 
               if (info == null || !info.hasCompletedProfile) {
-                return const ProfileScreen();
+                return ProfileScreen(isSociety: info?.isSociety ?? false);
               }
 
               return info.isSociety ? const SocietyScreen() : const MainShell();
@@ -168,6 +167,7 @@ Future<_UserRouteInfo> _getUserRouteInfo(String userId) async {
 
       if (result != null) {
         final university = result['university'] as String?;
+
         return _UserRouteInfo(
           isSociety: result['is_society'] == true,
           hasCompletedProfile:
@@ -179,5 +179,6 @@ Future<_UserRouteInfo> _getUserRouteInfo(String userId) async {
       await Future.delayed(const Duration(milliseconds: 500));
     }
   }
+
   return const _UserRouteInfo(isSociety: false, hasCompletedProfile: false);
 }

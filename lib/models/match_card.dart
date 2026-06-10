@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'base_card.dart';
 
 class MatchCard extends BaseCard {
-  final String id; // from Supabase
+  final String currentUserId;
+  final String otherUserId;
   @override
   final String title;
   final String university;
@@ -17,7 +18,8 @@ class MatchCard extends BaseCard {
   final String imageUrl; // profile image URL, can be empty if no image
 
   const MatchCard({
-    required this.id,
+    required this.currentUserId,
+    required this.otherUserId,
     required this.title,
     required this.university,
     required this.course,
@@ -30,21 +32,16 @@ class MatchCard extends BaseCard {
     required this.imageUrl,
   });
 
-  factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(
-    id: json['id'],
-    title: json['name'],
-    university: json['university'],
-    course: json['course'],
-    bio: json['bio'],
-    eventId: json['event_id'],
-    eventName: json['event_name'],
-    yearGroup: json['year_group'] ?? '',
-    interests: (json['user_interests'] as List<dynamic>? ?? [])
-        .map((i) => i['interest'] as String)
-        .toList(),
-    location: json['location'] ?? '',
-    imageUrl: json['profile_image_url'] ?? '',
-  );
+  // needs to be ordered the same way as the DB (user1_id < user2_id presumably)
+  String get matchKey {
+    final a = currentUserId.compareTo(otherUserId) <= 0
+        ? currentUserId
+        : otherUserId;
+    final b = currentUserId.compareTo(otherUserId) <= 0
+        ? otherUserId
+        : currentUserId;
+    return '$a|$b|$eventId';
+  }
 
   // So InteractiveCard still works
   String get name => title;

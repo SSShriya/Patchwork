@@ -9,11 +9,7 @@ class UserProfileCard extends StatelessWidget {
   final MatchCard card;
   final bool accepted;
 
-  const UserProfileCard({
-    super.key, 
-    required this.card,
-    this.accepted = false,
-  });
+  const UserProfileCard({super.key, required this.card, this.accepted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +50,10 @@ class UserProfileCard extends StatelessWidget {
                     const Icon(Icons.school, size: 17),
                     const SizedBox(width: 2),
                     Text(
-                        '${card.yearGroup} · ${card.university} · ${card.course}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      '${card.yearGroup} · ${card.university} · ${card.course}',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -75,18 +68,19 @@ class UserProfileCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       card.location,
-                      style: const TextStyle(fontSize: 16, color: Colors.grey,),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ],
                 ),
 
                 if (accepted) const SizedBox(height: 14),
-                if (accepted) 
+                if (accepted)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 10,
                     children: [
-                      ElevatedButton( // Messages Button
+                      ElevatedButton(
+                        // Messages Button
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -101,11 +95,10 @@ class UserProfileCard extends StatelessWidget {
                           backgroundColor: Color.fromARGB(197, 199, 162, 251),
                           foregroundColor: Colors.black,
                         ),
-                        child: Text(
-                          "Message"
-                        ),
+                        child: Text("Message"),
                       ),
-                      ElevatedButton( // Meeting invite button
+                      ElevatedButton(
+                        // Meeting invite button
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -121,14 +114,12 @@ class UserProfileCard extends StatelessWidget {
                           backgroundColor: Color.fromARGB(197, 199, 162, 251),
                           foregroundColor: Colors.black,
                         ),
-                        child: Text(
-                          "Invite to Meet"
-                        ),
-                      )
+                        child: Text("Invite to Meet"),
+                      ),
                     ],
                   ),
               ],
-            )
+            ),
           ),
 
           const SizedBox(height: 12),
@@ -152,7 +143,7 @@ class UserProfileCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
 
@@ -178,7 +169,10 @@ class UserProfileCard extends StatelessWidget {
                       children: [
                         const Text('★ ', style: TextStyle(fontSize: 16)),
                         Expanded(
-                          child: Text(interest, style: const TextStyle(fontSize: 16)),
+                          child: Text(
+                            interest,
+                            style: const TextStyle(fontSize: 16),
+                          ),
                         ),
                       ],
                     ),
@@ -202,8 +196,8 @@ class UserProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(card.bio, style: const TextStyle(fontSize: 16)),
-              ]
-            )
+              ],
+            ),
           ),
 
           const SizedBox(height: 16),
@@ -214,7 +208,32 @@ class UserProfileCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => _confirmBlock(context),
               icon: const Icon(Icons.block, color: Colors.red),
-              label: const Text('Block User', style: TextStyle(color: Colors.red)),
+              label: const Text(
+                'Block User',
+                style: TextStyle(color: Colors.red),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // --- Report Button ---
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _report(context),
+              icon: const Icon(Icons.report, color: Colors.red),
+              label: const Text(
+                'Report user',
+                style: TextStyle(color: Colors.red),
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -233,13 +252,13 @@ class UserProfileCard extends StatelessWidget {
 
   Future<void> _handleBlock(BuildContext context) async {
     try {
-      await MatchService().blockUser(card.id);
+      await MatchService().blockUser(card);
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to block: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to block: $e')));
       }
     }
   }
@@ -269,17 +288,151 @@ class UserProfileCard extends StatelessWidget {
       ),
     );
   }
-}
 
+  void _report(BuildContext context) {
+    final TextEditingController descriptionController = TextEditingController();
+    bool blockUser = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: ((ctx, setState) => AlertDialog(
+          title: const Text('Report user?'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Please describe why you\'re reporting ${card.title}.',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 4,
+                  minLines: 3,
+                  maxLength: 500,
+                  decoration: InputDecoration(
+                    hintText: 'Enter desctiption...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      RadioGroup<bool>(
+                        groupValue: blockUser,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => blockUser = value);
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            RadioListTile<bool>(
+                              value: false,
+                              title: const Text('Report'),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                            Divider(height: 1),
+                            RadioListTile<bool>(
+                              value: true,
+                              title: const Text('Report and Block'),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (descriptionController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('Please enter a description')),
+                  );
+                  return;
+                }
+                Navigator.pop(ctx);
+                _handleReport(
+                  context,
+                  descriptionController.text.trim(),
+                  blockUser: blockUser,
+                );
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Submit'),
+            ),
+          ],
+        )),
+      ),
+    );
+  }
+
+  Future<void> _handleReport(
+    BuildContext context,
+    String description, {
+    bool blockUser = false,
+  }) async {
+    try {
+      await MatchService().reportUser(card, description);
+
+      // Block user if selected
+      if (blockUser) {
+        await MatchService().blockUser(card);
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              blockUser
+                  ? 'User reported and blocked'
+                  : 'User reported successfully',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to report: $e')));
+      }
+    }
+  }
+}
 
 class _Card extends StatelessWidget {
   final Widget child;
   final Color? color;
 
-  const _Card({
-    required this.child,
-    this.color,
-  });
+  const _Card({required this.child, this.color});
 
   @override
   Widget build(BuildContext context) {

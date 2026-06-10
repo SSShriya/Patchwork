@@ -39,7 +39,7 @@ Future<void> uploadSocImage(File imageFile, String socId) async {
 Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
   final Map<String, dynamic>? row = await supabase
       .from('users')
-      .select('id, name, university, bio, location') // Explicitly select only what you need
+      .select('id, name, university, bio, location, avatar_url')
       .eq('id', societyId)
       .eq('is_society', true)
       .maybeSingle();

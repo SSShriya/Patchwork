@@ -9,8 +9,8 @@ class CongratsPopup extends StatelessWidget {
   final VoidCallback onGoHome;
 
   const CongratsPopup({
-    super.key, 
-    required this.match, 
+    super.key,
+    required this.match,
     required this.isMutual,
     required this.onGoHome,
   });
@@ -53,34 +53,8 @@ class CongratsPopup extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) {
-                      // ── Extract plain user ID from composite match ID ──
-                      final parts = match.id.split('|');
-                      final currentUserId =
-                          '5f7e9d61-3865-47b2-9155-202267ee947f';
-                      final otherUserId = parts[0] == currentUserId
-                          ? parts[1]
-                          : parts[0];
-
-                      // ── Build a clean MatchCard with just the plain user ID ──
-                      final dmCard = MatchCard(
-                        id: otherUserId,
-                        title: match.title,
-                        university: match.university,
-                        course: match.course,
-                        bio: match.bio,
-                        eventId: match.eventId,
-                        eventName: match.eventName,
-                        yearGroup: match.yearGroup,
-                        interests: match.interests,
-                        location: match.location,
-                        imageUrl: match.imageUrl,
-                      );
-
-                      return DMScreen(
-                        chat: ChatConversation(matchCard: dmCard),
-                      );
-                    },
+                    builder: (_) =>
+                        DMScreen(chat: ChatConversation(matchCard: match)),
                   ),
                 ),
               )
@@ -111,10 +85,7 @@ class CongratsPopup extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
             const SizedBox(height: 12),
-            _button(
-              label: 'Back to Home',
-              onPressed:  onGoHome,
-            ),
+            _button(label: 'Back to Home', onPressed: onGoHome),
           ],
         ),
       ),

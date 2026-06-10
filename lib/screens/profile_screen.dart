@@ -1,5 +1,6 @@
-import 'dart:io';
+// import 'dart:io';
 import 'package:drp/screens/main_shell.dart';
+import 'package:drp/screens/society_screen.dart';
 import 'package:drp/services/supabase_client.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,9 +11,11 @@ import '../models/useful_data.dart';
 import '../models/interest_data.dart';
 import '../services/interest_suggestion_service.dart';
 import '../widgets/interests_categories.dart';
+import 'dart:typed_data';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool isSociety;
+  const ProfileScreen({super.key, this.isSociety = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -25,12 +28,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _bioController = TextEditingController();
   final _interestInputController = TextEditingController();
 
-  // All three dropdowns managed as plain Strings
   String? _selectedUniversity;
   String? _selectedBorough;
   String? _selectedYearGroup;
 
-  File? _imageFile;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   String? _existingAvatarUrl;
   final List<String> _interests = [];
   bool _isLoading = false;
@@ -112,13 +115,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
+    final XFile? picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70,
     );
-    if (pickedFile != null) {
-      setState(() => _imageFile = File(pickedFile.path));
+
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+
+      setState(() {
+        _imageFile = picked;
+        _imageBytes = bytes;
+      });
     }
   }
 
@@ -131,7 +138,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    // University is required — guard here too in case form validator is bypassed
     if (_selectedUniversity == null) {
       _showError('Please select your university.');
       return;
@@ -147,12 +153,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await updateDetails(
         userId,
         _nameController.text.trim(),
-        _selectedUniversity!, // ← university
+        _selectedUniversity!,
         _courseController.text.trim(),
         _bioController.text.trim(),
-        _selectedYearGroup ?? '', // ← year group
-        _selectedBorough ?? '', // ← borough
-        _interests,
+        widget.isSociety ? '' : (_selectedYearGroup ?? ''),
+        widget.isSociety ? '' : (_selectedBorough ?? ''),
+        widget.isSociety ? [] : _interests,
       );
 
       if (mounted) {
@@ -160,13 +166,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(content: Text('Profile saved successfully!')),
         );
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainShell()),
+          MaterialPageRoute(
+            builder: (context) =>
+                widget.isSociety ? const SocietyScreen() : const MainShell(),
+          ),
         );
       }
     } on PostgrestException catch (e) {
       if (mounted) _showError(e.message);
     } catch (e) {
-      if (mounted) _showError('An unexpected error occurred while saving.');
+      if (mounted) _showError('Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -220,9 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData itemIcon,
     required Color itemIconColor,
     required ValueChanged<String> onSelected,
-    // Pass a key so Flutter can distinguish the two Autocomplete widgets
     Key? key,
-    // Optional form validator — supply for required fields
     String? Function(String?)? validator,
   }) {
     return Autocomplete<String>(
@@ -297,7 +304,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderSide: BorderSide.none,
             ),
           ),
-          // Wire up the validator so the Form key catches it on save
           validator: validator,
         );
       },
@@ -319,7 +325,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       itemIcon: Icons.school_outlined,
       itemIconColor: const Color(0xFF84DCC6),
       onSelected: (value) => setState(() => _selectedUniversity = value),
-      // Required — must pick a university before saving
       validator: (value) => (value == null || value.trim().isEmpty)
           ? 'Please select your university'
           : null,
@@ -426,13 +431,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               CircleAvatar(
                                 radius: 60,
                                 backgroundColor: Colors.grey.shade200,
-                                backgroundImage: _imageFile != null
-                                    ? FileImage(_imageFile!) as ImageProvider
+                                backgroundImage: _imageBytes != null
+                                    ? MemoryImage(_imageBytes!) as ImageProvider
                                     : _existingAvatarUrl != null
                                     ? NetworkImage(_existingAvatarUrl!)
                                     : null,
                                 child:
-                                    (_imageFile == null &&
+                                    (_imageBytes == null &&
                                         _existingAvatarUrl == null)
                                     ? Icon(
                                         Icons.camera_alt_outlined,
@@ -476,122 +481,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildUniversityField(),
                       const SizedBox(height: 16),
 
-                      // ── Course ───────────────────────────────────────────
-                      _buildTextField(
-                        controller: _courseController,
-                        label: 'Course / Major',
-                        icon: Icons.book_outlined,
-                        required: false,
-                      ),
-                      const SizedBox(height: 16),
+                      if (!widget.isSociety) ...[
+                        // ── Course ───────────────────────────────────────────
+                        _buildTextField(
+                          controller: _courseController,
+                          label: 'Course / Major',
+                          icon: Icons.book_outlined,
+                          required: false,
+                        ),
+                        const SizedBox(height: 16),
 
-                      // ── Year Group ───────────────────────────────────────
-                      _buildYearGroupField(),
-                      const SizedBox(height: 16),
+                        // ── Year Group ───────────────────────────────────────
+                        _buildYearGroupField(),
+                        const SizedBox(height: 16),
 
-                      // ── Borough ──────────────────────────────────────────
-                      _buildBoroughField(),
-                      const SizedBox(height: 16),
+                        // ── Borough ──────────────────────────────────────────
+                        _buildBoroughField(),
+                        const SizedBox(height: 16),
 
-                      // ── Interests ────────────────────────────────────────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Your Interests',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            '${_interests.length}/$_maxInterests',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Pick categories to explore interests',
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Category chips — tap to open subcategory sheet
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: interestCategories.map((category) {
-                          return GestureDetector(
-                            onTap: () => _openCategorySheet(category),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.grey.shade300,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    category.emoji,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    category.name,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
+                        // ── Interests ────────────────────────────────────────────────────
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Your Interests',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 12),
+                            Text(
+                              '${_interests.length}/$_maxInterests',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Pick categories to explore interests',
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 10),
 
-                      // Selected interest chips
-                      if (_interests.isNotEmpty) ...[
                         Wrap(
-                          spacing: 8.0,
-                          runSpacing: 4.0,
-                          children: _interests.map((interest) {
-                            return Chip(
-                              label: Text(
-                                interest,
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 13,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: interestCategories.map((category) {
+                            return GestureDetector(
+                              onTap: () => _openCategorySheet(category),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      category.emoji,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      category.name,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              backgroundColor: Colors.grey.shade200,
-                              deleteIcon: const Icon(
-                                Icons.cancel,
-                                size: 18,
-                                color: Colors.grey,
-                              ),
-                              onDeleted: () =>
-                                  setState(() => _interests.remove(interest)),
                             );
                           }).toList(),
                         ),
+                        const SizedBox(height: 12),
+
+                        if (_interests.isNotEmpty) ...[
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 4.0,
+                            children: _interests.map((interest) {
+                              return Chip(
+                                label: Text(
+                                  interest,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                backgroundColor: Colors.grey.shade200,
+                                deleteIcon: const Icon(
+                                  Icons.cancel,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
+                                onDeleted: () =>
+                                    setState(() => _interests.remove(interest)),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
                       ],
-                      const SizedBox(height: 16),
 
                       // ── Bio ──────────────────────────────────────────────────────────
                       const Text(
@@ -676,7 +681,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _openCategorySheet(InterestCategory category) async {
-    // Fetch promoted interests before opening sheet
     List<String> promotedInterests = [];
     try {
       promotedInterests = await fetchPromotedInterests(category.name);

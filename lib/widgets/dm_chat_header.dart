@@ -64,12 +64,13 @@ class DmChatHeader extends StatelessWidget implements PreferredSizeWidget {
               'Suggest a time/place to meet ${chat.name} before ${chat.event}!',
           onPressed: onSuggestMeeting,
         ),
-        IconButton(
-          icon: const Icon(Icons.lightbulb_outline),
-          iconSize: 36,
-          tooltip: 'Prompts to help you chat with ${chat.name}',
-          onPressed: onShowHints,
-        ),
+        if (!chat.isSociety)
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline),
+            iconSize: 36,
+            tooltip: 'Prompts to help you chat with ${chat.name}',
+            onPressed: onShowHints,
+          ),
       ],
     );
   }

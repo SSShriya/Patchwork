@@ -20,7 +20,6 @@ class SocietyScreen extends StatefulWidget {
 }
 
 class _SocietyScreenState extends State<SocietyScreen> {
-
   String? _societyName;
   File? _imageFile;
   String? _existingImageUrl;
@@ -80,18 +79,21 @@ class _SocietyScreenState extends State<SocietyScreen> {
           // Pre-populate events list
           _events.clear();
           _events.addAll(
-            (eventsData as List).map((e) => 
-              {'id': '${e['event_id']}',
-               'title': e['event_name'], 
-               'start_date': '${DateFormat('EEE d MMMM yyyy').format(e['start_day'])} at ${DateFormat('HH:mm').format(e['start_time'])}',
-               'end_date': '${DateFormat('EEE d MMMM yyyy').format(e['end_day'])} at ${DateFormat('HH:mm').format(e['end_time'])}',
-               'location': e['location'],
-               'cost': '${e['cost']}',
-               'latitude': '${e['latitude'] ?? ''}',
-               'longitude': '${e['longitude'] ?? ''}',
-              })
+            (eventsData as List).map(
+              (e) => {
+                'id': '${e['event_id']}',
+                'title': e['event_name'],
+                'start_date':
+                    '${DateFormat('EEE d MMMM yyyy').format(e['start_day'])} at ${DateFormat('HH:mm').format(e['start_time'])}',
+                'end_date':
+                    '${DateFormat('EEE d MMMM yyyy').format(e['end_day'])} at ${DateFormat('HH:mm').format(e['end_time'])}',
+                'location': e['location'],
+                'cost': '${e['cost']}',
+                'latitude': '${e['latitude'] ?? ''}',
+                'longitude': '${e['longitude'] ?? ''}',
+              },
+            ),
           );
-
         });
       }
     } on PostgrestException catch (e) {
@@ -110,126 +112,146 @@ class _SocietyScreenState extends State<SocietyScreen> {
   }
 
   // Method to handle editing the About Me text area via a popup dialog
- void _editAboutMe() {
-  // Use a local copy so cancelling doesn't mutate state
-  final tempController = TextEditingController(text: _aboutController.text);
+  void _editAboutMe() {
+    // Use a local copy so cancelling doesn't mutate state
+    final tempController = TextEditingController(text: _aboutController.text);
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text('Edit About Section', style: GoogleFonts.montserrat(fontWeight: FontWeight.bold)),
-      content: TextField(
-        controller: tempController,
-        maxLines: 4,
-        decoration: InputDecoration(
-          hintText: 'Tell others about your society...',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Edit About Section',
+          style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
         ),
+        content: TextField(
+          controller: tempController,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: 'Tell others about your society...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final nav = Navigator.of(context); // capture before await
+              setState(
+                () => _aboutController.text = tempController.text.trim(),
+              );
+              await updateSocDetails(
+                id: societyId,
+                about: _aboutController.text,
+              );
+              nav.pop(); // safe — no BuildContext used after async gap
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0XFF84DCC6),
+            ),
+            child: const Text('Save', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            final nav = Navigator.of(context); // capture before await
-            setState(() => _aboutController.text = tempController.text.trim());
-            await updateSocDetails(id: societyId, about: _aboutController.text);
-            nav.pop(); // safe — no BuildContext used after async gap
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0XFF84DCC6)),
-          child: const Text('Save', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
-
-
-void _editEvent(Map<String, String> event) async {
-  final eventId = event['id'];
-  if (eventId == null || eventId.isEmpty) return;
-
-  DateTime? parsedStartDate;
-  TimeOfDay? parsedStartTime;
-  DateTime? parsedEndDate;
-  TimeOfDay? parsedEndTime;
-  
-  try {
-    // Stored parsing from your format: "2026-06-09 at 16:30"
-    final startParts = event['start_date']!.split(' at ');
-    if (startParts.length == 2) {
-      parsedStartDate = DateTime.parse(startParts[0]);
-      final timeParts = startParts[1].split(':');
-      parsedStartTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
-    }
-    
-    // Stored parsing from your format: "2026-06-09 18:30"
-    final endParts = event['end_date']!.split(' ');
-    if (endParts.length == 2) {
-      parsedEndDate = DateTime.parse(endParts[0]);
-      final timeParts = endParts[1].split(':');
-      parsedEndTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
-    }
-  } catch (e) {
-    // Clean fallback parameters
-    parsedStartDate = DateTime.now();
-    parsedStartTime = const TimeOfDay(hour: 9, minute: 0);
-    parsedEndDate = DateTime.now().add(const Duration(hours: 2));
-    parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
+    );
   }
 
-  // Pass everything cleanly into the updated parameter structure
-  final result = await showNewEventPopup(
-    context,
-    existingName: event['title'],
-    existingLocation: event['location'],
-    existingLatitude: double.tryParse(event['latitude'] ?? ''),
-    existingLongitude: double.tryParse(event['longitude'] ?? ''),
-    existingPrice: double.tryParse(event['cost'] ?? '0') ?? 0.0,
-    existingStartDate: parsedStartDate,
-    existingStartTime: parsedStartTime,
-    existingEndDate: parsedEndDate,
-    existingEndTime: parsedEndTime,
-    existingDescription: event['description'], // Safely handled if saved in state map
-  ); 
+  void _editEvent(Map<String, String> event) async {
+    final eventId = event['id'];
+    if (eventId == null || eventId.isEmpty) return;
 
-  if (result == null) return;
+    DateTime? parsedStartDate;
+    TimeOfDay? parsedStartTime;
+    DateTime? parsedEndDate;
+    TimeOfDay? parsedEndTime;
 
-  setState(() => _isLoading = true);
-  try {
-    if (result.image != null) {
-      await EventService.uploadEventImage(result.image, societyId);
+    try {
+      // Stored parsing from your format: "2026-06-09 at 16:30"
+      final startParts = event['start_date']!.split(' at ');
+      if (startParts.length == 2) {
+        parsedStartDate = DateTime.parse(startParts[0]);
+        final timeParts = startParts[1].split(':');
+        parsedStartTime = TimeOfDay(
+          hour: int.parse(timeParts[0]),
+          minute: int.parse(timeParts[1]),
+        );
+      }
+
+      // Stored parsing from your format: "2026-06-09 18:30"
+      final endParts = event['end_date']!.split(' ');
+      if (endParts.length == 2) {
+        parsedEndDate = DateTime.parse(endParts[0]);
+        final timeParts = endParts[1].split(':');
+        parsedEndTime = TimeOfDay(
+          hour: int.parse(timeParts[0]),
+          minute: int.parse(timeParts[1]),
+        );
+      }
+    } catch (e) {
+      // Clean fallback parameters
+      parsedStartDate = DateTime.now();
+      parsedStartTime = const TimeOfDay(hour: 9, minute: 0);
+      parsedEndDate = DateTime.now().add(const Duration(hours: 2));
+      parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
     }
 
-    await supabase.from('events').update({
-      'event_name': result.name,
-      'start_day': result.startDate.toIso8601String().split('T').first,
-      'start_time': '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
-      'end_day': result.endDate.toIso8601String().split('T').first,
-      'end_time': '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
-      'location': result.location,
-      'cost': result.price,
-      if (result.description != null) 'description': result.description,
-      if (result.latitude != null) 'latitude': result.latitude,
-      if (result.longitude != null) 'longitude': result.longitude,
-    }).eq('event_id', eventId);
+    // Pass everything cleanly into the updated parameter structure
+    final result = await showNewEventPopup(
+      context,
+      existingName: event['title'],
+      existingLocation: event['location'],
+      existingLatitude: double.tryParse(event['latitude'] ?? ''),
+      existingLongitude: double.tryParse(event['longitude'] ?? ''),
+      existingPrice: double.tryParse(event['cost'] ?? '0') ?? 0.0,
+      existingStartDate: parsedStartDate,
+      existingStartTime: parsedStartTime,
+      existingEndDate: parsedEndDate,
+      existingEndTime: parsedEndTime,
+      existingDescription:
+          event['description'], // Safely handled if saved in state map
+    );
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event updated successfully!')),
-      );
+    if (result == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      if (result.image != null) {
+        await EventService.uploadEventImage(result.image, societyId);
+      }
+
+      await supabase
+          .from('events')
+          .update({
+            'event_name': result.name,
+            'start_day': result.startDate.toIso8601String().split('T').first,
+            'start_time':
+                '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
+            'end_day': result.endDate.toIso8601String().split('T').first,
+            'end_time':
+                '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
+            'location': result.location,
+            'cost': result.price,
+            if (result.description != null) 'description': result.description,
+            if (result.latitude != null) 'latitude': result.latitude,
+            if (result.longitude != null) 'longitude': result.longitude,
+          })
+          .eq('event_id', eventId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event updated successfully!')),
+        );
+      }
+
+      await _loadExistingProfile();
+    } catch (e) {
+      _showError('Failed to update event: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    await _loadExistingProfile(); 
-  } catch (e) {
-    _showError('Failed to update event: $e');
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
-
 
   Future<void> _saveSocDetails() async {
     if (!_formKey.currentState!.validate()) return;
@@ -263,7 +285,6 @@ void _editEvent(Map<String, String> event) async {
     }
   }
 
-
   Future<void> _pickSocietyImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
@@ -276,38 +297,40 @@ void _editEvent(Map<String, String> event) async {
   }
 
   // Method placeholder for creating a new event
-void _addNewEvent() async {
-  final result = await showNewEventPopup(context);
-  if (result == null) return;
+  void _addNewEvent() async {
+    final result = await showNewEventPopup(context);
+    if (result == null) return;
 
-  // Upload image if provided, then insert into DB
-  setState(() => _isLoading = true);
-  try {
-    await EventService.uploadEventImage(result.image, societyId);
+    // Upload image if provided, then insert into DB
+    setState(() => _isLoading = true);
+    try {
+      await EventService.uploadEventImage(result.image, societyId);
 
-    await supabase.from('events').insert({
-      'society_id': societyId,
-      'event_name': result.name,
-      'start_day': result.startDate.toIso8601String().split('T').first,
-      'start_time': '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
-      'end_day': result.endDate.toIso8601String().split('T').first,
-      'end_time': '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
-      'location': result.location,
-      'cost': result.price,
-      if (result.description != null) 'description': result.description,
-      if (result.latitude != null) 'latitude': result.latitude,
-      if (result.longitude != null) 'longitude': result.longitude,
-    });
+      await supabase.from('events').insert({
+        'society_id': societyId,
+        'event_name': result.name,
+        'start_day': result.startDate.toIso8601String().split('T').first,
+        'start_time':
+            '${result.startTime.hour}:${result.startTime.minute.toString().padLeft(2, '0')}',
+        'end_day': result.endDate.toIso8601String().split('T').first,
+        'end_time':
+            '${result.endTime.hour}:${result.endTime.minute.toString().padLeft(2, '0')}',
+        'location': result.location,
+        'cost': result.price,
+        if (result.description != null) 'description': result.description,
+        if (result.latitude != null) 'latitude': result.latitude,
+        if (result.longitude != null) 'longitude': result.longitude,
+      });
 
-    await _loadExistingProfile(); // refresh events list
-  } catch (e) {
-    _showError('Failed to create event: $e');
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
+      await _loadExistingProfile(); // refresh events list
+    } catch (e) {
+      _showError('Failed to create event: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
-}
 
-   // Logout now signs out from Supabase + confirms with user first
+  // Logout now signs out from Supabase + confirms with user first
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -341,7 +364,6 @@ void _addNewEvent() async {
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -361,7 +383,9 @@ void _addNewEvent() async {
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0XFF222222)),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0XFF222222),
+                      ),
                     ),
                   ),
                 )
@@ -380,7 +404,7 @@ void _addNewEvent() async {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 10),
-              
+
               // 1. Society Picture Slot with Image rendering logic
               GestureDetector(
                 onTap: _pickSocietyImage,
@@ -392,11 +416,19 @@ void _addNewEvent() async {
                       // Logic checks: 1. Newly selected local file -> 2. Network URL from DB -> 3. Default Icon
                       backgroundImage: _imageFile != null
                           ? FileImage(_imageFile!)
-                          : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
-                              ? NetworkImage(_existingImageUrl!) as ImageProvider
-                              : null,
-                      child: (_imageFile == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty))
-                          ? const Icon(Icons.person, size: 65, color: Colors.white)
+                          : (_existingImageUrl != null &&
+                                _existingImageUrl!.isNotEmpty)
+                          ? NetworkImage(_existingImageUrl!) as ImageProvider
+                          : null,
+                      child:
+                          (_imageFile == null &&
+                              (_existingImageUrl == null ||
+                                  _existingImageUrl!.isEmpty))
+                          ? const Icon(
+                              Icons.person,
+                              size: 65,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                     const Positioned(
@@ -405,14 +437,18 @@ void _addNewEvent() async {
                       child: CircleAvatar(
                         radius: 18,
                         backgroundColor: Color(0XFF84DCC6),
-                        child: Icon(Icons.add_a_photo, size: 16, color: Colors.white),
+                        child: Icon(
+                          Icons.add_a_photo,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-  
+
               // 2. Society Title Name Display
               Text(
                 _societyName ?? 'UNKNOWN',
@@ -423,7 +459,7 @@ void _addNewEvent() async {
                 ),
               ),
               const SizedBox(height: 24),
-  
+
               // 3. Container Card housing the "About" Description Box
               Card(
                 elevation: 0,
@@ -450,7 +486,11 @@ void _addNewEvent() async {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.edit, size: 18, color: Color(0xFFEBA6A9)),
+                            icon: const Icon(
+                              Icons.edit,
+                              size: 18,
+                              color: Color(0xFFEBA6A9),
+                            ),
                             onPressed: _editAboutMe,
                             constraints: const BoxConstraints(),
                             padding: EdgeInsets.zero,
@@ -459,7 +499,9 @@ void _addNewEvent() async {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _aboutController.text.isNotEmpty ? _aboutController.text : "No description provided yet. Click the edit icon to write something!",
+                        _aboutController.text.isNotEmpty
+                            ? _aboutController.text
+                            : "No description provided yet. Click the edit icon to write something!",
                         style: GoogleFonts.montserrat(
                           fontSize: 14,
                           color: Colors.black87,
@@ -471,7 +513,7 @@ void _addNewEvent() async {
                 ),
               ),
               const SizedBox(height: 32),
-  
+
               // 4. "YOUR EVENTS" Section Header with Plus Floating Action Style Button
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -490,20 +532,26 @@ void _addNewEvent() async {
                     label: const Text("New Event"),
                     style: TextButton.styleFrom(
                       foregroundColor: const Color(0XFF84DCC6),
-                      textStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 13),
+                      textStyle: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-  
+
               // 5. Scrollable Column of Event Cards
               _events.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
                         "You haven't listed any events yet.",
-                        style: GoogleFonts.montserrat(color: Colors.grey, fontSize: 14),
+                        style: GoogleFonts.montserrat(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -515,55 +563,75 @@ void _addNewEvent() async {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           color: Colors.white,
                           child: ListTile(
                             onTap: () => _editEvent(event),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             leading: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0XFF84DCC6).withValues(alpha: 0.1),
+                                color: const Color(
+                                  0XFF84DCC6,
+                                ).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.calendar_today, color: Color(0XFF84DCC6)),
+                              child: const Icon(
+                                Icons.calendar_today,
+                                color: Color(0XFF84DCC6),
+                              ),
                             ),
                             title: Text(
                               event['title']!,
-                              style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15),
+                              style: GoogleFonts.montserrat(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
                             ),
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 4.0),
                               child: Text(
                                 "${event['start_date']} • ${event['location']}",
-                                style: GoogleFonts.montserrat(fontSize: 12, color: Colors.grey.shade600),
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
                             ),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
                           ),
                         );
                       },
                     ),
-                    ElevatedButton(
-                        onPressed: _isLoading ? null : _logout,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0XFFFD5757),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'LOG OUT',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _logout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0XFFFD5757),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'LOG OUT',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
