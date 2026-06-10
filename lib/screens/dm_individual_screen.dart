@@ -409,7 +409,7 @@ class _DMScreenState extends State<DMScreen> {
           ),
 
         const SizedBox(height: 12),
-
+      if(!widget.chat.isSociety)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Container(

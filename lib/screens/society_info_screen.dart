@@ -182,7 +182,6 @@ Future<void> _setupEvents() async {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
 ElevatedButton(
-  // 1. Disable the button by setting onPressed to null if data isn't ready
   onPressed: (_isLoading || _societyCard == null)
       ? null 
       : () {
@@ -190,8 +189,7 @@ ElevatedButton(
             context,
             MaterialPageRoute(
               builder: (context) => DMScreen(
-                // 2. Safe access now that we know it's not null
-                chat: ChatConversation(matchCard: _societyCard!),
+                chat: ChatConversation(matchCard: _societyCard!, isSociety: true),
               ),
             ),
           );
@@ -200,7 +198,6 @@ ElevatedButton(
     backgroundColor: const Color(0XFF84DCC6),
     foregroundColor: Colors.black,
   ),
-  // 3. Optional: update text to show a loading/disabled state
   child: Text((_isLoading || _societyCard == null) ? "Loading..." : "Message"),
 ),
                   ],
