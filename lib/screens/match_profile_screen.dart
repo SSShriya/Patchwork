@@ -61,25 +61,25 @@ class _MatchProfileScreenState extends State<MatchProfileScreen> {
 
     if (accepted) {
       // ── Delegate DB check entirely to the service ──
-      final isMutual = await _matchService.hasOtherUserAccepted(card.id);
+      final isMutual = await _matchService.hasOtherUserAccepted(card);
       if (!mounted) return;
 
       showDialog(
         context: context,
         builder: (dialogContext) => CongratsPopup(
-          match: card, 
+          match: card,
           isMutual: isMutual,
           onGoHome: () {
-              Navigator.of(dialogContext).pop();  // closes dialog 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
+            Navigator.of(dialogContext).pop(); // closes dialog
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
 
-                // Navigator.of(context).pop(); // closes MatchProfileScreen
-                widget.onGoHome();
-              });
-              // widget.onGoHome();
-            },
-          ),
+              // Navigator.of(context).pop(); // closes MatchProfileScreen
+              widget.onGoHome();
+            });
+            // widget.onGoHome();
+          },
+        ),
       ).then((_) {
         if (!mounted) return;
         setState(() {

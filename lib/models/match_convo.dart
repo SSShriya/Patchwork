@@ -18,7 +18,7 @@ class ChatConversation {
   });
 
   String get name => matchCard.title;
-  String get otherUserId => matchCard.id;
+  String get otherUserId => matchCard.otherUserId;
   String get event => matchCard.eventName;
   List<String> get interests => matchCard.interests;
   String? get imageUrl => matchCard.imageUrl;
