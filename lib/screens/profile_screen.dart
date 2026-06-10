@@ -1,4 +1,4 @@
-import 'dart:io';
+// import 'dart:io';
 import 'package:drp/screens/main_shell.dart';
 import 'package:drp/services/supabase_client.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +10,7 @@ import '../models/useful_data.dart';
 import '../models/interest_data.dart';
 import '../services/interest_suggestion_service.dart';
 import '../widgets/interests_categories.dart';
+import 'dart:typed_data';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,7 +31,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _selectedBorough;
   String? _selectedYearGroup;
 
-  File? _imageFile;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   String? _existingAvatarUrl;
   final List<String> _interests = [];
   bool _isLoading = false;
@@ -112,13 +114,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
+    final XFile? picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 70,
     );
-    if (pickedFile != null) {
-      setState(() => _imageFile = File(pickedFile.path));
+
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+
+      setState(() {
+        _imageFile = picked;
+        _imageBytes = bytes;
+      });
     }
   }
 
@@ -166,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } on PostgrestException catch (e) {
       if (mounted) _showError(e.message);
     } catch (e) {
-      if (mounted) _showError('An unexpected error occurred while saving.');
+      if (mounted) _showError('Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -426,13 +432,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               CircleAvatar(
                                 radius: 60,
                                 backgroundColor: Colors.grey.shade200,
-                                backgroundImage: _imageFile != null
-                                    ? FileImage(_imageFile!) as ImageProvider
+                                backgroundImage: _imageBytes != null
+                                    ? MemoryImage(_imageBytes!) as ImageProvider
                                     : _existingAvatarUrl != null
                                     ? NetworkImage(_existingAvatarUrl!)
                                     : null,
                                 child:
-                                    (_imageFile == null &&
+                                    (_imageBytes == null &&
                                         _existingAvatarUrl == null)
                                     ? Icon(
                                         Icons.camera_alt_outlined,
