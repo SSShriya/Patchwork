@@ -212,6 +212,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                           title: 'Old Chats',
                           conversations: filteredOldConvos,
                           onRefresh: _loadConversations,
+                          oldChats: true,
                         ),
 
                       // Newly Added: Society Chats Section

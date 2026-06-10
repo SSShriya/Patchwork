@@ -8,12 +8,14 @@ class ChatSection extends StatelessWidget {
   final String title;
   final List<ChatConversation> conversations;
   final VoidCallback onRefresh;
+  final bool oldChats; 
 
   const ChatSection({
     super.key,
     required this.title,
     required this.conversations,
     required this.onRefresh,
+    this.oldChats = false,
   });
 
   @override
@@ -23,7 +25,7 @@ class ChatSection extends StatelessWidget {
         title,
         style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
       ),
-      initiallyExpanded: true,
+      initiallyExpanded: oldChats,
       children: [
         ListView.builder(
           shrinkWrap: true,
