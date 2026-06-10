@@ -245,7 +245,14 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         builder: (_) => PickLocationMap(initialLocation: _pickedLocation),
       ),
     );
-    if (result != null) setState(() => _pickedLocation = result);
+
+    if (result != null) {
+      setState(() {
+        _pickedLocation = result;
+        _locationController.text =
+            '${result.latitude.toStringAsFixed(5)}, ${result.longitude.toStringAsFixed(5)}';
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -357,105 +364,181 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      _SectionLabel(label: 'START', color: _teal),
+                      _SectionLabel(
+                        label: 'Start Date & Time',
+                        color: Colors.black,
+                      ),
                       const SizedBox(height: 8),
+
                       Row(
                         children: [
                           Expanded(
-                            child: _DateTimeTile(
-                              icon: Icons.calendar_today_outlined,
-                              value: _fmt(_startDate),
+                            child: InkWell(
                               onTap: () => _pickDate(isStart: true),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'Date',
+                                  floatingLabelBehavior:
+                                      FloatingLabelBehavior.always,
+                                  prefixIcon: const Icon(
+                                    Icons.calendar_today_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(_fmt(_startDate)),
+                              ),
                             ),
                           ),
+
                           const SizedBox(width: 10),
+
                           Expanded(
-                            child: _DateTimeTile(
-                              icon: Icons.access_time_outlined,
-                              value: _fmtTime(_startTime),
+                            child: InkWell(
                               onTap: () => _pickTime(isStart: true),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'Time',
+                                  floatingLabelBehavior:
+                                      FloatingLabelBehavior.always,
+                                  prefixIcon: const Icon(
+                                    Icons.access_time_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(_fmtTime(_startTime)),
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 14),
 
-                      _SectionLabel(label: 'END', color: _teal),
+                      _SectionLabel(
+                        label: 'End Date & Time',
+                        color: Colors.black,
+                      ),
                       const SizedBox(height: 8),
+
                       Row(
                         children: [
                           Expanded(
-                            child: _DateTimeTile(
-                              icon: Icons.calendar_today_outlined,
-                              value: _fmt(_endDate),
+                            child: InkWell(
                               onTap: () => _pickDate(isStart: false),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'Date',
+                                  floatingLabelBehavior:
+                                      FloatingLabelBehavior.always,
+                                  prefixIcon: const Icon(
+                                    Icons.calendar_today_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(_fmt(_endDate)),
+                              ),
                             ),
                           ),
+
                           const SizedBox(width: 10),
+
                           Expanded(
-                            child: _DateTimeTile(
-                              icon: Icons.access_time_outlined,
-                              value: _fmtTime(_endTime),
+                            child: InkWell(
                               onTap: () => _pickTime(isStart: false),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'Time',
+                                  floatingLabelBehavior:
+                                      FloatingLabelBehavior.always,
+                                  prefixIcon: const Icon(
+                                    Icons.access_time_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text(_fmtTime(_endTime)),
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 14),
 
-                      _field(
+                      TextFormField(
                         controller: _locationController,
-                        label: 'Location',
-                        icon: Icons.location_on_outlined,
+                        decoration: InputDecoration(
+                          labelText: 'Location',
+                          hintText: 'Type an address or pick on map',
+                          prefixIcon: Icon(
+                            _pickedLocation != null
+                                ? Icons.location_pin
+                                : Icons.location_on_outlined,
+                            color: _pickedLocation != null
+                                ? const Color(0xFF84DCC6)
+                                : null,
+                          ),
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Clear pin button — only shown when a pin exists
+                              if (_pickedLocation != null)
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  tooltip: 'Clear map pin',
+                                  onPressed: () =>
+                                      setState(() => _pickedLocation = null),
+                                ),
+                              // Map picker button
+                              IconButton(
+                                icon: const Icon(Icons.map_outlined),
+                                tooltip: 'Pick on map',
+                                onPressed: _pickLocation,
+                              ),
+                            ],
+                          ),
+                          filled: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                         validator: (v) => (v == null || v.trim().isEmpty)
                             ? 'Enter a location'
                             : null,
+                        onChanged: (_) {
+                          // If user edits text manually, detach the map pin
+                          if (_pickedLocation != null)
+                            setState(() => _pickedLocation = null);
+                        },
                       ),
 
-                      const SizedBox(height: 14),
-
-                      // map coord picker
-                      GestureDetector(
-                        onTap: _pickLocation,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      // Optional: small "pinned" indicator below the field
+                      if (_pickedLocation != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, left: 4),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.map_outlined,
-                                size: 20,
-                                color: Colors.grey.shade600,
+                              const Icon(
+                                Icons.push_pin,
+                                size: 14,
+                                color: Color(0xFF84DCC6),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _pickedLocation == null
-                                      ? 'Pin location on map (optional)'
-                                      : '📍 ${_pickedLocation!.latitude.toStringAsFixed(4)}, '
-                                            '${_pickedLocation!.longitude.toStringAsFixed(4)}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: _pickedLocation == null
-                                        ? Colors.grey.shade400
-                                        : const Color(0xFF222222),
-                                  ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Map pin attached',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
                                 ),
-                              ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Colors.grey.shade400,
                               ),
                             ],
                           ),
                         ),
-                      ),
 
                       const SizedBox(height: 14),
 
@@ -569,55 +652,10 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       label,
       style: GoogleFonts.montserrat(
-        fontSize: 11,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.4,
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        letterSpacing: 1.2,
         color: color,
-      ),
-    );
-  }
-}
-
-class _DateTimeTile extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final VoidCallback onTap;
-
-  const _DateTimeTile({
-    required this.icon,
-    required this.value,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isPlaceholder = value.startsWith('Select');
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: Colors.grey.shade500),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isPlaceholder
-                      ? Colors.grey.shade400
-                      : const Color(0XFF222222),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
