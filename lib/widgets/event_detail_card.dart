@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
-import '../widgets/map_preview.dart';
 
 class EventDetailCard extends StatelessWidget {
   final EventCard card;
