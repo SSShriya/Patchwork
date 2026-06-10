@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
-import '../screens/verify_email_screen.dart';
+//import '../screens/verify_email_screen.dart';
+import '../screens/main_shell.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -49,8 +50,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) =>
-                  VerifyEmailScreen(email: _emailController.text.trim()),
+              builder: (context) => const MainShell(),
+              //VerifyEmailScreen(email: _emailController.text.trim()),
             ),
           );
         }

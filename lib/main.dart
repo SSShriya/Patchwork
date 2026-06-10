@@ -105,10 +105,10 @@ class _MainAppState extends State<MainApp> {
           final user =
               snapshot.data?.session?.user ?? supabase.auth.currentUser;
 
-          // ── User exists but email not verified ──────────────────────
-          if (user != null && user.emailConfirmedAt == null) {
-            return VerifyEmailScreen(email: user.email ?? '');
-          }
+          // // ── User exists but email not verified ──────────────────────
+          // if (user != null && user.emailConfirmedAt == null) {
+          //   return VerifyEmailScreen(email: user.email ?? '');
+          // }
 
           // ── No user at all → sign up/login screen ───────────────────
           if (user == null || session == null) return const SignUpScreen();
