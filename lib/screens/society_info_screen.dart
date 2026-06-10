@@ -155,7 +155,7 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
       'event_id': widget.eventId,
       'user1_accepted': true,
       'user2_accepted': true,
-    }, onConflict: 'user1_id,user2_id,event_id');
+    }, onConflict: 'user1_id,user2_id');
   }
 
   // Helper check to see if the event item collection contains our current target ID

@@ -15,7 +15,7 @@ class ChatSection extends StatelessWidget {
     required this.title,
     required this.conversations,
     required this.onRefresh,
-    this.currentChats = true,
+    this.currentChats = false,
   });
 
   @override

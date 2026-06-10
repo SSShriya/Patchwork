@@ -130,9 +130,9 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
     final filteredConversations = _applyFilters(_conversations);
 
     // 2. Separate Society Chats completely away from general user chats
-    // final filteredSocietyConvos = filteredConversations
-    //     .where((chat) => chat.isSociety)
-    //     .toList();
+    final filteredSocietyConvos = filteredConversations
+        .where((chat) => chat.isSociety)
+        .toList();
 
     // 3. Keep non-society matches and partition them by relevance
     final filteredCurrentConvos = filteredConversations
@@ -143,6 +143,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
       .map((chat) => chat.otherUserId)
       .toSet();
 
+    // Ensure the old conversations have no current user IDs
     final filteredOldConvos = filteredConversations
         .where((chat) => 
           !chat.isSociety && 
@@ -230,24 +231,25 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                           title: 'Current Chats',
                           conversations: filteredCurrentConvos,
                           onRefresh: _loadConversations,
+                          currentChats: true,
+                        ),
+
+                      // Society Chats Section
+                      if (filteredSocietyConvos.isNotEmpty)
+                        ChatSection(
+                          title: 'Contact a Committee Member',
+                          conversations: filteredSocietyConvos,
+                          onRefresh: _loadConversations,
+                          currentChats: true,
                         ),
                         
-                      // Existing Chats Section
+                      // Old Chats Section
                       if (filteredOldConvos.isNotEmpty)
                         ChatSection(
                           title: 'Old Chats',
                           conversations: filteredOldConvos,
                           onRefresh: _loadConversations,
-                          currentChats: false,
                         ),
-
-                      // Newly Added: Society Chats Section
-                      // if (filteredSocietyConvos.isNotEmpty)
-                      //   ChatSection(
-                      //     title: 'Society Chats',
-                      //     conversations: [],
-                      //     onRefresh: _loadConversations,
-                      //   ),
                     ],
                   ],
                 ),
