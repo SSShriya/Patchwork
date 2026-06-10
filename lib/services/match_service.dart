@@ -9,7 +9,7 @@ import 'supabase_client.dart';
 class MatchService {
   Future<List<MatchCard>> getPendingMatches(String currentUserId) async {
     debugPrint("getPendingMatches() has been called");
-    // fetch current user's profile
+
     final currentUserData = await supabase
         .from('users')
         .select('university, course, location, user_interests(interest)')
@@ -24,7 +24,6 @@ class MatchService {
             .map((i) => i['interest'] as String)
             .toSet();
 
-    // fetch events the current user is interested in
     final interestedEventsData = await supabase
         .from('interested_events')
         .select('event_id')
@@ -36,7 +35,6 @@ class MatchService {
 
     if (interestedEventIds.isEmpty) return [];
 
-    // fetch matches
     final rows = await supabase
         .from('matches')
         .select(
@@ -45,11 +43,23 @@ class MatchService {
         .inFilter('event_id', interestedEventIds)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
-    final matches = <(MatchCard, int)>[]; // store card + score together
-
+    // ── Collect all other user IDs for batch gallery fetch ──────────────
+    final otherUserIds = <String>[];
     for (final row in rows as List) {
+      final isUser1 = currentUserId == row['user1_id'] as String;
+      final otherUserData = isUser1
+          ? row['user2'] as Map<String, dynamic>
+          : row['user1'] as Map<String, dynamic>;
+      otherUserIds.add(otherUserData['id'] as String);
+    }
+
+    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
+
+    // ── Build match cards ────────────────────────────────────────────────
+    final matches = <(MatchCard, int)>[];
+
+    for (final row in rows) {
       final user1Id = row['user1_id'] as String;
-      // final user2Id = row['user2_id'] as String;
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
       final eventId = row['event_id'] as String;
@@ -69,20 +79,16 @@ class MatchService {
           otherUserData['is_society'].toString() == 'true') {
         break;
       }
-      debugPrint("Carrying on");
 
+      final otherUserId = otherUserData['id'] as String;
       final otherInterests =
           (otherUserData['user_interests'] as List<dynamic>? ?? [])
               .map((i) => i['interest'] as String)
               .toSet();
 
-      // score the match
       int score = 0;
-
-      // +1 per shared interest
       score += currentInterests.intersection(otherInterests).length;
 
-      // +1 for shared university
       final otherUniversity = (otherUserData['university'] as String?) ?? '';
       if (currentUniversity.isNotEmpty &&
           otherUniversity.isNotEmpty &&
@@ -90,7 +96,6 @@ class MatchService {
         score += 1;
       }
 
-      // +1 for shared course/degree
       final otherCourse = (otherUserData['course'] as String?) ?? '';
       if (currentCourse.isNotEmpty &&
           otherCourse.isNotEmpty &&
@@ -98,7 +103,6 @@ class MatchService {
         score += 1;
       }
 
-      // +1 for shared location
       final otherLocation = (otherUserData['location'] as String?) ?? '';
       if (currentLocation.isNotEmpty &&
           otherLocation.isNotEmpty &&
@@ -106,14 +110,12 @@ class MatchService {
         score += 1;
       }
 
-      // filter: only include score >= 2
       if (score < 1) continue;
 
       matches.add((
         MatchCard(
-          // id: '$user1Id|$user2Id|$eventId',
           currentUserId: currentUserId,
-          otherUserId: otherUserData['id'] as String,
+          otherUserId: otherUserId,
           title: otherUserData['name'] ?? 'Unknown',
           university: otherUniversity,
           course: otherCourse,
@@ -124,18 +126,16 @@ class MatchService {
           interests: otherInterests.toList(),
           location: otherLocation,
           imageUrl: otherUserData['avatar_url'] ?? '',
+          galleryUrls: galleryMap[otherUserId] ?? [],
         ),
         score,
       ));
     }
 
-    // sort descending by score
     matches.sort((a, b) => b.$2.compareTo(a.$2));
-
     return matches.map((e) => e.$1).toList();
   }
 
-  // check if other user has accepted your match
   Future<bool> hasOtherUserAccepted(MatchCard card) async {
     final parts = card.matchKey.split('|');
     final user1Id = parts[0];
@@ -157,7 +157,6 @@ class MatchService {
     return otherAccepted == true;
   }
 
-  // Matches where current user accepted, other user hasn't decided yet
   Future<List<MatchCard>> getAwaitingResponseMatches(
     String currentUserId,
   ) async {
@@ -168,11 +167,22 @@ class MatchService {
         )
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
+    // ── Collect other user IDs for batch gallery fetch ───────────────────
+    final otherUserIds = <String>[];
+    for (final row in rows as List) {
+      final isUser1 = currentUserId == row['user1_id'] as String;
+      final otherUserData = isUser1
+          ? row['user2'] as Map<String, dynamic>
+          : row['user1'] as Map<String, dynamic>;
+      otherUserIds.add(otherUserData['id'] as String);
+    }
+
+    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
+
     final waiting = <MatchCard>[];
 
-    for (final row in rows as List) {
+    for (final row in rows) {
       final user1Id = row['user1_id'] as String;
-      // final user2Id = row['user2_id'] as String;
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
       final eventId = row['event_id'] as String;
@@ -184,18 +194,18 @@ class MatchService {
       final iAccepted = isUser1 ? user1Accepted : user2Accepted;
       final theyAccepted = isUser1 ? user2Accepted : user1Accepted;
 
-      // I said yes, they haven't answered yet
       if (iAccepted != true || theyAccepted != null) continue;
 
       final otherUserData = isUser1
           ? row['user2'] as Map<String, dynamic>
           : row['user1'] as Map<String, dynamic>;
 
+      final otherUserId = otherUserData['id'] as String;
+
       waiting.add(
         MatchCard(
-          // id: '$user1Id|$user2Id|$eventId',
           currentUserId: currentUserId,
-          otherUserId: otherUserData['id'] as String,
+          otherUserId: otherUserId,
           title: otherUserData['name'] ?? 'Unknown',
           university: otherUserData['university'] ?? '',
           course: otherUserData['course'] ?? '',
@@ -208,6 +218,7 @@ class MatchService {
               .toList(),
           location: otherUserData['location'] ?? '',
           imageUrl: otherUserData['avatar_url'] ?? '',
+          galleryUrls: galleryMap[otherUserId] ?? [],
         ),
       );
     }
@@ -237,8 +248,6 @@ class MatchService {
   }
 
   Future<void> reportUser(MatchCard card, String description) async {
-    // final currentUserId = await loadUserId();
-
     try {
       await supabase.from('reported').insert({
         'reportee_userid': card.otherUserId,
@@ -251,9 +260,6 @@ class MatchService {
   }
 
   Future<void> blockUser(MatchCard card) async {
-    // final currentUserId = await loadUserId();
-
-    // insert into blocked table
     await supabase.from('blocked').upsert({
       'user1_id': card.currentUserId,
       'user2_id': card.otherUserId,
@@ -261,7 +267,6 @@ class MatchService {
 
     final parts = card.matchKey.split('|');
 
-    // also delete all matches between these two users
     await supabase
         .from('matches')
         .delete()
@@ -269,7 +274,6 @@ class MatchService {
         .eq('user2_id', parts[1]);
   }
 
-  // for getting confirmed matches for an event
   Future<List<MatchCard>> getConfirmedMatchesForEvent(String eventId) async {
     final currentUserId = await loadUserId();
     final rows = await _getConfirmedMatchRows(currentUserId, eventId: eventId);
@@ -281,16 +285,38 @@ class MatchService {
     }
     debugPrint("getConfirmedMatchesForEvent() has been called");
 
+    // ── Batch fetch gallery for confirmed matches ────────────────────────
+    final otherUserIds = rows.map((row) {
+      final user1Data = row['user1'] as Map<String, dynamic>;
+      final otherUser = user1Data['id'] == currentUserId
+          ? row['user2'] as Map<String, dynamic>
+          : user1Data;
+      return otherUser['id'] as String;
+    }).toList();
+
+    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
+
     return rows
-        .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
+        .map((row) => _rowToConfirmedMatchCard(row, currentUserId, galleryMap))
         .toList();
   }
 
   Future<List<MatchCard>> getMutualMatches(String currentUserId) async {
-    // final currentUserId = await loadUserId();
     final rows = await _getConfirmedMatchRows(currentUserId);
+
+    // ── Batch fetch gallery for mutual matches ───────────────────────────
+    final otherUserIds = rows.map((row) {
+      final user1Data = row['user1'] as Map<String, dynamic>;
+      final otherUser = user1Data['id'] == currentUserId
+          ? row['user2'] as Map<String, dynamic>
+          : user1Data;
+      return otherUser['id'] as String;
+    }).toList();
+
+    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
+
     return rows
-        .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
+        .map((row) => _rowToConfirmedMatchCard(row, currentUserId, galleryMap))
         .toList();
   }
 
@@ -302,8 +328,6 @@ class MatchService {
     return publicUrl;
   }
 
-  // ----- private helpers ------
-  // fetches the rows
   Future<List<Map<String, dynamic>>> _getConfirmedMatchRows(
     String currentUserId, {
     String? eventId,
@@ -321,25 +345,22 @@ class MatchService {
 
     final List<dynamic> results = await query;
 
-    // FILTER RULE: Filter out any row where user1 or user2 has is_society == true
     return results
         .where((row) {
           final user1 = row['user1'] as Map<String, dynamic>?;
           final user2 = row['user2'] as Map<String, dynamic>?;
-
           final bool isUser1Society = user1?['is_society'] ?? false;
           final bool isUser2Society = user2?['is_society'] ?? false;
-
           return !isUser1Society && !isUser2Society;
         })
         .cast<Map<String, dynamic>>()
         .toList();
   }
 
-  // maps single row to a MatchCard
   MatchCard _rowToConfirmedMatchCard(
     Map<String, dynamic> row,
     String currentUserId,
+    Map<String, List<String>> galleryMap,
   ) {
     final user1Data = row['user1'] as Map<String, dynamic>;
     final user2Data = row['user2'] as Map<String, dynamic>;
@@ -348,11 +369,11 @@ class MatchService {
         '';
     final eventId = row['event_id'] as String;
     final otherUser = user1Data['id'] == currentUserId ? user2Data : user1Data;
+    final otherUserId = otherUser['id'] as String;
 
     return MatchCard(
-      // id: otherUser['id'],
       currentUserId: currentUserId,
-      otherUserId: otherUser['id'] as String,
+      otherUserId: otherUserId,
       title: otherUser['name'] ?? 'Unknown',
       university: otherUser['university'] ?? '',
       course: otherUser['course'] ?? '',
@@ -365,6 +386,7 @@ class MatchService {
           .toList(),
       location: (otherUser['location']) ?? '',
       imageUrl: otherUser['avatar_url'] ?? '',
+      galleryUrls: galleryMap[otherUserId] ?? [],
     );
   }
 }

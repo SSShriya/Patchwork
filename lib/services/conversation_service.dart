@@ -4,7 +4,6 @@ import '../models/match_convo.dart';
 import '../models/match_card.dart';
 import 'utils.dart';
 import 'package:flutter/foundation.dart';
-// import 'session_manager.dart';
 
 class ConversationService {
   Future<List<ChatConversation>> getConversations() async {
@@ -25,7 +24,20 @@ class ConversationService {
         .select('sender_id, recipient_id, content')
         .or('sender_id.eq.$currentUserId, recipient_id.eq.$currentUserId');
 
-    return (matchRows as List).map((r) {
+    // ── Batch fetch gallery URLs for all other users ─────────────────────
+    final otherUserIds = (matchRows as List).map((r) {
+      final user1Data = r['user1'] as Map<String, dynamic>;
+      final user2Data = r['user2'] as Map<String, dynamic>;
+      final otherUser = currentUserId == user1Data['id']
+          ? user2Data
+          : user1Data;
+      return otherUser['id'] as String;
+    }).toList();
+
+    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
+    (otherUserIds);
+
+    return (matchRows).map((r) {
       final user1Data = r['user1'] as Map<String, dynamic>;
       final user2Data = r['user2'] as Map<String, dynamic>;
 
@@ -52,7 +64,7 @@ class ConversationService {
       final messageCount = directMessages.length;
       final hasHistory = messageCount > 0;
 
-      // ── Extract event data ──
+      // ── Extract event data ───────────────────────────────────────────
       final eventData = r['event'];
       String eventName = '';
       String eventId = '';
@@ -70,7 +82,7 @@ class ConversationService {
         }
       }
 
-      // ── Build MatchCard ──
+      // ── Build MatchCard ──────────────────────────────────────────────
       final matchCard = MatchCard(
         currentUserId: currentUserId,
         otherUserId: actualOtherUserId,
@@ -84,9 +96,9 @@ class ConversationService {
         interests: interestsList,
         location: otherUser['location'] as String? ?? '',
         imageUrl: otherUser['avatar_url'] as String? ?? '',
+        galleryUrls: galleryMap[actualOtherUserId] ?? [],
       );
 
-      // Helper to clean message content for preview display
       String previewText(String content) {
         if (content.startsWith('INVITATION_DATA:')) {
           return '📅 Invitation sent.';
@@ -98,7 +110,6 @@ class ConversationService {
         return content;
       }
 
-      // ── Build ChatConversation from matchCard only ──
       return ChatConversation(
         matchCard: matchCard,
         numMessages: messageCount,

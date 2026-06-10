@@ -15,6 +15,27 @@ Future<String> loadUserId() async {
   return id;
 }
 
+Future<Map<String, List<String>>> fetchGalleryUrlsForUsers(
+  List<String> userIds,
+) async {
+  if (userIds.isEmpty) return {};
+
+  final galleryData = await supabase
+      .from('user_gallery')
+      .select('user_id, photo_url')
+      .inFilter('user_id', userIds)
+      .order('position', ascending: true);
+
+  final Map<String, List<String>> galleryMap = {};
+  for (final row in galleryData as List) {
+    final userId = row['user_id'] as String;
+    final photoUrl = row['photo_url'] as String;
+    galleryMap.putIfAbsent(userId, () => []).add(photoUrl);
+  }
+
+  return galleryMap;
+}
+
 String formatGroupDate(DateTime dt) {
   final now = DateTime.now();
   bool sameDay(DateTime a, DateTime b) =>
@@ -75,4 +96,3 @@ String buildInvitePayload(Map result) =>
     location: loc.isEmpty ? 'Not specified' : loc,
   );
 }
-

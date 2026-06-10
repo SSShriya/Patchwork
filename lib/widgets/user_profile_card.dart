@@ -202,6 +202,14 @@ class UserProfileCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // Add between Bio card and Block button in build():
+          if (card.galleryUrls.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildGallery(),
+          ],
+
+          const SizedBox(height: 16),
+
           // ── Block button ──
           SizedBox(
             width: double.infinity,
@@ -425,6 +433,159 @@ class UserProfileCard extends StatelessWidget {
         ).showSnackBar(SnackBar(content: Text('Failed to report: $e')));
       }
     }
+  }
+
+  Widget _buildGallery() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Photos:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Scrollable row of photos ──────────────────────────────────
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: card.galleryUrls.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final url = card.galleryUrls[index];
+                return GestureDetector(
+                  // ── Tap to view full screen ─────────────────────────
+                  onTap: () => _showFullScreenImage(context, index),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      url,
+                      width: 160,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 160,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF84DCC6),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 160,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.grey.shade400,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Full screen image viewer ──────────────────────────────────────────────
+  void _showFullScreenImage(BuildContext context, int initialIndex) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // ── Swipeable page view ───────────────────────────────────
+            PageView.builder(
+              controller: PageController(initialPage: initialIndex),
+              itemCount: card.galleryUrls.length,
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  child: Center(
+                    child: Image.network(
+                      card.galleryUrls[index],
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF84DCC6),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // ── Close button ──────────────────────────────────────────
+            Positioned(
+              top: 40,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+
+            // ── Photo counter ─────────────────────────────────────────
+            Positioned(
+              top: 48,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${initialIndex + 1} / ${card.galleryUrls.length}',
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

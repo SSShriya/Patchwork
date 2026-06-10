@@ -64,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       final userId = await loadUserId();
 
       final matches = await _matchService.getPendingMatches(userId);
+
       final events = await _eventService.getInterestedEvents(userId);
       final awaiting = await _matchService.getAwaitingResponseMatches(userId);
       final mutual = await _matchService.getMutualMatches(userId);
@@ -113,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final groupCards = _pendingMatches
         .where((c) => c.eventId == card.eventId)
         .toList();
+
     final initialIndex = groupCards.indexOf(card);
 
     Navigator.push(
@@ -326,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     ),
                     child: Center(
                       child: Text(
-                        '${_awaitingMatches.length}',
+                        '${_unseenIds.length}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
