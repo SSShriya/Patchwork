@@ -32,22 +32,6 @@ class MatchCard extends BaseCard {
     required this.imageUrl,
   });
 
-  // factory MatchCard.fromJson(Map<String, dynamic> json) => MatchCard(
-  //   currentUserId: json['id'],
-  //   title: json['name'],
-  //   university: json['university'],
-  //   course: json['course'],
-  //   bio: json['bio'],
-  //   eventId: json['event_id'],
-  //   eventName: json['event_name'],
-  //   yearGroup: json['year_group'] ?? '',
-  //   interests: (json['user_interests'] as List<dynamic>? ?? [])
-  //       .map((i) => i['interest'] as String)
-  //       .toList(),
-  //   location: json['location'] ?? '',
-  //   imageUrl: json['profile_image_url'] ?? '',
-  // );
-
   // needs to be ordered the same way as the DB (user1_id < user2_id presumably)
   String get matchKey {
     final a = currentUserId.compareTo(otherUserId) <= 0

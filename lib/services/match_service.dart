@@ -46,7 +46,7 @@ class MatchService {
 
     for (final row in rows as List) {
       final user1Id = row['user1_id'] as String;
-      final user2Id = row['user2_id'] as String;
+      // final user2Id = row['user2_id'] as String;
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
       final eventId = row['event_id'] as String;
@@ -128,19 +128,17 @@ class MatchService {
 
   // check if other user has accepted your match
   Future<bool> hasOtherUserAccepted(MatchCard card) async {
-    // final currentUserId = await loadUserId();
-
-    // final parts = matchId.split('|');
-    // final user1Id = parts[0];
-    // final user2Id = parts[1];
-    // final eventId = parts[2];
+    final parts = card.matchKey.split('|');
+    final user1Id = parts[0];
+    final user2Id = parts[1];
+    final eventId = parts[2];
 
     final row = await supabase
         .from('matches')
         .select('user1_accepted, user2_accepted')
-        .eq('user1_id', card.matchKey.split('|')[0])
-        .eq('user2_id', card.matchKey.split('|')[1])
-        .eq('event_id', card.matchKey.split('|')[2])
+        .eq('user1_id', user1Id)
+        .eq('user2_id', user2Id)
+        .eq('event_id', eventId)
         .single();
 
     final otherAccepted = card.currentUserId == card.matchKey.split('|')[0]
@@ -165,7 +163,7 @@ class MatchService {
 
     for (final row in rows as List) {
       final user1Id = row['user1_id'] as String;
-      final user2Id = row['user2_id'] as String;
+      // final user2Id = row['user2_id'] as String;
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
       final eventId = row['event_id'] as String;
@@ -209,8 +207,6 @@ class MatchService {
   }
 
   Future<void> recordDecision(MatchCard card, bool accepted) async {
-    // final currentUserId = await loadUserId();
-
     final parts = card.matchKey.split('|');
     final user1Id = parts[0];
     final user2Id = parts[1];
@@ -255,14 +251,6 @@ class MatchService {
     });
 
     final parts = card.matchKey.split('|');
-
-    // // delete matches in both possible ID orderings
-    // final a = currentUserId.compareTo(otherUserId) <= 0
-    //     ? currentUserId
-    //     : otherUserId;
-    // final b = currentUserId.compareTo(otherUserId) <= 0
-    //     ? otherUserId
-    //     : currentUserId;
 
     // also delete all matches between these two users
     await supabase
