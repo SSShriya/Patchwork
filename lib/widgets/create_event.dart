@@ -1,5 +1,6 @@
 import 'dart:io';
-
+import 'package:drp/widgets/pick_location_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,8 +14,8 @@ class NewEventData {
   final DateTime endDate;
   final TimeOfDay endTime;
   final String location;
-  // final double? latitude;
-  // final double? longitude;
+  final double? latitude;
+  final double? longitude;
   final double price;
   final String? description;
   final File? image;
@@ -26,8 +27,8 @@ class NewEventData {
     required this.endDate,
     required this.endTime,
     required this.location,
-    // required this.latitude,
-    // required this.longitude,
+    required this.latitude,
+    required this.longitude,
     required this.price,
     this.description,
     this.image,
@@ -44,6 +45,8 @@ Future<NewEventData?> showNewEventPopup(
   DateTime? existingEndDate,
   TimeOfDay? existingEndTime,
   String? existingLocation,
+  double? existingLatitude,
+  double? existingLongitude,
   double? existingPrice,
   String? existingDescription,
 }) {
@@ -57,6 +60,8 @@ Future<NewEventData?> showNewEventPopup(
       existingEndDate: existingEndDate,
       existingEndTime: existingEndTime,
       existingLocation: existingLocation,
+      existingLongitude: existingLongitude,
+      existingLatitude: existingLatitude,
       existingPrice: existingPrice,
       existingDescription: existingDescription,
     ),
@@ -72,6 +77,8 @@ class _CreateEventForm extends StatefulWidget {
   final DateTime? existingEndDate;
   final TimeOfDay? existingEndTime;
   final String? existingLocation;
+  final double? existingLatitude;
+  final double? existingLongitude;
   final double? existingPrice;
   final String? existingDescription;
 
@@ -82,6 +89,8 @@ class _CreateEventForm extends StatefulWidget {
     this.existingEndDate,
     this.existingEndTime,
     this.existingLocation,
+    this.existingLongitude,
+    this.existingLatitude,
     this.existingPrice,
     this.existingDescription,
   });
@@ -108,6 +117,9 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   DateTime? _endDate;
   TimeOfDay? _endTime;
 
+  // Location
+  LatLng? _pickedLocation;
+
   File? _imageFile;
   bool _isSaving = false;
 
@@ -127,6 +139,11 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     _startTime = widget.existingStartTime;
     _endDate = widget.existingEndDate;
     _endTime = widget.existingEndTime;
+
+    // pre-populate coords
+    _pickedLocation = (widget.existingLatitude != null && widget.existingLongitude != null)
+      ? LatLng(widget.existingLatitude!, widget.existingLongitude!)
+      : null;
   }
 
   @override
@@ -199,6 +216,16 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     if (file != null) setState(() => _imageFile = File(file.path));
   }
 
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PickLocationMap(initialLocation: _pickedLocation),
+      ),
+    );
+    if (result != null) setState(() => _pickedLocation = result);
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -234,6 +261,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       endDate: _endDate!,
       endTime: _endTime!,
       location: _locationController.text.trim(),
+      latitude: _pickedLocation?.latitude,
+      longitude: _pickedLocation?.longitude,
       price: double.tryParse(_priceController.text.trim()) ?? 0,
       description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
       image: _imageFile,
@@ -346,6 +375,42 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                         validator: (v) => (v == null || v.trim().isEmpty)
                             ? 'Enter a location' : null,
                       ),
+
+                      const SizedBox(height: 14),
+
+                      // map coord picker
+                      GestureDetector(
+                        onTap: _pickLocation,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.map_outlined, size: 20, color: Colors.grey.shade600),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _pickedLocation == null
+                                      ? 'Pin location on map (optional)'
+                                      : '📍 ${_pickedLocation!.latitude.toStringAsFixed(4)}, '
+                                        '${_pickedLocation!.longitude.toStringAsFixed(4)}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: _pickedLocation == null
+                                        ? Colors.grey.shade400
+                                        : const Color(0xFF222222),
+                                  ),
+                                ),
+                              ),
+                              Icon(Icons.chevron_right, color: Colors.grey.shade400),
+                            ],
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(height: 14),
 
                       _field(

@@ -85,7 +85,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
                'start_date': '${e['start_day']} at ${e['start_time']}',
                'end_date': '${e['end_day']} ${e['end_time']}',
                'location': e['location'],
-               'cost': '${e['cost']}'})
+               'cost': '${e['cost']}',
+               'latitude': '${e['latitude'] ?? ''}',
+               'longitude': '${e['longitude'] ?? ''}',
+              })
           );
 
         });
@@ -181,6 +184,8 @@ void _editEvent(Map<String, String> event) async {
     context,
     existingName: event['title'],
     existingLocation: event['location'],
+    existingLatitude: double.tryParse(event['latitude'] ?? ''),
+    existingLongitude: double.tryParse(event['longitude'] ?? ''),
     existingPrice: double.tryParse(event['cost'] ?? '0') ?? 0.0,
     existingStartDate: parsedStartDate,
     existingStartTime: parsedStartTime,
@@ -206,6 +211,8 @@ void _editEvent(Map<String, String> event) async {
       'location': result.location,
       'cost': result.price,
       if (result.description != null) 'description': result.description,
+      if (result.latitude != null) 'latitude': result.latitude,
+      if (result.longitude != null) 'longitude': result.longitude,
     }).eq('event_id', eventId);
 
     if (mounted) {
@@ -287,6 +294,8 @@ void _addNewEvent() async {
       'location': result.location,
       'cost': result.price,
       if (result.description != null) 'description': result.description,
+      if (result.latitude != null) 'latitude': result.latitude,
+      if (result.longitude != null) 'longitude': result.longitude,
     });
 
     await _loadExistingProfile(); // refresh events list
