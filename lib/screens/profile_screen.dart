@@ -27,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _courseController = TextEditingController();
   final _bioController = TextEditingController();
   final _interestInputController = TextEditingController();
+  final List<String> _existingGalleryUrls = [];
 
   String? _selectedUniversity;
   String? _selectedBorough;
@@ -64,6 +65,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .eq('id', userId)
           .maybeSingle();
 
+      final galleryData = await supabase
+          .from('user_gallery')
+          .select('photo_url')
+          .eq('user_id', userId)
+          .order('position', ascending: true);
+
       final interestsData = await supabase
           .from('user_interests')
           .select('interest')
@@ -95,6 +102,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _interests.clear();
           _interests.addAll(
             (interestsData as List).map((e) => e['interest'] as String),
+          );
+
+          _existingGalleryUrls.clear();
+          _existingGalleryUrls.addAll(
+            (galleryData as List).map((e) => e['photo_url'] as String),
           );
         });
       }
@@ -174,10 +186,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // ── Profile picture ──────────────────────────────────────────────
       if (_imageFile != null) {
         await uploadProfilePicture(_imageFile!, userId);
       }
 
+      // ── Gallery photos ───────────────────────────────────────────────
+      // 1. Upload any newly picked photos and get their URLs
+      final List<String> newUrls = _galleryFiles.isNotEmpty
+          ? await uploadGalleryPhotos(_galleryFiles, userId)
+          : [];
+
+      // 2. Merge kept existing URLs + newly uploaded URLs (preserves order)
+      final List<String> allUrls = [..._existingGalleryUrls, ...newUrls];
+
+      // 3. Sync the full gallery to the database
+      await saveGalleryUrls(userId, allUrls);
+
+      // ── Profile details ──────────────────────────────────────────────
       await updateDetails(
         userId,
         _nameController.text.trim(),
@@ -418,12 +444,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Photo Gallery Widget ─────────────────────────────────────────────────
   Widget _buildPhotoGallery() {
+    final int totalPhotos = _existingGalleryUrls.length + _galleryBytes.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header ──────────────────────────────────────────────────────
+        // ── Header ────────────────────────────────────────────────────────
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -436,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             Text(
-              '${_galleryBytes.length}/$_maxGalleryPhotos',
+              '$totalPhotos/$_maxGalleryPhotos',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
           ],
@@ -448,12 +475,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 12),
 
-        // ── Photo Grid ───────────────────────────────────────────────────
+        // ── Photo Grid ────────────────────────────────────────────────────
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
-            // Existing photo thumbnails
+            // ── Existing saved photos (from Supabase) ──────────────────
+            ..._existingGalleryUrls.asMap().entries.map((entry) {
+              final index = entry.key;
+              final url = entry.value;
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      url,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF84DCC6),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Remove button
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () =>
+                          setState(() => _existingGalleryUrls.removeAt(index)),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+
+            // ── Newly picked photos (not yet saved) ────────────────────
             ..._galleryBytes.asMap().entries.map((entry) {
               final index = entry.key;
               final bytes = entry.value;
@@ -488,12 +574,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
+
+                  // ── "Unsaved" badge ──────────────────────────────────
+                  Positioned(
+                    bottom: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'New',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             }),
 
-            // Add photo button (only show if under the limit)
-            if (_galleryBytes.length < _maxGalleryPhotos)
+            // ── Add photo button (only if under limit) ─────────────────
+            if (totalPhotos < _maxGalleryPhotos)
               GestureDetector(
                 onTap: _pickGalleryPhoto,
                 child: Container(

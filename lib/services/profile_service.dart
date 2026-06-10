@@ -92,3 +92,59 @@ Future<void> updateDetails(
     throw Exception('Unexpected error during profile update: $e');
   }
 }
+
+Future<List<String>> uploadGalleryPhotos(
+  List<XFile> galleryFiles,
+  String userId,
+) async {
+  final List<String> uploadedUrls = [];
+
+  for (int i = 0; i < galleryFiles.length; i++) {
+    final file = galleryFiles[i];
+    final bytes = await file.readAsBytes();
+    final fileExt = file.name.split('.').last;
+    final fileName =
+        'gallery_${i}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final storagePath = '$userId/$fileName';
+
+    await supabase.storage
+        .from('photo_gallery')
+        .uploadBinary(
+          storagePath,
+          bytes,
+          fileOptions: FileOptions(contentType: 'image/$fileExt', upsert: true),
+        );
+
+    final publicUrl = supabase.storage
+        .from('photo_gallery')
+        .getPublicUrl(storagePath);
+
+    uploadedUrls.add(publicUrl);
+  }
+
+  return uploadedUrls;
+}
+
+Future<void> saveGalleryUrls(String userId, List<String> urls) async {
+  // Delete existing gallery photos first
+  await supabase.from('user_gallery').delete().eq('user_id', userId);
+
+  if (urls.isEmpty) return;
+
+  // Insert new ones with position ordering
+  await supabase
+      .from('user_gallery')
+      .insert(
+        urls
+            .asMap()
+            .entries
+            .map(
+              (entry) => {
+                'user_id': userId,
+                'photo_url': entry.value,
+                'position': entry.key,
+              },
+            )
+            .toList(),
+      );
+}
