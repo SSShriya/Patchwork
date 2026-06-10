@@ -533,26 +533,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 20),
 
                   // ── Action button ──────────────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        // Pick photo, then rebuild both sheet + parent
-                        await _pickInterestPhoto(interest);
-                        setSheetState(() {});
-                      },
-                      icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: Text(hasPhoto ? 'Change Photo' : 'Choose Photo'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF84DCC6),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  // ── Action buttons ─────────────────────────────────────────────────
+                  Row(
+                    children: [
+                      // Change / Choose photo
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            await _pickInterestPhoto(interest);
+                            setSheetState(() {});
+                          },
+                          icon: const Icon(
+                            Icons.photo_library_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            hasPhoto ? 'Change Photo' : 'Choose Photo',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF84DCC6),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
                         ),
-                        elevation: 0,
                       ),
-                    ),
+
+                      // Only show confirm if a photo exists
+                      if (hasPhoto) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.check, size: 18),
+                            label: const Text('Confirm'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF84DCC6),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: const BorderSide(
+                                  color: Color(0xFF84DCC6),
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
