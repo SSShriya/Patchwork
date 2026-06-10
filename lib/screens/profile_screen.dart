@@ -337,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     // Highlight if a photo has been added
                     color: hasPhoto
-                        ? const Color(0xFF84DCC6).withOpacity(0.15)
+                        ? const Color(0xFF84DCC6).withValues(alpha: 0.15)
                         : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(

@@ -7,12 +7,37 @@ import 'utils.dart';
 import 'supabase_client.dart';
 
 class MatchService {
+  // ── Helper: parse interest photos from a user data map ─────────────────
+  // user_interests rows now have {interest, photo_url}
+  Map<String, String> _parseInterestPhotos(Map<String, dynamic> userData) {
+    final rows = userData['user_interests'] as List<dynamic>? ?? [];
+    final map = <String, String>{};
+    for (final row in rows) {
+      final interest = row['interest'] as String?;
+      final photoUrl = row['photo_url'] as String?;
+      if (interest != null && photoUrl != null) {
+        map[interest] = photoUrl;
+      }
+    }
+    return map;
+  }
+
+  // ── Helper: parse plain interest list from a user data map ─────────────
+  List<String> _parseInterests(Map<String, dynamic> userData) {
+    return (userData['user_interests'] as List<dynamic>? ?? [])
+        .map((i) => i['interest'] as String)
+        .toList();
+  }
+
   Future<List<MatchCard>> getPendingMatches(String currentUserId) async {
     debugPrint("getPendingMatches() has been called");
 
+    // ── Fetch current user — include photo_url in user_interests ──────────
     final currentUserData = await supabase
         .from('users')
-        .select('university, course, location, user_interests(interest)')
+        .select(
+          'university, course, location, user_interests(interest, photo_url)',
+        )
         .eq('id', currentUserId)
         .single();
 
@@ -35,30 +60,22 @@ class MatchService {
 
     if (interestedEventIds.isEmpty) return [];
 
+    // ── Fetch matches — include photo_url in user_interests ───────────────
     final rows = await supabase
         .from('matches')
         .select(
-          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society)',
+          '*, '
+          'events(event_name), '
+          'user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url), is_society), '
+          'user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url), is_society)',
         )
         .inFilter('event_id', interestedEventIds)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
-    // ── Collect all other user IDs for batch gallery fetch ──────────────
-    final otherUserIds = <String>[];
-    for (final row in rows as List) {
-      final isUser1 = currentUserId == row['user1_id'] as String;
-      final otherUserData = isUser1
-          ? row['user2'] as Map<String, dynamic>
-          : row['user1'] as Map<String, dynamic>;
-      otherUserIds.add(otherUserData['id'] as String);
-    }
-
-    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
-
-    // ── Build match cards ────────────────────────────────────────────────
+    // ── Build match cards ─────────────────────────────────────────────────
     final matches = <(MatchCard, int)>[];
 
-    for (final row in rows) {
+    for (final row in rows as List) {
       final user1Id = row['user1_id'] as String;
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
@@ -77,14 +94,11 @@ class MatchService {
 
       if (otherUserData['is_society'] == true ||
           otherUserData['is_society'].toString() == 'true') {
-        break;
+        continue; // was break — changed to continue so remaining rows process
       }
 
       final otherUserId = otherUserData['id'] as String;
-      final otherInterests =
-          (otherUserData['user_interests'] as List<dynamic>? ?? [])
-              .map((i) => i['interest'] as String)
-              .toSet();
+      final otherInterests = _parseInterests(otherUserData).toSet();
 
       int score = 0;
       score += currentInterests.intersection(otherInterests).length;
@@ -126,7 +140,7 @@ class MatchService {
           interests: otherInterests.toList(),
           location: otherLocation,
           imageUrl: otherUserData['avatar_url'] ?? '',
-          galleryUrls: galleryMap[otherUserId] ?? [],
+          interestPhotos: _parseInterestPhotos(otherUserData),
         ),
         score,
       ));
@@ -160,28 +174,20 @@ class MatchService {
   Future<List<MatchCard>> getAwaitingResponseMatches(
     String currentUserId,
   ) async {
+    // ── Include photo_url in user_interests ───────────────────────────────
     final rows = await supabase
         .from('matches')
         .select(
-          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
+          '*, '
+          'events(event_name), '
+          'user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url)), '
+          'user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url))',
         )
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
-    // ── Collect other user IDs for batch gallery fetch ───────────────────
-    final otherUserIds = <String>[];
-    for (final row in rows as List) {
-      final isUser1 = currentUserId == row['user1_id'] as String;
-      final otherUserData = isUser1
-          ? row['user2'] as Map<String, dynamic>
-          : row['user1'] as Map<String, dynamic>;
-      otherUserIds.add(otherUserData['id'] as String);
-    }
-
-    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
-
     final waiting = <MatchCard>[];
 
-    for (final row in rows) {
+    for (final row in rows as List) {
       final user1Id = row['user1_id'] as String;
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
@@ -213,12 +219,10 @@ class MatchService {
           eventId: eventId,
           eventName: eventName,
           yearGroup: otherUserData['year_group'] ?? '',
-          interests: (otherUserData['user_interests'] as List<dynamic>? ?? [])
-              .map((i) => i['interest'] as String)
-              .toList(),
+          interests: _parseInterests(otherUserData),
           location: otherUserData['location'] ?? '',
           imageUrl: otherUserData['avatar_url'] ?? '',
-          galleryUrls: galleryMap[otherUserId] ?? [],
+          interestPhotos: _parseInterestPhotos(otherUserData),
         ),
       );
     }
@@ -285,38 +289,15 @@ class MatchService {
     }
     debugPrint("getConfirmedMatchesForEvent() has been called");
 
-    // ── Batch fetch gallery for confirmed matches ────────────────────────
-    final otherUserIds = rows.map((row) {
-      final user1Data = row['user1'] as Map<String, dynamic>;
-      final otherUser = user1Data['id'] == currentUserId
-          ? row['user2'] as Map<String, dynamic>
-          : user1Data;
-      return otherUser['id'] as String;
-    }).toList();
-
-    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
-
     return rows
-        .map((row) => _rowToConfirmedMatchCard(row, currentUserId, galleryMap))
+        .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
         .toList();
   }
 
   Future<List<MatchCard>> getMutualMatches(String currentUserId) async {
     final rows = await _getConfirmedMatchRows(currentUserId);
-
-    // ── Batch fetch gallery for mutual matches ───────────────────────────
-    final otherUserIds = rows.map((row) {
-      final user1Data = row['user1'] as Map<String, dynamic>;
-      final otherUser = user1Data['id'] == currentUserId
-          ? row['user2'] as Map<String, dynamic>
-          : user1Data;
-      return otherUser['id'] as String;
-    }).toList();
-
-    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
-
     return rows
-        .map((row) => _rowToConfirmedMatchCard(row, currentUserId, galleryMap))
+        .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
         .toList();
   }
 
@@ -332,10 +313,14 @@ class MatchService {
     String currentUserId, {
     String? eventId,
   }) async {
+    // ── Include photo_url in user_interests ───────────────────────────────
     var query = supabase
         .from('matches')
         .select(
-          'event_id, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society)',
+          'event_id, '
+          'events(event_name), '
+          'user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url), is_society), '
+          'user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url), is_society)',
         )
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
@@ -357,10 +342,10 @@ class MatchService {
         .toList();
   }
 
+  // ── galleryMap param removed — photos now come from user_interests ────────
   MatchCard _rowToConfirmedMatchCard(
     Map<String, dynamic> row,
     String currentUserId,
-    Map<String, List<String>> galleryMap,
   ) {
     final user1Data = row['user1'] as Map<String, dynamic>;
     final user2Data = row['user2'] as Map<String, dynamic>;
@@ -381,12 +366,10 @@ class MatchService {
       eventId: eventId,
       eventName: eventName,
       yearGroup: otherUser['year_group'] ?? '',
-      interests: (otherUser['user_interests'] as List<dynamic>? ?? [])
-          .map((i) => i['interest'] as String)
-          .toList(),
+      interests: _parseInterests(otherUser),
       location: (otherUser['location']) ?? '',
       imageUrl: otherUser['avatar_url'] ?? '',
-      galleryUrls: galleryMap[otherUserId] ?? [],
+      interestPhotos: _parseInterestPhotos(otherUser),
     );
   }
 }

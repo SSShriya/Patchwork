@@ -16,7 +16,7 @@ class MatchCard extends BaseCard {
   final List<String> interests;
   @override
   final String imageUrl; // profile image URL, can be empty if no image
-  final List<String> galleryUrls;
+  final Map<String, String> interestPhotos; // {interest: photo_url}
 
   const MatchCard({
     required this.currentUserId,
@@ -31,7 +31,7 @@ class MatchCard extends BaseCard {
     required this.location,
     required this.interests,
     required this.imageUrl,
-    this.galleryUrls = const [],
+    this.interestPhotos = const {},
   });
 
   // needs to be ordered the same way as the DB (user1_id < user2_id presumably)

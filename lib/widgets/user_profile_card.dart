@@ -18,7 +18,7 @@ class UserProfileCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // -- Profile card --
+          // ── Profile card ──────────────────────────────────────────────
           _Card(
             child: Column(
               children: [
@@ -29,9 +29,7 @@ class UserProfileCard extends StatelessWidget {
                   random: false,
                   img: card.imageUrl.isNotEmpty ? card.imageUrl : null,
                 ),
-
                 const SizedBox(height: 10),
-
                 Text(
                   card.title,
                   textAlign: TextAlign.center,
@@ -40,9 +38,7 @@ class UserProfileCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 if (card.yearGroup != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -63,7 +59,6 @@ class UserProfileCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -83,7 +78,6 @@ class UserProfileCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 if (card.course != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -104,9 +98,7 @@ class UserProfileCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                 const SizedBox(height: 10),
-
                 if (card.location != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -127,7 +119,6 @@ class UserProfileCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                 if (accepted) const SizedBox(height: 14),
                 if (accepted)
                   Row(
@@ -135,7 +126,6 @@ class UserProfileCard extends StatelessWidget {
                     spacing: 10,
                     children: [
                       ElevatedButton(
-                        // Messages Button
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -150,10 +140,9 @@ class UserProfileCard extends StatelessWidget {
                           backgroundColor: Color.fromARGB(197, 199, 162, 251),
                           foregroundColor: Colors.black,
                         ),
-                        child: Text("Message"),
+                        child: const Text("Message"),
                       ),
                       ElevatedButton(
-                        // Meeting invite button
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -169,7 +158,7 @@ class UserProfileCard extends StatelessWidget {
                           backgroundColor: Color.fromARGB(197, 199, 162, 251),
                           foregroundColor: Colors.black,
                         ),
-                        child: Text("Invite to Meet"),
+                        child: const Text("Invite to Meet"),
                       ),
                     ],
                   ),
@@ -179,9 +168,9 @@ class UserProfileCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ── Shared event ──
+          // ── Shared event ──────────────────────────────────────────────
           _Card(
-            color: Color(0X8FE6AACE),
+            color: const Color(0X8FE6AACE),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -204,44 +193,14 @@ class UserProfileCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ── Interests ──
-          _Card(
-            // color: Color.fromARGB(255, 221, 226, 243),
-            color: Color(0X8FBFCC94),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Interests:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 3),
-                ...card.interests.map(
-                  (interest) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('★ ', style: TextStyle(fontSize: 16)),
-                        Expanded(
-                          child: Text(
-                            interest,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // ── Interests + photos ────────────────────────────────────────
+          _buildInterestsWithPhotos(context),
 
           const SizedBox(height: 12),
 
-          // ── Bio ──
+          // ── Bio ───────────────────────────────────────────────────────
           _Card(
-            color: Color.fromARGB(255, 221, 226, 243),
+            color: const Color.fromARGB(255, 221, 226, 243),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -257,12 +216,7 @@ class UserProfileCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // -- Photo Gallery --
-          if (card.galleryUrls.isNotEmpty) ...[_buildGallery()],
-
-          const SizedBox(height: 16),
-
-          // ── Block button ──
+          // ── Block button ──────────────────────────────────────────────
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -284,7 +238,7 @@ class UserProfileCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // --- Report Button ---
+          // ── Report button ─────────────────────────────────────────────
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -306,6 +260,199 @@ class UserProfileCard extends StatelessWidget {
 
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  // ── Interests card with inline photos ────────────────────────────────────
+  // Interests without a photo → plain bullet list (unchanged feel)
+  // Interests with a photo    → tappable row that opens a full-screen viewer
+  Widget _buildInterestsWithPhotos(BuildContext context) {
+    return _Card(
+      color: const Color(0X8FBFCC94),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Interests:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ...card.interests.asMap().entries.map((entry) {
+            final index = entry.key;
+            final interest = entry.value;
+            final photoUrl = card.interestPhotos[interest];
+            final hasPhoto = photoUrl != null;
+            final displayName =
+                interest[0].toUpperCase() + interest.substring(1);
+            final isLast = index == card.interests.length - 1;
+
+            return Column(
+              children: [
+                GestureDetector(
+                  onTap: hasPhoto
+                      ? () => _showFullScreenImage(context, photoUrl, interest)
+                      : null,
+                  child: SizedBox(
+                    height: 56,
+                    child: Row(
+                      children: [
+                        // ── Thumbnail or placeholder ─────────────────────
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: hasPhoto
+                              ? Image.network(
+                                  photoUrl,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return _photoPlaceholder(isEmpty: false);
+                                  },
+                                  errorBuilder: (_, _, _) =>
+                                      _photoPlaceholder(isEmpty: true),
+                                )
+                              : _photoPlaceholder(isEmpty: true),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // ── Interest label ───────────────────────────────
+                        Expanded(
+                          child: Text(
+                            displayName,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
+                        // ── Expand icon (only if has photo) ──────────────
+                        if (hasPhoto)
+                          Icon(
+                            Icons.open_in_full_rounded,
+                            size: 15,
+                            color: Colors.grey.shade600,
+                          )
+                        else
+                          // Keeps row widths consistent
+                          const SizedBox(width: 15),
+                      ],
+                    ),
+                  ),
+                ),
+                if (!isLast)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Colors.black.withValues(alpha: 0.06),
+                  ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ── Placeholder box shown when there is no photo ─────────────────────────
+  Widget _photoPlaceholder({required bool isEmpty}) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        isEmpty ? Icons.image_outlined : Icons.hourglass_empty,
+        size: 20,
+        color: Colors.black26,
+      ),
+    );
+  }
+
+  // ── Full screen image viewer (single photo with interest label) ───────────
+  void _showFullScreenImage(
+    BuildContext context,
+    String photoUrl,
+    String interest,
+  ) {
+    final displayName = interest[0].toUpperCase() + interest.substring(1);
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // ── Full screen photo ───────────────────────────────────────
+            Center(
+              child: InteractiveViewer(
+                child: Image.network(
+                  photoUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF84DCC6),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // ── Close button ────────────────────────────────────────────
+            Positioned(
+              top: 40,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+
+            // ── Interest label overlay ──────────────────────────────────
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    displayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -367,22 +514,19 @@ class UserProfileCard extends StatelessWidget {
                   'Please describe why you\'re reporting ${card.title}.',
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
-
                 const SizedBox(height: 16),
-
                 TextField(
                   controller: descriptionController,
                   maxLines: 4,
                   minLines: 3,
                   maxLength: 500,
                   decoration: InputDecoration(
-                    hintText: 'Enter desctiption...',
+                    hintText: 'Enter description...',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
                 Container(
                   decoration: BoxDecoration(
@@ -407,7 +551,7 @@ class UserProfileCard extends StatelessWidget {
                                 horizontal: 8,
                               ),
                             ),
-                            Divider(height: 1),
+                            const Divider(height: 1),
                             RadioListTile<bool>(
                               value: true,
                               title: const Text('Report and Block'),
@@ -460,12 +604,7 @@ class UserProfileCard extends StatelessWidget {
   }) async {
     try {
       await MatchService().reportUser(card, description);
-
-      // Block user if selected
-      if (blockUser) {
-        await MatchService().blockUser(card);
-      }
-
+      if (blockUser) await MatchService().blockUser(card);
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -486,160 +625,6 @@ class UserProfileCard extends StatelessWidget {
       }
     }
   }
-
-  Widget _buildGallery() {
-    return _Card(
-      color: Color.fromARGB(202, 255, 229, 181),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Photos:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Scrollable row of photos ──────────────────────────────────
-          SizedBox(
-            height: 200,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: card.galleryUrls.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final url = card.galleryUrls[index];
-                return GestureDetector(
-                  // ── Tap to view full screen ─────────────────────────
-                  onTap: () => _showFullScreenImage(context, index),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      url,
-                      width: 160,
-                      height: 200,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          width: 160,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF84DCC6),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 160,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.grey.shade400,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Full screen image viewer ──────────────────────────────────────────────
-  void _showFullScreenImage(BuildContext context, int initialIndex) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            // ── Swipeable page view ───────────────────────────────────
-            PageView.builder(
-              controller: PageController(initialPage: initialIndex),
-              itemCount: card.galleryUrls.length,
-              itemBuilder: (context, index) {
-                return InteractiveViewer(
-                  child: Center(
-                    child: Image.network(
-                      card.galleryUrls[index],
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(0xFF84DCC6),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            // ── Close button ──────────────────────────────────────────
-            Positioned(
-              top: 40,
-              right: 16,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 22),
-                ),
-              ),
-            ),
-
-            // ── Photo counter ─────────────────────────────────────────
-            Positioned(
-              top: 48,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${initialIndex + 1} / ${card.galleryUrls.length}',
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _Card extends StatelessWidget {
@@ -656,7 +641,6 @@ class _Card extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        // border: Border.all(color: Colors.grey),
       ),
       child: child,
     );

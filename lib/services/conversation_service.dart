@@ -6,14 +6,29 @@ import 'utils.dart';
 import 'package:flutter/foundation.dart';
 
 class ConversationService {
+  // ── Helper: build interest → photo_url map from a user data row ──────────
+  Map<String, String> _parseInterestPhotos(Map<String, dynamic> userData) {
+    final rows = userData['user_interests'] as List<dynamic>? ?? [];
+    final map = <String, String>{};
+    for (final row in rows) {
+      final interest = row['interest'] as String?;
+      final photoUrl = row['photo_url'] as String?;
+      if (interest != null && photoUrl != null) {
+        map[interest] = photoUrl;
+      }
+    }
+    return map;
+  }
+
   Future<List<ChatConversation>> getConversations() async {
     final currentUserId = await loadUserId();
 
+    // ── Include photo_url in user_interests ───────────────────────────────
     final matchRows = await supabase
         .from('matches')
         .select('''*, 
-        user1:user1_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest), is_society), 
-        user2:user2_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest), is_society),
+        user1:user1_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest, photo_url), is_society), 
+        user2:user2_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest, photo_url), is_society),
         event:event_id(event_id, event_name)''')
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
@@ -24,24 +39,12 @@ class ConversationService {
         .select('sender_id, recipient_id, content')
         .or('sender_id.eq.$currentUserId, recipient_id.eq.$currentUserId');
 
-    // ── Batch fetch gallery URLs for all other users ─────────────────────
-    final otherUserIds = (matchRows as List).map((r) {
-      final user1Data = r['user1'] as Map<String, dynamic>;
-      final user2Data = r['user2'] as Map<String, dynamic>;
-      final otherUser = currentUserId == user1Data['id']
-          ? user2Data
-          : user1Data;
-      return otherUser['id'] as String;
-    }).toList();
-
-    final galleryMap = await fetchGalleryUrlsForUsers(otherUserIds);
-    (otherUserIds);
-
-    return (matchRows).map((r) {
+    return (matchRows as List).map((r) {
       final user1Data = r['user1'] as Map<String, dynamic>;
       final user2Data = r['user2'] as Map<String, dynamic>;
 
-      final bool isSociety = user1Data['is_society'] || user2Data['is_society'];
+      final bool isSociety =
+          user1Data['is_society'] == true || user2Data['is_society'] == true;
 
       final otherUser = currentUserId == user1Data['id']
           ? user2Data
@@ -96,7 +99,9 @@ class ConversationService {
         interests: interestsList,
         location: otherUser['location'] as String? ?? '',
         imageUrl: otherUser['avatar_url'] as String? ?? '',
-        galleryUrls: galleryMap[actualOtherUserId] ?? [],
+        interestPhotos: _parseInterestPhotos(
+          otherUser,
+        ), // ← replaces galleryUrls
       );
 
       String previewText(String content) {
