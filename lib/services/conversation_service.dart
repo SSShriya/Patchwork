@@ -70,7 +70,8 @@ class ConversationService {
 
       // ── Build MatchCard ──
       final matchCard = MatchCard(
-        id: actualOtherUserId,
+        currentUserId: currentUserId,
+        otherUserId: actualOtherUserId,
         title: otherUser['name'] ?? 'Unknown Match',
         university: otherUser['university'] as String? ?? '',
         course: otherUser['course'] as String? ?? '',
