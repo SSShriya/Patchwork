@@ -88,7 +88,7 @@ class InteractiveCard extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 // Year group for match card
-                if (matchCard != null && matchCard.yearGroup.isNotEmpty) ...[
+                if (matchCard != null) ...[
                   const SizedBox(height: 2),
                   Row(
                     children: [
@@ -98,19 +98,35 @@ class InteractiveCard extends StatelessWidget {
                         color: const Color(0xFF222222).withValues(alpha: 0.8),
                       ),
                       const SizedBox(width: 2),
-                      Expanded(
-                        child: Text(
-                          '${matchCard.yearGroup} · ${matchCard.university}',
-                          style: GoogleFonts.merriweather(
-                            fontSize: 12,
-                            color: const Color(
-                              0xFF222222,
-                            ).withValues(alpha: 0.8),
+
+                      if (matchCard.yearGroup.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            '${matchCard.yearGroup} · ${matchCard.university}',
+                            style: GoogleFonts.merriweather(
+                              fontSize: 12,
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.8),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        )
+                      else
+                        Expanded(
+                          child: Text(
+                            matchCard.university,
+                            style: GoogleFonts.merriweather(
+                              fontSize: 12,
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.8),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],
