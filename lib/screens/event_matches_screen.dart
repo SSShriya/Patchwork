@@ -129,6 +129,14 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  Text(
+                    'Tap here to find out more!', 
+                    style: TextStyle(
+                      fontSize: 15, 
+                      color: const Color(0XFF224488).withValues(alpha: 0.8),
+                    )
+                  ),
+                  const SizedBox(height: 12),
                   const Divider(color: Color(0xFF222222), thickness: 0.3),
                   const SizedBox(height: 8),
                   Row(

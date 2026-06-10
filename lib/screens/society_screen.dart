@@ -8,6 +8,7 @@ import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/create_event.dart';
 
@@ -82,8 +83,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
             (eventsData as List).map((e) => 
               {'id': '${e['event_id']}',
                'title': e['event_name'], 
-               'start_date': '${e['start_day']} at ${e['start_time']}',
-               'end_date': '${e['end_day']} ${e['end_time']}',
+               'start_date': '${DateFormat('EEE d MMMM yyyy').format(e['start_day'])} at ${DateFormat('HH:mm').format(e['start_time'])}',
+               'end_date': '${DateFormat('EEE d MMMM yyyy').format(e['end_day'])} at ${DateFormat('HH:mm').format(e['end_time'])}',
                'location': e['location'],
                'cost': '${e['cost']}'})
           );

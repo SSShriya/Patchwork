@@ -35,3 +35,25 @@ Future<void> uploadSocImage(File imageFile, String socId) async {
     throw Exception('Unexpected error during profile picture upload: $e');
   }
 }
+
+Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
+  final Map<String, dynamic>? row = await supabase
+      .from('users')
+      .select('id, name, university, bio, location') // Explicitly select only what you need
+      .eq('id', societyId)
+      .eq('is_society', true)
+      .maybeSingle();
+
+  if (row == null) {
+    return null; 
+  }
+
+  return {
+    'id': row['id'],
+    'name': row['name'],
+    'uni': row['university'],
+    'about': row['bio'],
+    'location': row['location'],
+    'image_url': row['avatar_url']
+  };
+}
