@@ -1,11 +1,14 @@
 // lib/services/match_service.dart
 
+import 'package:flutter/material.dart';
+
 import '../models/match_card.dart';
 import 'utils.dart';
 import 'supabase_client.dart';
 
 class MatchService {
   Future<List<MatchCard>> getPendingMatches(String currentUserId) async {
+    debugPrint("getPendingMatches() has been called");
     // fetch current user's profile
     final currentUserData = await supabase
         .from('users')
@@ -37,7 +40,7 @@ class MatchService {
     final rows = await supabase
         .from('matches')
         .select(
-          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
+          '*, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society)',
         )
         .inFilter('event_id', interestedEventIds)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
@@ -61,6 +64,12 @@ class MatchService {
       final otherUserData = isUser1
           ? row['user2'] as Map<String, dynamic>
           : row['user1'] as Map<String, dynamic>;
+
+      if (otherUserData['is_society'] == true ||
+          otherUserData['is_society'].toString() == 'true') {
+        break;
+      }
+      debugPrint("Carrying on");
 
       final otherInterests =
           (otherUserData['user_interests'] as List<dynamic>? ?? [])
@@ -264,6 +273,14 @@ class MatchService {
   Future<List<MatchCard>> getConfirmedMatchesForEvent(String eventId) async {
     final currentUserId = await loadUserId();
     final rows = await _getConfirmedMatchRows(currentUserId, eventId: eventId);
+
+    for (var row in rows) {
+      debugPrint(
+        "DEBUG MATCH FOUND: ${row['user1']?['name']} matching with ${row['user2']?['name']}",
+      );
+    }
+    debugPrint("getConfirmedMatchesForEvent() has been called");
+
     return rows
         .map((row) => _rowToConfirmedMatchCard(row, currentUserId))
         .toList();
@@ -294,7 +311,7 @@ class MatchService {
     var query = supabase
         .from('matches')
         .select(
-          'event_id, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
+          'event_id, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest), is_society)',
         )
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
@@ -302,7 +319,21 @@ class MatchService {
 
     if (eventId != null) query = query.eq('event_id', eventId);
 
-    return (await query);
+    final List<dynamic> results = await query;
+
+    // FILTER RULE: Filter out any row where user1 or user2 has is_society == true
+    return results
+        .where((row) {
+          final user1 = row['user1'] as Map<String, dynamic>?;
+          final user2 = row['user2'] as Map<String, dynamic>?;
+
+          final bool isUser1Society = user1?['is_society'] ?? false;
+          final bool isUser2Society = user2?['is_society'] ?? false;
+
+          return !isUser1Society && !isUser2Society;
+        })
+        .cast<Map<String, dynamic>>()
+        .toList();
   }
 
   // maps single row to a MatchCard

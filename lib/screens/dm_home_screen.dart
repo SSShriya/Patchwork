@@ -34,6 +34,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Initial generalized search filtering
     final filteredConversations = _conversations.where((chat) {
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
@@ -47,11 +48,18 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
       return true;
     }).toList();
 
-    final filteredNewConvos = filteredConversations
-        .where((chat) => chat.numMessages <= 0)
+    // 2. Separate Society Chats completely away from general user chats
+    final filteredSocietyConvos = filteredConversations
+        .where((chat) => chat.isSociety)
         .toList();
+
+    // 3. Keep non-society matches and partition them strictly by activity metrics
+    final filteredNewConvos = filteredConversations
+        .where((chat) => !chat.isSociety && chat.numMessages <= 0)
+        .toList();
+
     final filteredOldConvos = filteredConversations
-        .where((chat) => chat.numMessages > 0)
+        .where((chat) => !chat.isSociety && chat.numMessages > 0)
         .toList();
 
     return Scaffold(
@@ -72,71 +80,82 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-            onRefresh: _loadConversations, 
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                    child: TextField(
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search by name or interest...',
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, color: Colors.grey),
-                                onPressed: () {
-                                  FocusScope.of(context).unfocus();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+              onRefresh: _loadConversations, 
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+                      child: TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Search by name or interest...',
+                          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, color: Colors.grey),
+                                  onPressed: () {
+                                    FocusScope.of(context).unfocus();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  if (filteredConversations.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40.0),
-                      child: Center(
-                        child: Text(
-                          'No conversations found matching criteria.',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    if (filteredConversations.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40.0),
+                        child: Center(
+                          child: Text(
+                            'No conversations found matching criteria.',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                          ),
                         ),
-                      ),
-                    )
-                  else ...[
-                    if (filteredNewConvos.isNotEmpty)
-                      ChatSection(
-                        title: 'New Chats',
-                        conversations: filteredNewConvos,
-                        onRefresh: _loadConversations,
-                      ),
-                    if (filteredOldConvos.isNotEmpty)
-                      ChatSection(
-                        title: 'Existing Chats',
-                        conversations: filteredOldConvos,
-                        onRefresh: _loadConversations,
-                      ),
+                      )
+                    else ...[
+                      // New Chats Section
+                      if (filteredNewConvos.isNotEmpty)
+                        ChatSection(
+                          title: 'New Chats',
+                          conversations: filteredNewConvos,
+                          onRefresh: _loadConversations,
+                        ),
+                        
+                      // Existing Chats Section
+                      if (filteredOldConvos.isNotEmpty)
+                        ChatSection(
+                          title: 'Existing Chats',
+                          conversations: filteredOldConvos,
+                          onRefresh: _loadConversations,
+                        ),
+
+                      // Newly Added: Society Chats Section
+                      if (filteredSocietyConvos.isNotEmpty)
+                        ChatSection(
+                          title: 'Society Chats',
+                          conversations: filteredSocietyConvos,
+                          onRefresh: _loadConversations,
+                        ),
                     ],
                   ],
                 ),
               ),
-            )
-          );
+            ),
+    );
   }
 }

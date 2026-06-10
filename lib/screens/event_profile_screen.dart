@@ -222,7 +222,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                        SocietyInfoScreen(societyId: widget.card.societyId)
+                        SocietyInfoScreen(societyId: widget.card.societyId, eventId: widget.card.eventId)
                     )
                   ),
                   child: Text('More About $societyName'),

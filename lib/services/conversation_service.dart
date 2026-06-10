@@ -13,8 +13,8 @@ class ConversationService {
     final matchRows = await supabase
         .from('matches')
         .select('''*, 
-        user1:user1_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest)), 
-        user2:user2_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest)),
+        user1:user1_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest), is_society), 
+        user2:user2_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest), is_society),
         event:event_id(event_id, event_name)''')
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
@@ -28,6 +28,8 @@ class ConversationService {
     return (matchRows as List).map((r) {
       final user1Data = r['user1'] as Map<String, dynamic>;
       final user2Data = r['user2'] as Map<String, dynamic>;
+
+      final bool isSociety = user1Data['is_society'] || user2Data['is_society'];
 
       final otherUser = currentUserId == user1Data['id']
           ? user2Data
@@ -106,6 +108,7 @@ class ConversationService {
         time: hasHistory ? 'Active' : '',
         unreadCount: 0,
         isOnline: false,
+        isSociety: isSociety,
       );
     }).toList();
   }
