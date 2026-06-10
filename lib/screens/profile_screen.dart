@@ -38,6 +38,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final List<String> _interests = [];
   bool _isLoading = false;
 
+  // ── Photo Gallery ────────────────────────────────────────────────────────
+  static const int _maxGalleryPhotos = 5;
+  final List<Uint8List> _galleryBytes = [];
+  final List<XFile> _galleryFiles = [];
+
   static const int _maxInterests = 10;
 
   @override
@@ -70,19 +75,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _courseController.text = userdata['course'] ?? '';
           _bioController.text = userdata['bio'] ?? '';
 
-          // University — only accept known values
           final savedUniversity = userdata['university'] as String?;
           _selectedUniversity = londonUniversities.contains(savedUniversity)
               ? savedUniversity
               : null;
 
-          // Borough — only accept known values
           final savedLocation = userdata['location'] as String?;
           _selectedBorough = londonBoroughs.contains(savedLocation)
               ? savedLocation
               : null;
 
-          // Year group — only accept known values
           final savedYear = userdata['year_group'] as String?;
           _selectedYearGroup = yearGroups.contains(savedYear)
               ? savedYear
@@ -121,12 +123,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (picked != null) {
       final bytes = await picked.readAsBytes();
-
       setState(() {
         _imageFile = picked;
         _imageBytes = bytes;
       });
     }
+  }
+
+  // ── Gallery Photo Picker ─────────────────────────────────────────────────
+  Future<void> _pickGalleryPhoto() async {
+    if (_galleryFiles.length >= _maxGalleryPhotos) {
+      _showError('You can only upload up to $_maxGalleryPhotos photos.');
+      return;
+    }
+
+    final XFile? picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _galleryFiles.add(picked);
+        _galleryBytes.add(bytes);
+      });
+    }
+  }
+
+  void _removeGalleryPhoto(int index) {
+    setState(() {
+      _galleryFiles.removeAt(index);
+      _galleryBytes.removeAt(index);
+    });
   }
 
   Future<void> _saveProfile() async {
@@ -219,8 +247,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');
   }
 
-  // ── Shared Autocomplete builder ───────────────────────────────────────────
-  // Reusable so borough and university stay visually identical
   Widget _buildAutocompleteField({
     required String initialValue,
     required List<String> options,
@@ -314,7 +340,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── University Field ──────────────────────────────────────────────────────
   Widget _buildUniversityField() {
     return _buildAutocompleteField(
       key: const ValueKey('university'),
@@ -331,7 +356,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Borough Field ─────────────────────────────────────────────────────────
   Widget _buildBoroughField() {
     return _buildAutocompleteField(
       key: const ValueKey('borough'),
@@ -345,7 +369,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Year Group Dropdown ───────────────────────────────────────────────────
   Widget _buildYearGroupField() {
     return DropdownButtonFormField<String>(
       initialValue: _selectedYearGroup,
@@ -395,6 +418,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ── Photo Gallery Widget ─────────────────────────────────────────────────
+  Widget _buildPhotoGallery() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Header ──────────────────────────────────────────────────────
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Photo Gallery',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              '${_galleryBytes.length}/$_maxGalleryPhotos',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Upload some photos that represent yourself!',
+          style: TextStyle(fontSize: 13, color: Colors.grey),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Photo Grid ───────────────────────────────────────────────────
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            // Existing photo thumbnails
+            ..._galleryBytes.asMap().entries.map((entry) {
+              final index = entry.key;
+              final bytes = entry.value;
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      bytes,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  // Remove button
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => _removeGalleryPhoto(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+
+            // Add photo button (only show if under the limit)
+            if (_galleryBytes.length < _maxGalleryPhotos)
+              GestureDetector(
+                onTap: _pickGalleryPhoto,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 30,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Add Photo',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -428,27 +563,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: _pickImage,
                           child: Column(
                             children: [
-                              Text(
+                              const Text(
                                 'Profile Picture',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade600,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
                                 ),
                               ),
 
                               SizedBox(height: 4),
-
-                              Text(
+                              const Text(
                                 'Upload a picture, preferably with you in it!',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade600,
+                                  color: Colors.grey,
                                 ),
                               ),
-                              SizedBox(height: 8),
 
+                              SizedBox(height: 8),
                               Stack(
                                 children: [
                                   CircleAvatar(
@@ -494,6 +627,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 32),
 
+                      const Text(
+                        'Your Information',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+
+                      SizedBox(height: 16),
+
                       // ── Name ─────────────────────────────────────────────
                       _buildTextField(
                         controller: _nameController,
@@ -525,7 +669,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _buildBoroughField(),
                         const SizedBox(height: 16),
 
-                        // ── Interests ────────────────────────────────────────────────────
+                        // ── Interests ────────────────────────────────────────
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -624,7 +768,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 16),
                       ],
 
-                      // ── Bio ──────────────────────────────────────────────────────────
+                      // ── Photo Gallery ─────────────────────────────────────
+                      _buildPhotoGallery(),
+                      const SizedBox(height: 24),
+
+                      // ── Bio ──────────────────────────────────────────────
                       const Text(
                         'Bio',
                         style: TextStyle(
