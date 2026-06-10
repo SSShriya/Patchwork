@@ -64,11 +64,25 @@ class _MainAppState extends State<MainApp> {
   void _handleIncomingLinks() {
     _appLinks = AppLinks();
 
+    // ── Handle link when app is launched fresh from the link ──────────
+    _appLinks.getInitialLink().then((uri) async {
+      if (uri != null && uri.scheme == 'drp') {
+        try {
+          await supabase.auth.getSessionFromUrl(uri);
+        } catch (e) {
+          debugPrint('❌ Error getting session from initial link: $e');
+        }
+      }
+    });
+
+    // ── Handle link when app is already open in background ────────────
     _appLinks.uriLinkStream.listen((uri) async {
       if (uri.scheme == 'drp') {
-        // Let Supabase handle the deep link — it will extract the tokens
-        // and fire onAuthStateChange automatically
-        await supabase.auth.getSessionFromUrl(uri);
+        try {
+          await supabase.auth.getSessionFromUrl(uri);
+        } catch (e) {
+          debugPrint('❌ Error getting session from link: $e');
+        }
       }
     });
   }
