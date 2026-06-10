@@ -1,23 +1,49 @@
-import 'dart:io';
+// import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_client.dart';
+import 'package:image/image.dart' as img;
+import 'package:mime/mime.dart';
+import 'dart:typed_data';
 
 /// Uploads a profile picture and updates the user's avatar_url in the DB.
-Future<void> uploadProfilePicture(File imageFile, String userId) async {
+Future<void> uploadProfilePicture(XFile imageFile, String userId) async {
   final String filePath = '$userId/profile.jpg';
 
   try {
+    final bytes = await imageFile.readAsBytes();
+
+    // // detect og mime type
+    // final mimeType = lookupMimeType('', headerBytes: bytes);
+
+    Uint8List finalBytes;
+    String contentType = 'image/jpeg';
+
+    final decoded = img.decodeImage(bytes);
+
+    if (decoded == null) {
+      throw Exception('Unsupported image format');
+    }
+
+    // Convert everything to JPEG (you can switch to webp if preferred)
+    finalBytes = Uint8List.fromList(img.encodeJpg(decoded, quality: 90));
+    contentType = 'image/jpeg';
+
     await supabase.storage
         .from('avatars')
-        .upload(
+        .uploadBinary(
           filePath,
-          imageFile,
-          fileOptions: const FileOptions(upsert: true),
+          finalBytes,
+          fileOptions: FileOptions(upsert: true, contentType: contentType),
         );
 
-    final String publicUrl = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+    // final String publicUrl = supabase.storage
+    //     .from('avatars')
+    //     .getPublicUrl(filePath);
+
+    final String publicUrl =
+        '${supabase.storage.from('avatars').getPublicUrl(filePath)}'
+        '?t=${DateTime.now().millisecondsSinceEpoch}';
 
     await supabase
         .from('users')
