@@ -22,6 +22,7 @@ class ChatConversation {
   String get name => matchCard.title;
   String get otherUserId => matchCard.otherUserId;
   String get event => matchCard.eventName;
+  String get eventId => matchCard.eventId; 
   List<String> get interests => matchCard.interests;
   String? get imageUrl => matchCard.imageUrl;
 }
