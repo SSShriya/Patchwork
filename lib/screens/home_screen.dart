@@ -1,5 +1,6 @@
 import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/match_card.dart';
 import '../models/event_card.dart';
 import '../services/match_service.dart';
@@ -23,15 +24,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final _eventService = EventService();
   List<MatchCard> _pendingMatches = [];
   List<EventCard> _interestedEvents = [];
-  List<MatchCard> _awaitingMatches = [];
+  // List<MatchCard> _awaitingMatches = [];
   bool _loading = true;
   List<ChatConversation> conversations = [];
-  bool _notificationSeen = false;
+  // bool _notificationSeen = false;
+
+  List<MatchCard> _mutualMatches = [];
+  List<MatchCard> _awaitingMatches = [];
+  Set<String> _seenNotificationIds = {};     // persisted
+
+  static const _seenPrefsKey = 'seen_notification_ids';
 
   @override
   void initState() {
     super.initState();
-    _loadMatches();
+    _loadSeenIds().then((_) => _loadMatches());
   }
 
   @override
@@ -44,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void dispose() {
     routeObserver.unsubscribe(
       this,
-    ); // 👈 Critical: Always clean up to prevent memory leaks!
+    );
     super.dispose();
   }
 
@@ -61,13 +68,27 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       final matches = await _matchService.getPendingMatches(userId);
       final events = await _eventService.getInterestedEvents(userId);
       final awaiting = await _matchService.getAwaitingResponseMatches(userId);
+      final mutual = await _matchService.getMutualMatches(userId);
+
       setState(() {
-        _pendingMatches = matches;
-        _awaitingMatches = awaiting;
-        _loading = false;
-        _notificationSeen = false;
         _interestedEvents = events
           ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+
+
+        // reusing the alr filtered event ids from getInterestedEvents
+        final activeEventIds = _interestedEvents.map((e) => e.eventId).toSet();
+        
+        _pendingMatches = matches
+          .where((m) => activeEventIds.contains(m.eventId))
+          .toList();
+        _awaitingMatches = awaiting
+          .where((m) => activeEventIds.contains(m.eventId))
+          .toList();
+        _mutualMatches = mutual
+          .where((m) => activeEventIds.contains(m.eventId))
+          .toList();
+        
+        _loading = false;
       });
     } catch (e) {
       debugPrint('Error: $e');
@@ -103,7 +124,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           initialIndex: initialIndex < 0 ? 0 : initialIndex,
           onDecision: _handleDecision,
           onGoHome: () {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            });
           },
         ),
       ),
@@ -160,13 +183,54 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Waiting for their response...',
+                  'Notifications',
                   style: GoogleFonts.lora(
                     fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // -- New matches --
+                Text(
+                  'New Matches !!',
+                  style: GoogleFonts.bitter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_mutualMatches.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      'No new matches yet',
+                      style: GoogleFonts.merriweather(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  )
+                else
+                  ..._mutualMatches.map((m) => _notifTile(
+                    m,
+                    isNew: !_seenNotificationIds.contains('mutual_${m.id}'),
+                    subtitle: m.eventName,
+                    badge: 'Matched',
+                    badgeColor: const Color(0XFF84DCC6),
+                    badgeTextColor: const Color(0XFF2A8C73),
+                  )),
+                
+                const Divider(height: 24),
+
+                // -- Pending --
+                Text(
+                  'Waiting for their response...',
+                  style: GoogleFonts.bitter(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -174,19 +238,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 Text(
                   'You liked them — waiting to hear back',
                   style: GoogleFonts.merriweather(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Colors.grey[600],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 if (_awaitingMatches.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: Center(
                       child: Text(
                         'No pending responses right now',
                         style: GoogleFonts.merriweather(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: Colors.grey[500],
                         ),
                       ),
@@ -194,69 +258,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   )
                 else
                   Expanded(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: _awaitingMatches.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (_, i) {
-                        final m = _awaitingMatches[i];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 4,
-                          ),
-                          leading: CircleAvatar(
-                            radius: 26,
-                            backgroundImage: m.imageUrl.isNotEmpty
-                                ? NetworkImage(m.imageUrl)
-                                : null,
-                            backgroundColor: const Color(0xFF84DCC6),
-                            child: m.imageUrl.isEmpty
-                                ? Text(
-                                    m.title.isNotEmpty
-                                        ? m.title[0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          title: Text(
-                            m.title,
-                            style: GoogleFonts.bitter(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          subtitle: Text(
-                            m.eventName,
-                            style: GoogleFonts.merriweather(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF84DCC6),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Pending',
-                              style: GoogleFonts.merriweather(
-                                fontSize: 11,
-                                color: const Color(0xFF2A8C73),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+                    child: ListView(
+                      children: _awaitingMatches.map((m) => _notifTile(
+                        m,
+                        isNew: !_seenNotificationIds.contains('await_${m.id}'),
+                        subtitle: m.eventName,
+                        badge: 'Pending',
+                        badgeColor: const Color(0XFFEFDD8D),
+                        badgeTextColor: const Color.fromARGB(255, 86, 66, 3),
+                      )).toList(),
                     ),
                   ),
               ],
@@ -278,13 +288,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () => {
-                    setState(() => _notificationSeen = true),
-                    Scaffold.of(ctx).openEndDrawer(),
+                  onPressed: () {
+                    final allCurrentIds = {
+                      ..._mutualMatches.map((m) => 'mutual_${m.id}'),
+                      ..._awaitingMatches.map((m) => 'await_${m.id}'),
+                    };
+                    setState(() => _seenNotificationIds = allCurrentIds);
+                    _saveSeenIds();
+                    Scaffold.of(ctx).openEndDrawer();
                   },
                 ),
               ),
-              if (_awaitingMatches.isNotEmpty && !_notificationSeen)
+              if (_unseenIds.isNotEmpty)
                 Positioned(
                   right: 8,
                   top: 8,
@@ -292,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     width: 16,
                     height: 16,
                     decoration: const BoxDecoration(
-                      color: Colors.redAccent,
+                      color: Color.fromARGB(255, 247, 101, 101),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -441,5 +456,81 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ),
       ),
     );
+  }
+
+  // notif tile
+  Widget _notifTile(
+    MatchCard m, {
+      required bool isNew,
+      required String subtitle,
+      required String badge,
+      required Color badgeColor,
+      required Color badgeTextColor,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: isNew
+          ? BoxDecoration(
+              color: const Color(0xFF84DCC6),
+              borderRadius: BorderRadius.circular(10),
+            )
+          : null,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          leading: CircleAvatar(
+            radius: 26,
+            backgroundImage: m.imageUrl.isNotEmpty ? NetworkImage(m.imageUrl) : null,
+            backgroundColor: const Color(0xFF84DCC6),
+            child: m.imageUrl.isEmpty
+                ? Text(m.title.isNotEmpty ? m.title[0].toUpperCase() : '?',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+                : null,
+          ),
+          title: Row(
+            children: [
+              Text(m.title,
+                  style: GoogleFonts.bitter(fontWeight: FontWeight.bold, fontSize: 15)),
+              if (isNew) ...[
+                const SizedBox(width: 6),
+                Container(
+                  width: 8, height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent, shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          subtitle: Text(subtitle, style: GoogleFonts.merriweather(fontSize: 12, color: Colors.grey[600])),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(badge, style: GoogleFonts.merriweather(fontSize: 11, color: badgeTextColor, fontWeight: FontWeight.w600)),
+          ),
+        ),
+      );
+    }
+
+  // -- helpers for notifications --
+  Future<void> _loadSeenIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getStringList(_seenPrefsKey) ?? [];
+    setState(() => _seenNotificationIds = stored.toSet());
+  }
+
+  Future<void> _saveSeenIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_seenPrefsKey, _seenNotificationIds.toList());
+  }
+
+  Set<String> get _unseenIds {
+    final allCurrentIds = {
+      ..._mutualMatches.map((m) => 'mutual_${m.id}'),
+      ..._awaitingMatches.map((m) => 'await_${m.id}'),
+    };
+    return allCurrentIds.difference(_seenNotificationIds);
   }
 }

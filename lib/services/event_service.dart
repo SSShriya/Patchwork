@@ -15,7 +15,7 @@ class EventService {
     final rows = await supabase
         .from('interested_events')
         .select(
-          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url)',
+          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, society_id)',
         )
         .eq('user_id', currentUserId);
     
@@ -65,6 +65,7 @@ class EventService {
         location: e['location'] ?? '',
         cost: (e['cost'] as num?)?.toDouble() ?? 0.0,
         eventId: eventId,
+        societyId: e['society_id'] ?? '',
         icon: Icons.event,
         color: const Color(0XFFFED766),
         imageUrl: e['image_url'] ?? '',
@@ -76,12 +77,13 @@ class EventService {
     final rows = await supabase
         .from('active_events')
         .select(
-          'event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url',
+          'event_id, society_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url',
         );
 
     return (rows as List).map((e) {
       return EventCard(
         eventId: e['event_id'],
+        societyId: e['society_id'] ?? 'ERROR',
         title: e['event_name'] ?? '',
         subtitle: e['description'] ?? '',
         numMatches: 0,
@@ -123,6 +125,19 @@ class EventService {
     } catch (e) {
       throw Exception('Unexpected error during profile picture upload: $e');
     }
+  }
+
+  Future<String> getSocietyName(String societyId) async {
+    final rows = await supabase
+        .from('users')
+        .select('name, is_society')
+        .eq('id', societyId);
+
+    if(rows.isEmpty) throw Exception('No societies found for id $societyId');
+
+    final result = rows[0];
+    if(!result['is_society']) return 'is_society is false for id $societyId';
+    return result['name'];
   }
 }
 

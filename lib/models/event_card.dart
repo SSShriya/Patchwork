@@ -3,6 +3,7 @@ import 'base_card.dart';
 
 class EventCard extends BaseCard {
   final String eventId;
+  final String societyId;
   @override
   final String title;
   final String subtitle;
@@ -29,11 +30,13 @@ class EventCard extends BaseCard {
     required this.cost,
     required this.icon,
     required this.color,
+    required this.societyId, // make required in future, default is for backwards compatibility
     this.imageUrl = '',
   });
 
   factory EventCard.fromJson(Map<String, dynamic> json) => EventCard(
     eventId: json['event_id'],
+    societyId: json['society_id'],
     title: json['title'] ?? '',
     subtitle: json['subtitle'] ?? '',
     numMatches: json['num_matches'] ?? 0,

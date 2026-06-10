@@ -251,45 +251,16 @@ class MatchService {
   // for getting confirmed matches for an event
   Future<List<MatchCard>> getConfirmedMatchesForEvent(String eventId) async {
     final currentUserId = await loadUserId();
-
-    final rows = await supabase
-        .from('matches')
-        .select(
-          'events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
-        )
-        .eq('event_id', eventId)
-        .eq('user1_accepted', true)
-        .eq('user2_accepted', true)
-        .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
-
-    return (rows as List).map((row) {
-      final user1Data = row['user1'] as Map<String, dynamic>;
-      final user2Data = row['user2'] as Map<String, dynamic>;
-      final eventName =
-          (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
-          '';
-
-      final otherUser = user1Data['id'] == currentUserId
-          ? user2Data
-          : user1Data;
-
-      return MatchCard(
-        id: otherUser['id'],
-        title: otherUser['name'] ?? 'Unknown',
-        university: otherUser['university'] ?? '',
-        course: otherUser['course'] ?? '',
-        bio: otherUser['bio'] ?? '',
-        eventId: eventId,
-        eventName: eventName,
-        yearGroup: otherUser['year_group'] ?? '',
-        interests: (otherUser['user_interests'] as List<dynamic>? ?? [])
-            .map((i) => i['interest'] as String)
-            .toList(),
-        location: (otherUser['location']) ?? '',
-        imageUrl: otherUser['avatar_url'] ?? '',
-      );
-    }).toList();
+    final rows = await _getConfirmedMatchRows(currentUserId, eventId: eventId);
+    return rows.map((row) => _rowToConfirmedMatchCard(row, currentUserId)).toList();
   }
+
+  Future<List<MatchCard>> getMutualMatches(String currentUserId) async {
+    // final currentUserId = await loadUserId();
+    final rows = await _getConfirmedMatchRows(currentUserId);
+    return rows.map((row) => _rowToConfirmedMatchCard(row, currentUserId)).toList();
+  }
+  
 
   Future<String?> getProfilePictureUrl(String userId) async {
     final String publicUrl = supabase.storage
@@ -298,4 +269,50 @@ class MatchService {
 
     return publicUrl;
   }
+
+
+  // ----- private helpers ------
+  // fetches the rows
+  Future<List<Map<String, dynamic>>> _getConfirmedMatchRows(String currentUserId, {String? eventId}) async {
+    var query = supabase
+        .from('matches')
+        .select(
+          'event_id, events(event_name), user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest)), user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest))',
+        )
+        .eq('user1_accepted', true)
+        .eq('user2_accepted', true)
+        .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
+  
+    if (eventId != null) query = query.eq('event_id', eventId);
+
+    return (await query);
+  }
+
+  // maps single row to a MatchCard
+  MatchCard _rowToConfirmedMatchCard(Map<String, dynamic> row, String currentUserId) {
+    final user1Data = row['user1'] as Map<String, dynamic>;
+    final user2Data = row['user2'] as Map<String, dynamic>;
+    final eventName = (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ?? '';
+    final eventId = row['event_id'] as String;
+    final otherUser = user1Data['id'] == currentUserId
+        ? user2Data
+        : user1Data;
+
+    return MatchCard(
+      id: otherUser['id'],
+      title: otherUser['name'] ?? 'Unknown',
+      university: otherUser['university'] ?? '',
+      course: otherUser['course'] ?? '',
+      bio: otherUser['bio'] ?? '',
+      eventId: eventId,
+      eventName: eventName,
+      yearGroup: otherUser['year_group'] ?? '',
+      interests: (otherUser['user_interests'] as List<dynamic>? ?? [])
+          .map((i) => i['interest'] as String)
+          .toList(),
+      location: (otherUser['location']) ?? '',
+      imageUrl: otherUser['avatar_url'] ?? '',
+    );
+  }
+
 }
