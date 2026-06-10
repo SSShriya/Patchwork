@@ -14,13 +14,12 @@ class AuthService {
     );
 
     final user = response.user;
-    final session = response.session;
 
-    if (user == null || session == null) {
+    if (user == null) {
       throw Exception('Sign up failed. Please try again.');
     }
 
-
+    // ── Insert the user row immediately using the user id ──────────────
     await supabase.from('users').insert({
       'id': user.id,
       'name': name,
@@ -28,9 +27,7 @@ class AuthService {
       'course': '',
       'bio': '',
       'is_society': isSociety,
-    });  
-
-    await SessionManager.saveSession(userId: user.id);
+    });
   }
 
   Future<void> signIn({required String email, required String password}) async {

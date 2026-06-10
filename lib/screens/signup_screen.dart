@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import '../screens/verify_email_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -43,11 +44,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
           name: _nameController.text.trim(),
           isSociety: _holdsEvents,
         );
+
+        // ── Immediately navigate to verify screen after sign-up ────────
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) =>
+                  VerifyEmailScreen(email: _emailController.text.trim()),
+            ),
+          );
+        }
       } else {
         await _authService.signIn(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+        // Sign-in: StreamBuilder handles routing automatically
       }
     } on AuthException catch (e) {
       if (mounted) _showErrorSnackBar(e.message);
@@ -207,7 +219,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      labelText: 'Email Address',
+                      labelText: 'University Email Address',
                       prefixIcon: const Icon(Icons.email_outlined),
                       filled: true,
                       fillColor: Colors.grey.shade100,
@@ -226,6 +238,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                       ).hasMatch(value.trim())) {
                         return 'Please enter a valid email address';
+                      }
+                      if (!value.trim().toLowerCase().endsWith('.ac.uk')) {
+                        return 'Please use your university email address (.ac.uk)';
                       }
                       return null;
                     },

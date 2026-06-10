@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/signup_screen.dart';
 import 'services/supabase_client.dart';
+import 'screens/verify_email_screen.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -47,12 +48,22 @@ class _MainAppState extends State<MainApp> {
           }
 
           final session = snapshot.data?.session;
-          if (session == null) return const SignUpScreen();
+          // ── Read user from the event, falling back to currentUser ──────
+          final user =
+              snapshot.data?.session?.user ?? supabase.auth.currentUser;
 
-          // Only re-fetch if the user actually changed
-          if (_lastUserId != session.user.id) {
-            _lastUserId = session.user.id;
-            _routeFuture = _getUserRouteInfo(session.user.id);
+          // ── User exists but email not verified ──────────────────────────
+          if (user != null && user.emailConfirmedAt == null) {
+            return VerifyEmailScreen(email: user.email ?? '');
+          }
+
+          // ── No user at all → sign up/login screen ───────────────────────
+          if (user == null || session == null) return const SignUpScreen();
+
+          // Only re-fetch if the user changed
+          if (_lastUserId != user.id) {
+            _lastUserId = user.id;
+            _routeFuture = _getUserRouteInfo(user.id);
           }
 
           return FutureBuilder<_UserRouteInfo>(
@@ -66,12 +77,10 @@ class _MainAppState extends State<MainApp> {
 
               final info = snap.data;
 
-              // Profile incomplete → always go to profile setup first
               if (info == null || !info.hasCompletedProfile) {
                 return const ProfileScreen();
               }
 
-              // Profile complete → route by account type
               return info.isSociety ? const SocietyScreen() : const MainShell();
             },
           );
@@ -109,7 +118,6 @@ Future<_UserRouteInfo> _getUserRouteInfo(String userId) async {
         final university = result['university'] as String?;
         return _UserRouteInfo(
           isSociety: result['is_society'] == true,
-          // University can only be set from ProfileScreen — safe completion check
           hasCompletedProfile:
               university != null && university.trim().isNotEmpty,
         );
@@ -117,6 +125,5 @@ Future<_UserRouteInfo> _getUserRouteInfo(String userId) async {
     } catch (_) {}
     if (attempt < 2) await Future.delayed(const Duration(milliseconds: 500));
   }
-
   return const _UserRouteInfo(isSociety: false, hasCompletedProfile: false);
 }
