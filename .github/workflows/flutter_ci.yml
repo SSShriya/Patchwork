@@ -8,7 +8,6 @@ on:
   pull_request:
     branches: 
         - main
-        - kpi-iteration-2
 
 env:
   FLUTTER_CHANNEL: 'stable'
@@ -111,7 +110,7 @@ jobs:
   # BUILD JOB FOR ANDROID - only runs on main branch
   build_android:
     needs: [lint, test]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/*'
     runs-on: ubuntu-latest
 
     steps:
