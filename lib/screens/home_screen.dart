@@ -112,7 +112,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           initialIndex: initialIndex < 0 ? 0 : initialIndex,
           onDecision: _handleDecision,
           onGoHome: () {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            });
           },
         ),
       ),

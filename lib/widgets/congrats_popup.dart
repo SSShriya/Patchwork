@@ -113,10 +113,7 @@ class CongratsPopup extends StatelessWidget {
             const SizedBox(height: 12),
             _button(
               label: 'Back to Home',
-              onPressed: () {
-                Navigator.pop(context);
-                onGoHome();
-              },
+              onPressed:  onGoHome,
             ),
           ],
         ),

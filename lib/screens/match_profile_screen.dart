@@ -66,10 +66,19 @@ class _MatchProfileScreenState extends State<MatchProfileScreen> {
 
       showDialog(
         context: context,
-        builder: (context) => CongratsPopup(
+        builder: (dialogContext) => CongratsPopup(
           match: card, 
           isMutual: isMutual,
-          onGoHome: widget.onGoHome,
+          onGoHome: () {
+              Navigator.of(dialogContext).pop();  // closes dialog 
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+
+                // Navigator.of(context).pop(); // closes MatchProfileScreen
+                widget.onGoHome();
+              });
+              // widget.onGoHome();
+            },
           ),
       ).then((_) {
         if (!mounted) return;
