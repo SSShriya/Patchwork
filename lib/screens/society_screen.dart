@@ -360,7 +360,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: Colors.white,
+        color: Color(0X4F3E92CC),
         child: ListTile(
           onTap: isPast ? null : () => _editEvent(event),
           contentPadding: const EdgeInsets.symmetric(
@@ -376,7 +376,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
             ),
             child: Icon(
               Icons.calendar_today,
-              color: isPast ? Colors.grey : const Color(0XFF84DCC6),
+              color: isPast ? Colors.grey : const Color(0xFF4D5359),
             ),
           ),
           title: Text(
@@ -393,7 +393,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
               "${event['start_date']} • ${event['location']}",
               style: GoogleFonts.montserrat(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: const Color(0xFF4D5359),
               ),
             ),
           ),
@@ -515,7 +515,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                       right: 4,
                       child: CircleAvatar(
                         radius: 18,
-                        backgroundColor: Color(0XFF84DCC6),
+                        backgroundColor: Color(0xFF4D5359),
                         child: Icon(
                           Icons.add_a_photo,
                           size: 16,
@@ -539,14 +539,13 @@ class _SocietyScreenState extends State<SocietyScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 3. Container Card housing the "About" Description Box
+              // -- about the soc --
               Card(
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.shade200),
                 ),
-                color: Colors.white,
+                color: Color(0X5F79C99E),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -561,14 +560,14 @@ class _SocietyScreenState extends State<SocietyScreen> {
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.1,
-                              color: Colors.grey.shade600,
+                              color: Color(0xFF4D5359),
                             ),
                           ),
                           IconButton(
                             icon: const Icon(
                               Icons.edit,
                               size: 18,
-                              color: Color(0xFFEBA6A9),
+                              color: Color(0xFF4D5359),
                             ),
                             onPressed: _editAboutMe,
                             constraints: const BoxConstraints(),
@@ -583,7 +582,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                             : "No description provided yet. Click the edit icon to write something!",
                         style: GoogleFonts.montserrat(
                           fontSize: 14,
-                          color: Colors.black87,
+                          color: Color(0x9F4D5359),
                           height: 1.5,
                         ),
                       ),
@@ -593,32 +592,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
               ),
               const SizedBox(height: 32),
 
-              // your events
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //   children: [
-              //     Text(
-              //       'YOUR EVENTS',
-              //       style: GoogleFonts.lora(
-              //         fontSize: 20,
-              //         fontWeight: FontWeight.bold,
-              //         color: const Color(0XFF222222),
-              //       ),
-              //     ),
-              //     TextButton.icon(
-              //       onPressed: _addNewEvent,
-              //       icon: const Icon(Icons.add, size: 18),
-              //       label: const Text("New Event"),
-              //       style: TextButton.styleFrom(
-              //         foregroundColor: const Color(0XFF84DCC6),
-              //         textStyle: GoogleFonts.montserrat(
-              //           fontWeight: FontWeight.bold,
-              //           fontSize: 13,
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
+              // -- your events --
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -635,7 +609,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text("New Event"),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0XFF84DCC6),
+                      foregroundColor: const Color(0xFF4D5359),
                       textStyle: GoogleFonts.montserrat(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
@@ -698,7 +672,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                                   style: GoogleFonts.montserrat(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey.shade500,
+                                    color: const Color(0xFF4D5359),
                                     letterSpacing: 0.5,
                                   ),
                                 ),

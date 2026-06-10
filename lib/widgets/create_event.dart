@@ -329,7 +329,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
             // Header adapts conditionally based on mode
             Container(
               width: double.infinity,
-              color: _teal,
+              color: Color.fromARGB(255, 131, 187, 219),
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
                 isEditingMode ? 'EDIT EVENT' : 'NEW EVENT',
@@ -580,7 +580,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                         label: _isSaving
                             ? ''
                             : (isEditingMode ? 'SAVE CHANGES' : 'CREATE EVENT'),
-                        color: _teal,
+                        color: Color.fromARGB(255, 164, 204, 228),
                         onPressed: _isSaving ? null : _save,
                         child: _isSaving
                             ? const SizedBox(
@@ -600,7 +600,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
 
                       _ActionButton(
                         label: 'Cancel',
-                        color: Colors.grey.shade300,
+                        color: const Color.fromARGB(255, 217, 218, 219),
                         foreground: _dark,
                         onPressed: () => Navigator.of(context).pop(),
                       ),
@@ -686,12 +686,15 @@ class _ImagePicker extends StatelessWidget {
                   Icon(
                     Icons.add_photo_alternate_outlined,
                     size: 32,
-                    color: Colors.grey.shade400,
+                    color: const Color(0xFF4D5359),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Add banner image (optional)',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: const Color(0xFF4D5359),
+                    ),
                   ),
                 ],
               )
