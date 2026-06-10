@@ -198,7 +198,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                         ),
                       )
                     else ...[
-                      // New Chats Section
+                      // Current Chats Section
                       if (filteredCurrentConvos.isNotEmpty)
                         ChatSection(
                           title: 'Current Chats',
@@ -212,7 +212,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> {
                           title: 'Old Chats',
                           conversations: filteredOldConvos,
                           onRefresh: _loadConversations,
-                          oldChats: true,
+                          currentChats: false,
                         ),
 
                       // Newly Added: Society Chats Section
