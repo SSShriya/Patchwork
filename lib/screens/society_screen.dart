@@ -83,10 +83,14 @@ class _SocietyScreenState extends State<SocietyScreen> {
               (e) => {
                 'id': '${e['event_id']}',
                 'title': e['event_name'],
+                // 'start_date':
+                //     '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse(e['start_time']))}',
+                // 'end_date':
+                //     '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['end_day']))} at ${DateFormat('HH:mm').format(DateTime.parse(e['end_time']))}',
                 'start_date':
-                    '${DateFormat('EEE d MMMM yyyy').format(e['start_day'])} at ${DateFormat('HH:mm').format(e['start_time'])}',
+                    '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['start_time']}'))}',
                 'end_date':
-                    '${DateFormat('EEE d MMMM yyyy').format(e['end_day'])} at ${DateFormat('HH:mm').format(e['end_time'])}',
+                    '${DateFormat('EEE d MMMM yyyy').format(DateTime.parse(e['end_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['end_time']}'))}',
                 'location': e['location'],
                 'cost': '${e['cost']}',
                 'latitude': '${e['latitude'] ?? ''}',
