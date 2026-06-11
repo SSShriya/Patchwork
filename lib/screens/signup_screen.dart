@@ -16,7 +16,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _passwordFocusNode = FocusNode();
   final _nameController = TextEditingController();
-
+/*
   final _uniEmailDomains = [
     'student.bbk.ac.uk',
     'brunel.ac.uk',
@@ -65,7 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'lse.edu',
     'ucl.com',
   ];
-
+*/
   bool _isSignUpMode = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
