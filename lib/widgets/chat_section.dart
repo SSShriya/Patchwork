@@ -2,14 +2,13 @@ import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ChatSection extends StatelessWidget {
   final String title;
   final List<ChatConversation> conversations;
-  final Map<String, List<String>> eventsInCommon; 
+  final Map<String, List<String>> eventsInCommon;
   final VoidCallback onRefresh;
-  final bool currentChats; 
+  final bool currentChats;
 
   const ChatSection({
     super.key,
@@ -25,7 +24,10 @@ class ChatSection extends StatelessWidget {
     return ExpansionTile(
       title: Text(
         title,
-        style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.bold,
+        ),
       ),
       initiallyExpanded: currentChats,
       children: [
@@ -82,7 +84,8 @@ class ChatSection extends StatelessWidget {
                 children: [
                   Text(
                     chat.name,
-                    style: GoogleFonts.montserrat(
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -90,9 +93,10 @@ class ChatSection extends StatelessWidget {
                   if (chat.event.isNotEmpty)
                     Text(
                       eventsInCommon[chat.otherUserId]!.join(", "),
-                      style: GoogleFonts.montserrat(
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 11,
-                        color: const Color.fromARGB(255, 228, 138, 150),
+                        color: Color.fromARGB(255, 228, 138, 150),
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,

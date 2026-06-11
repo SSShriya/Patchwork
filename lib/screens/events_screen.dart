@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
 import '../services/event_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../widgets/event_detail_card.dart';
 import 'event_profile_screen.dart';
 
@@ -59,9 +58,7 @@ class _EventsScreenState extends State<EventsScreen> {
   void _openEventSummary(EventCard card) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventProfileScreen(card: card),
-      ),
+      MaterialPageRoute(builder: (context) => EventProfileScreen(card: card)),
     );
   }
 
@@ -92,7 +89,8 @@ class _EventsScreenState extends State<EventsScreen> {
                     controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search events...',
-                      hintStyle: GoogleFonts.montserrat(
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontSize: 14,
                         color: Colors.grey,
                       ),
@@ -136,7 +134,8 @@ class _EventsScreenState extends State<EventsScreen> {
                       children: [
                         Text(
                           'All Events',
-                          style: GoogleFonts.lora(
+                          style: const TextStyle(
+                            fontFamily: 'Lora',
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                           ),
@@ -162,7 +161,7 @@ class _EventsScreenState extends State<EventsScreen> {
                                 : width > 600
                                 ? 3
                                 : 2;
-                                crossAxisCount;
+                            crossAxisCount;
                             return GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -172,7 +171,8 @@ class _EventsScreenState extends State<EventsScreen> {
                               itemCount: _filteredEvents.length,
                               itemBuilder: (_, i) => EventDetailCard(
                                 card: _filteredEvents[i],
-                                onTap: () => _openEventSummary(_filteredEvents[i]),
+                                onTap: () =>
+                                    _openEventSummary(_filteredEvents[i]),
                               ),
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
@@ -196,7 +196,8 @@ class _EventsScreenState extends State<EventsScreen> {
                               height: 150,
                               child: EventDetailCard(
                                 card: _filteredEvents[i],
-                                onTap: () => _openEventSummary(_filteredEvents[i]),
+                                onTap: () =>
+                                    _openEventSummary(_filteredEvents[i]),
                                 isListView: true,
                               ),
                             ),
@@ -216,7 +217,8 @@ class _EventsScreenState extends State<EventsScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'No events found',
-                            style: GoogleFonts.montserrat(
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
                               fontSize: 16,
                               color: Colors.grey[600],
                             ),

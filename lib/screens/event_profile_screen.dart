@@ -8,7 +8,6 @@ import '../services/registration_service.dart';
 import 'package:intl/intl.dart';
 import '../services/event_service.dart';
 import '../widgets/map_preview.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class EventProfileScreen extends StatefulWidget {
   final EventCard card;
@@ -153,7 +152,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                     children: [
                       Text(
                         widget.card.title,
-                        style: GoogleFonts.lora(
+                        style: const TextStyle(
+                          fontFamily: 'Lora',
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -171,7 +171,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                             '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
                             '${DateFormat('HH:mm').format(widget.card.startDateTime)}'
                             '-${DateFormat('HH:mm').format(widget.card.endDateTime)}',
-                            style: GoogleFonts.montserrat(
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
                               fontSize: 16,
                               color: Color(0xFF4D5359),
                             ),
@@ -197,7 +198,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 const SizedBox(width: 6),
                 Text(
                   widget.card.location,
-                  style: GoogleFonts.montserrat(
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
                     fontWeight: FontWeight.normal,
                     fontSize: 18,
                     color: Color(0xFF4D5359),
@@ -230,7 +232,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   widget.card.cost > 0
                       ? '£${widget.card.cost.toStringAsFixed(2)}'
                       : 'Free',
-                  style: GoogleFonts.montserrat(
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
                     fontWeight: FontWeight.normal,
                     fontSize: 18,
                     color: Color(0xFF4D5359),
@@ -260,7 +263,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   ),
                   child: Text(
                     'More About $societyName',
-                    style: GoogleFonts.lora(
+                    style: const TextStyle(
+                      fontFamily: 'Lora',
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       color: Colors.black87,
@@ -275,7 +279,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             // ── Description ──
             Text(
               'Description',
-              style: GoogleFonts.lora(
+              style: const TextStyle(
+                fontFamily: 'Lora',
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
                 color: Colors.black87,
@@ -285,6 +290,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             Text(
               widget.card.subtitle,
               style: const TextStyle(
+                fontFamily: 'Montserrat',
                 fontSize: 15,
                 color: Colors.black87,
                 height: 1.5,
@@ -311,7 +317,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 child: _isRegistered
                     ? Text(
                         "Cancel Registration",
-                        style: GoogleFonts.lora(
+                        style: const TextStyle(
+                          fontFamily: 'Lora',
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                           color: Colors.black87,
@@ -319,7 +326,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                       )
                     : Text(
                         "I'm going!",
-                        style: GoogleFonts.lora(
+                        style: const TextStyle(
+                          fontFamily: 'Lora',
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                           color: Colors.black87,
