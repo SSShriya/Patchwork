@@ -18,6 +18,9 @@ class NewEventData {
   final double price;
   final String? description;
   final File? image;
+  final bool committeeCanMeet;
+  final String? committeeMeetingLocation;
+  final TimeOfDay? committeeMeetingTime;
 
   const NewEventData({
     required this.name,
@@ -31,11 +34,13 @@ class NewEventData {
     required this.price,
     this.description,
     this.image,
+    required this.committeeCanMeet,
+    this.committeeMeetingLocation,
+    this.committeeMeetingTime,
   });
 }
 
 /// Shows the popup and returns [NewEventData] if the user saves, or null if cancelled.
-/// Optional named parameters handle autofilling when editing an existing event.
 Future<NewEventData?> showNewEventPopup(
   BuildContext context, {
   String? existingName,
@@ -110,6 +115,12 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   late final TextEditingController _priceController;
   late final TextEditingController _descController;
 
+  // For if a committee member can meet or not
+  late final TextEditingController _committeeMeetingLocationController;
+  bool _committeeCanMeet = false;
+  TimeOfDay? _committeeMeetingTime;
+  // ────────────────────────────────────────────────────────────────────────────
+
   // Date / time state
   DateTime? _startDate;
   TimeOfDay? _startTime;
@@ -125,7 +136,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   @override
   void initState() {
     super.initState();
-    // Pre-populate text controllers with existing data or default to empty strings
     _nameController = TextEditingController(text: widget.existingName ?? '');
     _locationController = TextEditingController(
       text: widget.existingLocation ?? '',
@@ -141,13 +151,13 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       text: widget.existingDescription ?? '',
     );
 
-    // Pre-populate dates and times
+    _committeeMeetingLocationController = TextEditingController();
+
     _startDate = widget.existingStartDate;
     _startTime = widget.existingStartTime;
     _endDate = widget.existingEndDate;
     _endTime = widget.existingEndTime;
 
-    // pre-populate coords
     _pickedLocation =
         (widget.existingLatitude != null && widget.existingLongitude != null)
         ? LatLng(widget.existingLatitude!, widget.existingLongitude!)
@@ -160,6 +170,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     _locationController.dispose();
     _priceController.dispose();
     _descController.dispose();
+    _committeeMeetingLocationController.dispose();
     super.dispose();
   }
 
@@ -228,6 +239,26 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() => isStart ? _startTime = picked : _endTime = picked);
   }
 
+  // ── Pick committee meeting time ────────────────────────────────────────
+  Future<void> _pickCommitteeMeetingTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _committeeMeetingTime ?? const TimeOfDay(hour: 9, minute: 0),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: _teal,
+            onPrimary: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+    setState(() => _committeeMeetingTime = picked);
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final file = await picker.pickImage(
@@ -244,18 +275,14 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         builder: (_) => PickLocationMap(initialLocation: _pickedLocation),
       ),
     );
-
     if (result != null) {
-      setState(() {
-        _pickedLocation = result;
-      });
+      setState(() => _pickedLocation = result);
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Custom check: Ensure either typed location or map coordinate is chosen
     final textLocation = _locationController.text.trim();
     if (textLocation.isEmpty && _pickedLocation == null) {
       _snack('Please type an address or select a location on the map.');
@@ -270,6 +297,19 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       _snack('Please set an end date and time.');
       return;
     }
+
+    // ── Validate committee meeting fields if toggle is on ───────────────
+    if (_committeeCanMeet) {
+      if (_committeeMeetingLocationController.text.trim().isEmpty) {
+        _snack('Please enter a meeting location for the committee member.');
+        return;
+      }
+      if (_committeeMeetingTime == null) {
+        _snack('Please select a meeting time for the committee member.');
+        return;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     final startDT = DateTime(
       _startDate!.year,
@@ -299,9 +339,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       startTime: _startTime!,
       endDate: _endDate!,
       endTime: _endTime!,
-      // If text string is empty but pin exists, fallback to a readable coordinate string
-      location: textLocation.isNotEmpty 
-          ? textLocation 
+      location: textLocation.isNotEmpty
+          ? textLocation
           : '${_pickedLocation!.latitude.toStringAsFixed(5)}, ${_pickedLocation!.longitude.toStringAsFixed(5)}',
       latitude: _pickedLocation?.latitude,
       longitude: _pickedLocation?.longitude,
@@ -310,11 +349,13 @@ class _CreateEventFormState extends State<_CreateEventForm> {
           ? null
           : _descController.text.trim(),
       image: _imageFile,
+      committeeCanMeet: _committeeCanMeet,
+      committeeMeetingLocation: _committeeCanMeet
+          ? _committeeMeetingLocationController.text.trim()
+          : null,
+      committeeMeetingTime: _committeeCanMeet ? _committeeMeetingTime : null,
+      // ────────────────────────────────────────────────────────────────────────
     );
-
-    debugPrint('pickedLocation: $_pickedLocation');
-    debugPrint('result lat: ${result.latitude}');
-    debugPrint('result lng: ${result.longitude}');
 
     if (mounted) Navigator.of(context).pop(result);
   }
@@ -337,6 +378,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ── Header ───────────────────────────────────────────────────────
             Container(
               width: double.infinity,
               color: const Color.fromARGB(255, 131, 187, 219),
@@ -375,12 +417,12 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
+                      // ── Start Date & Time ───────────────────────────────────
                       _SectionLabel(
                         label: 'Start Date & Time',
                         color: Colors.black,
                       ),
                       const SizedBox(height: 8),
-
                       Row(
                         children: [
                           Expanded(
@@ -402,9 +444,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                               ),
                             ),
                           ),
-
                           const SizedBox(width: 10),
-
                           Expanded(
                             child: InkWell(
                               onTap: () => _pickTime(isStart: true),
@@ -428,12 +468,12 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
+                      // ── End Date & Time ─────────────────────────────────────
                       _SectionLabel(
                         label: 'End Date & Time',
                         color: Colors.black,
                       ),
                       const SizedBox(height: 8),
-
                       Row(
                         children: [
                           Expanded(
@@ -455,9 +495,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                               ),
                             ),
                           ),
-
                           const SizedBox(width: 10),
-
                           Expanded(
                             child: InkWell(
                               onTap: () => _pickTime(isStart: false),
@@ -481,6 +519,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
+                      // ── Location ────────────────────────────────────────────
                       TextFormField(
                         controller: _locationController,
                         decoration: InputDecoration(
@@ -516,9 +555,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        // Removed strict validator here so form can process logic dynamically in _save()
                       ),
-
                       if (_pickedLocation != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 6, left: 4),
@@ -540,9 +577,9 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                             ],
                           ),
                         ),
-
                       const SizedBox(height: 14),
 
+                      // ── Price ───────────────────────────────────────────────
                       _field(
                         controller: _priceController,
                         label: 'Price (£)',
@@ -565,16 +602,142 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 14),
 
+                      // ── Description ─────────────────────────────────────────
                       _field(
                         controller: _descController,
                         label: 'Description (optional)',
                         icon: Icons.notes_outlined,
                         maxLines: 3,
                       ),
+                      const SizedBox(height: 20),
 
+                      // ── NEW: Committee Member Meeting Section ────────────────
+                      const Divider(),
+                      const SizedBox(height: 4),
+                      _SectionLabel(
+                        label: 'Committee Member Availability',
+                        color: Colors.black,
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Toggle tile
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _committeeCanMeet
+                              ? const Color(0xFF84DCC6).withOpacity(0.12)
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _committeeCanMeet
+                                ? const Color(0xFF84DCC6)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: SwitchListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 2,
+                          ),
+                          title: const Text(
+                            'Is a committee member willing to meet before the event?',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          value: _committeeCanMeet,
+                          activeColor: const Color(0xFF84DCC6),
+                          onChanged: (val) {
+                            setState(() {
+                              _committeeCanMeet = val;
+                              // Reset sub-fields when toggled off
+                              if (!val) {
+                                _committeeMeetingLocationController.clear();
+                                _committeeMeetingTime = null;
+                              }
+                            });
+                          },
+                        ),
+                      ),
+
+                      // Animated reveal of sub-fields
+                      AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 250),
+                        crossFadeState: _committeeCanMeet
+                            ? CrossFadeState.showFirst
+                            : CrossFadeState.showSecond,
+                        firstChild: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Where
+                              TextFormField(
+                                controller: _committeeMeetingLocationController,
+                                decoration: InputDecoration(
+                                  labelText: 'Meeting Location',
+                                  hintText: 'e.g. Main entrance, Room 4B…',
+                                  floatingLabelBehavior:
+                                      FloatingLabelBehavior.always,
+                                  prefixIcon: const Icon(
+                                    Icons.meeting_room_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                // Validation is handled manually in _save()
+                                // so the field stays quiet when the toggle is off.
+                              ),
+                              const SizedBox(height: 12),
+
+                              // What time
+                              InkWell(
+                                onTap: _pickCommitteeMeetingTime,
+                                borderRadius: BorderRadius.circular(12),
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Meeting Time',
+                                    floatingLabelBehavior:
+                                        FloatingLabelBehavior.always,
+                                    prefixIcon: const Icon(
+                                      Icons.access_time_outlined,
+                                    ),
+                                    suffixIcon: _committeeMeetingTime != null
+                                        ? IconButton(
+                                            icon: const Icon(
+                                              Icons.close,
+                                              size: 18,
+                                            ),
+                                            tooltip: 'Clear time',
+                                            onPressed: () => setState(
+                                              () =>
+                                                  _committeeMeetingTime = null,
+                                            ),
+                                          )
+                                        : null,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _fmtTime(_committeeMeetingTime),
+                                    style: TextStyle(
+                                      color: _committeeMeetingTime == null
+                                          ? Colors.grey.shade500
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                          ),
+                        ),
+                        // Empty box when hidden — keeps layout stable
+                        secondChild: const SizedBox.shrink(),
+                      ),
+
+                      // ── End Committee Section ────────────────────────────────
                       const SizedBox(height: 24),
 
                       _ActionButton(
@@ -596,7 +759,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                               )
                             : null,
                       ),
-
                       const SizedBox(height: 10),
 
                       _ActionButton(
@@ -641,6 +803,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     );
   }
 }
+
+// ── Unchanged helper widgets ──────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   final String label;
@@ -692,10 +856,7 @@ class _ImagePicker extends StatelessWidget {
                   const SizedBox(height: 6),
                   const Text(
                     'Add banner image (optional)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF4D5359),
-                    ),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF4D5359)),
                   ),
                 ],
               )
@@ -706,11 +867,7 @@ class _ImagePicker extends StatelessWidget {
                   child: const CircleAvatar(
                     radius: 14,
                     backgroundColor: Color(0XFF84DCC6),
-                    child: Icon(
-                      Icons.edit,
-                      size: 14,
-                      color: Colors.white,
-                    ),
+                    child: Icon(Icons.edit, size: 14, color: Colors.white),
                   ),
                 ),
               ),
@@ -748,7 +905,8 @@ class _ActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: child ??
+        child:
+            child ??
             Text(
               label,
               style: const TextStyle(
