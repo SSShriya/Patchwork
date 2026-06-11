@@ -1,12 +1,17 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_client.dart';
 
-Future<void> updateSocDetails({required String id, String? about, String? uni}) async {
+Future<void> updateSocDetails({
+  required String id,
+  String? about,
+  String? uni,
+}) async {
   await supabase
-    .from('users')
-    .update({'bio': ?about, 'university': ?uni})
-    .eq('id', id);
+      .from('users')
+      .update({'bio': ?about, 'university': ?uni})
+      .eq('id', id);
 }
 
 Future<void> uploadSocImage(File imageFile, String socId) async {
@@ -39,13 +44,13 @@ Future<void> uploadSocImage(File imageFile, String socId) async {
 Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
   final Map<String, dynamic>? row = await supabase
       .from('users')
-      .select('id, name, university, bio, location, avatar_url')
+      .select('id, name, university, bio, location, avatar_url, can_message')
       .eq('id', societyId)
       .eq('is_society', true)
       .maybeSingle();
 
   if (row == null) {
-    return null; 
+    return null;
   }
 
   return {
@@ -54,6 +59,19 @@ Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
     'uni': row['university'],
     'about': row['bio'],
     'location': row['location'],
-    'image_url': row['avatar_url']
+    'image_url': row['avatar_url'],
+    'can_message': row['can_message'],
   };
+}
+
+Future<List<Map<String, dynamic>>> getCommittee(String societyId) async {
+  try {
+  return await supabase
+      .from('committee_members')
+      .select()
+      .eq('society_id', societyId);
+  } catch(e) {
+    debugPrint('Error fetching committee data: $e');
+    return [];
+  }
 }

@@ -26,11 +26,13 @@ class SocietyInfoScreen extends StatefulWidget {
 
 class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
   final List<EventCard> _events = [];
+  final List<Map<String, dynamic>> _committee = [];
   String _name = '';
   String _uni = '';
   String _about = '';
   String _location = '';
   String _imageUrl = '';
+  bool _canMessage = false;
   bool _isLoading = false;
   MatchCard? _societyCard;
   late final String userId;
@@ -110,6 +112,8 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
       final data = await getSocDetails(widget.societyId);
       if (data == null) return;
 
+      final committeeMembers = await getCommittee(widget.societyId);
+
       if (mounted) {
         setState(() {
           _name = data['name'] ?? 'Unknown Society';
@@ -117,6 +121,9 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
           _about = data['about'] ?? '';
           _location = data['location'] ?? '';
           _imageUrl = data['image_url'] ?? '';
+          _canMessage = data['can_message'] ?? false;
+          _committee.clear();
+          _committee.addAll(committeeMembers);
         });
       }
     } catch (e) {
@@ -221,45 +228,47 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed:
-                            (_isLoading ||
-                                _societyCard == null ||
-                                !_isUserInterestedInCurrentEvent())
-                            ? null
-                            : () async {
-                                final navigator = Navigator.of(context);
-                                await _initiateSocietyChat();
-                                if (!mounted) return;
 
-                                navigator.push(
-                                  MaterialPageRoute(
-                                    builder: (context) => DMScreen(
-                                      chat: ChatConversation(
-                                        matchCard: _societyCard!,
-                                        isSociety: true,
+                  if (_canMessage)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed:
+                              (_isLoading ||
+                                  _societyCard == null ||
+                                  !_isUserInterestedInCurrentEvent())
+                              ? null
+                              : () async {
+                                  final navigator = Navigator.of(context);
+                                  await _initiateSocietyChat();
+                                  if (!mounted) return;
+
+                                  navigator.push(
+                                    MaterialPageRoute(
+                                      builder: (context) => DMScreen(
+                                        chat: ChatConversation(
+                                          matchCard: _societyCard!,
+                                          isSociety: true,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0XFF84DCC6),
-                          foregroundColor: Colors.black,
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0XFF84DCC6),
+                            foregroundColor: Colors.black,
+                          ),
+                          child: Text(
+                            (_isLoading || _societyCard == null)
+                                ? "Loading..."
+                                : (_isUserInterestedInCurrentEvent()
+                                      ? "Message"
+                                      : "Express interest in an event to message!"),
+                          ),
                         ),
-                        child: Text(
-                          (_isLoading || _societyCard == null)
-                              ? "Loading..."
-                              : (_isUserInterestedInCurrentEvent()
-                                    ? "Message"
-                                    : "Express interest in an event to message!"),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -285,6 +294,71 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+
+            _Card(
+              color: Color(0X8FAAFFAA),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "COMMITTEE MEMBERS",
+                        style: TextStyle(
+                          color: Color(0XFF222222),
+                          fontSize: 14,
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Divider(color: Colors.black12),
+
+                  if (_committee.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text(
+                        "No committee members added yet.",
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    )
+                  else
+                    // Renders the list items sequentially
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: _committee.length,
+                      itemBuilder: (context, index) {
+                        final member = _committee[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.white60,
+                            child: Icon(Icons.person, color: Color(0XFF222222)),
+                          ),
+                          title: Text(
+                            member['name'] ?? '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Montserrat',
+                            ),
+                          ),
+                          subtitle: Text(
+                            member['role'] ?? '',
+                            style: TextStyle(color: Colors.grey[800]),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 12),
 
             // ── Events section ──
