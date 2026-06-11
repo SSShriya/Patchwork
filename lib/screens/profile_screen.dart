@@ -12,6 +12,7 @@ import '../models/interest_data.dart';
 import '../services/interest_suggestion_service.dart';
 import '../widgets/interests_categories.dart';
 import 'dart:typed_data';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isSociety;
@@ -386,7 +387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0XFFF5F0F6),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -664,19 +665,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
+          style: GoogleFonts.montserrat(),
           decoration: InputDecoration(
             labelText: label,
+            labelStyle: GoogleFonts.montserrat(),
             prefixIcon: Icon(prefixIcon),
             suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-            filled: true,
-            fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+            floatingLabelStyle: GoogleFonts.montserrat(
+              fontWeight: FontWeight.bold,
             ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: const BorderSide(color: Color(0xFFB284BE), width: 2),
             ),
           ),
           validator: validator,
@@ -697,7 +698,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       label: 'University',
       prefixIcon: Icons.school_outlined,
       itemIcon: Icons.school_outlined,
-      itemIconColor: const Color(0xFF84DCC6),
+      itemIconColor: const Color(0xFFB284BE),
       onSelected: (value) => setState(() => _selectedUniversity = value),
       validator: (value) => (value == null || value.trim().isEmpty)
           ? 'Please select your university'
@@ -713,7 +714,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       label: 'Borough (optional)',
       prefixIcon: Icons.location_on_outlined,
       itemIcon: Icons.location_on_outlined,
-      itemIconColor: const Color(0xFF84DCC6),
+      itemIconColor: const Color(0xFFB284BE),
       onSelected: (value) => setState(() => _selectedBorough = value),
     );
   }
@@ -721,23 +722,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildYearGroupField() {
     return DropdownButtonFormField<String>(
       initialValue: _selectedYearGroup,
+      style: GoogleFonts.montserrat(),
       decoration: InputDecoration(
         labelText: 'Year Group (optional)',
+        labelStyle: GoogleFonts.montserrat(),
         prefixIcon: const Icon(Icons.calendar_today_outlined),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: Color(0xFFB284BE), width: 2),
         ),
       ),
       borderRadius: BorderRadius.circular(12),
       icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-      style: const TextStyle(fontSize: 15, color: Colors.black87),
       hint: const Text('Select year group'),
       items: yearGroups.map((year) {
         final bool isPostgrad = year == 'Masters' || year == 'PhD';
@@ -770,13 +767,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0XFFF5F0F6),
       appBar: AppBar(
         title: const Text(
           'Setup Profile',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0XFF84DCC6),
         elevation: 0,
         centerTitle: true,
       ),
@@ -862,10 +859,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      const Text(
+                      Text(
                         'Your Information',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: GoogleFonts.lora(
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
@@ -902,17 +899,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Your Interests',
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: GoogleFonts.lora(
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
                             Text(
                               '${_interests.length}/$_maxInterests',
-                              style: TextStyle(
+                              style: GoogleFonts.montserrat(
                                 fontSize: 13,
                                 color: Colors.grey.shade600,
                               ),
@@ -920,9 +917,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Pick categories to explore interests',
-                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                          style: GoogleFonts.montserrat(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(height: 10),
 
@@ -955,7 +955,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       category.name,
-                                      style: const TextStyle(
+                                      style: GoogleFonts.montserrat(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.black87,
@@ -1163,14 +1163,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return TextFormField(
       controller: controller,
       textInputAction: TextInputAction.next,
+      style: GoogleFonts.montserrat(),
       decoration: InputDecoration(
         labelText: required ? label : '$label (optional)',
+        labelStyle: GoogleFonts.montserrat(),
         prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: Colors.grey.shade100,
-        border: OutlineInputBorder(
+        floatingLabelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: Color(0xFFB284BE), width: 2),
         ),
       ),
       validator: required
