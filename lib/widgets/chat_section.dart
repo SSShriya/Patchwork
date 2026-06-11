@@ -89,7 +89,7 @@ class ChatSection extends StatelessWidget {
                   ),
                   if (chat.event.isNotEmpty)
                     Text(
-                      eventsInCommon[chat.otherUserId]!.join(", "),
+                      (eventsInCommon[chat.otherUserId] ?? [chat.event]).join(", "),
                       style: const TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 11,
