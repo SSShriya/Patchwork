@@ -10,7 +10,6 @@ import '../models/match_convo.dart';
 import '../widgets/interactive_card.dart';
 import '../screens/event_matches_screen.dart';
 import '../services/event_service.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -188,7 +187,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               children: [
                 Text(
                   'Notifications',
-                  style: GoogleFonts.lora(
+                  style: const TextStyle(
+                    fontFamily: 'Lora',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -198,7 +198,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 // -- New matches --
                 Text(
                   'New Connections !!',
-                  style: GoogleFonts.bitter(
+                  style: const TextStyle(
+                    fontFamily: 'Bitter',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -209,7 +210,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text(
                       'No new connections yet',
-                      style: GoogleFonts.merriweather(
+                      style: TextStyle(
+                        fontFamily: 'Merriweather',
                         fontSize: 13,
                         color: Colors.grey[600],
                       ),
@@ -234,7 +236,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 // -- Pending --
                 Text(
                   'Waiting for their response...',
-                  style: GoogleFonts.bitter(
+                  style: const TextStyle(
+                    fontFamily: 'Bitter',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -242,7 +245,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 const SizedBox(height: 4),
                 Text(
                   'You liked them — waiting to hear back',
-                  style: GoogleFonts.merriweather(
+                  style: TextStyle(
+                    fontFamily: 'Merriweather',
                     fontSize: 12,
                     color: Colors.grey[600],
                   ),
@@ -254,7 +258,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     child: Center(
                       child: Text(
                         'No pending responses right now',
-                        style: GoogleFonts.merriweather(
+                        style: TextStyle(
+                          fontFamily: 'Merriweather',
                           fontSize: 13,
                           color: Colors.grey[500],
                         ),
@@ -294,7 +299,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       appBar: AppBar(
         title: Text(
           'Welcome Back!',
-          style: GoogleFonts.lora(fontWeight: FontWeight.bold, fontSize: 25),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 25,
+            fontFamily: 'Lora',
+          ),
         ),
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: const Color(0XFF222222),
@@ -358,7 +367,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 children: [
                   Text(
                     "Your Upcoming Events",
-                    style: GoogleFonts.lora(
+                    style: const TextStyle(
+                      fontFamily: 'Lora',
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -366,7 +376,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   const SizedBox(height: 4),
                   Text(
                     'Tap an event to see who you\'re going with!',
-                    style: GoogleFonts.merriweather(
+                    style: TextStyle(
+                      fontFamily: 'Merriweather',
                       fontSize: 14,
                       color: Colors.grey[600],
                     ),
@@ -401,7 +412,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 children: [
                   Text(
                     "Discover More People",
-                    style: GoogleFonts.lora(
+                    style: const TextStyle(
+                      fontFamily: 'Lora',
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -409,7 +421,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   const SizedBox(height: 4),
                   Text(
                     'Connect with others going to your events!',
-                    style: GoogleFonts.merriweather(
+                    style: TextStyle(
+                      fontFamily: 'Merriweather',
                       fontSize: 14,
                       color: Colors.grey[600],
                     ),
@@ -448,16 +461,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     children: [
                       Text(
                         event.title,
-                        style: GoogleFonts.bitter(
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
                           fontSize: 18,
-                          color: const Color(0XFF222222),
+                          color: Color(0XFF222222),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'No one to connect with yet - check back soon!',
-                        style: GoogleFonts.merriweather(
+                        style: TextStyle(
+                          fontFamily: 'Merriweather',
                           fontSize: 14,
                           color: Colors.grey[600],
                         ),
@@ -513,7 +528,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           children: [
             Text(
               m.title,
-              style: GoogleFonts.bitter(
+              style: const TextStyle(
+                fontFamily: 'Bitter',
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
               ),
@@ -533,7 +549,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ),
         subtitle: Text(
           subtitle,
-          style: GoogleFonts.merriweather(
+          style: TextStyle(
+            fontFamily: 'Merriweather',
             fontSize: 12,
             color: Colors.grey[600],
           ),
@@ -546,7 +563,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           child: Text(
             badge,
-            style: GoogleFonts.merriweather(
+            style: TextStyle(
+              fontFamily: 'Merriweather',
               fontSize: 11,
               color: badgeTextColor,
               fontWeight: FontWeight.w600,

@@ -1,7 +1,6 @@
 import 'package:drp/screens/dm_home_screen.dart';
 import 'package:drp/screens/society_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SocietyNavBar extends StatefulWidget {
   final int initialIndex;
@@ -15,10 +14,7 @@ class _SocietyNavBarState extends State<SocietyNavBar> {
   late int _currentIndex;
 
   // Keep pages alive by using IndexedStack
-  final List<Widget> _pages = const [
-    SocietyScreen(),
-    DMOverviewScreen(),
-  ];
+  final List<Widget> _pages = const [SocietyScreen(), DMOverviewScreen()];
 
   @override
   void initState() {
@@ -39,11 +35,15 @@ class _SocietyNavBarState extends State<SocietyNavBar> {
         currentIndex: _currentIndex,
         selectedItemColor: const Color(0xFFEBA6A9),
         unselectedItemColor: Colors.grey,
-        selectedLabelStyle: GoogleFonts.montserrat(
+        selectedLabelStyle: const TextStyle(
+          fontFamily: 'Montserrat',
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelStyle: GoogleFonts.montserrat(fontSize: 12),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Montserrat',
+          fontSize: 12,
+        ),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(

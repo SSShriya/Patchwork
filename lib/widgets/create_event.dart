@@ -3,7 +3,6 @@ import 'package:drp/widgets/pick_location_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Data class returned when the user confirms the form.
@@ -345,7 +344,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
               child: Text(
                 isEditingMode ? 'EDIT EVENT' : 'NEW EVENT',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.lora(
+                style: const TextStyle(
+                  fontFamily: 'Lora',
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -651,7 +651,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: GoogleFonts.montserrat(
+      style: TextStyle(
+        fontFamily: 'Montserrat',
         fontSize: 12,
         fontWeight: FontWeight.normal,
         letterSpacing: 1.2,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
 
@@ -66,10 +65,11 @@ class EventDetailCard extends StatelessWidget {
             children: [
               Text(
                 card.title,
-                style: GoogleFonts.bitter(
+                style: const TextStyle(
+                  fontFamily: 'Bitter',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF222222),
+                  color: Color(0xFF222222),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -78,7 +78,8 @@ class EventDetailCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   card.subtitle,
-                  style: GoogleFonts.merriweather(
+                  style: TextStyle(
+                    fontFamily: 'Merriweather',
                     fontSize: 12,
                     color: const Color(0xFF222222).withValues(alpha: 0.7),
                   ),
@@ -99,9 +100,10 @@ class EventDetailCard extends StatelessWidget {
                     '${DateFormat('d MMM').format(card.startDateTime)}  ·  '
                     '${DateFormat('HH:mm').format(card.startDateTime)}'
                     '-${DateFormat('HH:mm').format(card.endDateTime)}',
-                    style: GoogleFonts.merriweather(
+                    style: TextStyle(
+                      fontFamily: 'Merriweather',
                       fontSize: 11,
-                      color: const Color(0xFF222222).withValues(alpha: 0.8),
+                      color: Color(0xFF222222).withValues(alpha: 0.8),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -119,9 +121,10 @@ class EventDetailCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       card.location,
-                      style: GoogleFonts.merriweather(
+                      style: TextStyle(
+                        fontFamily: 'Merriweather',
                         fontSize: 11,
-                        color: const Color(0xFF222222).withValues(alpha: 0.8),
+                        color: Color(0xFF222222).withValues(alpha: 0.8),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -138,7 +141,8 @@ class EventDetailCard extends StatelessWidget {
                     card.cost == 0
                         ? 'Free'
                         : '£${card.cost.toStringAsFixed(2)}',
-                    style: GoogleFonts.merriweather(
+                    style: TextStyle(
+                      fontFamily: 'Merriweather',
                       fontSize: 11,
                       color: const Color(0xFF222222).withValues(alpha: 0.8),
                     ),
@@ -180,10 +184,11 @@ class EventDetailCard extends StatelessWidget {
             Expanded(
               child: Text(
                 card.title,
-                style: GoogleFonts.bitter(
+                style: const TextStyle(
+                  fontFamily: 'Bitter',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF222222),
+                  color: Color(0xFF222222),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -198,7 +203,8 @@ class EventDetailCard extends StatelessWidget {
           Expanded(
             child: Text(
               card.subtitle,
-              style: GoogleFonts.merriweather(
+              style: TextStyle(
+                fontFamily: 'Merriweather',
                 fontSize: 12,
                 color: const Color(0xFF222222).withValues(alpha: 0.7),
               ),
@@ -226,7 +232,8 @@ class EventDetailCard extends StatelessWidget {
                 '${DateFormat('d MMM').format(card.startDateTime)}  ·  '
                 '${DateFormat('HH:mm').format(card.startDateTime)}'
                 '-${DateFormat('HH:mm').format(card.endDateTime)}',
-                style: GoogleFonts.merriweather(
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
                   fontSize: 12,
                   color: const Color(0xFF222222).withValues(alpha: 0.8),
                 ),
@@ -250,7 +257,8 @@ class EventDetailCard extends StatelessWidget {
             Expanded(
               child: Text(
                 card.location,
-                style: GoogleFonts.merriweather(
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
                   fontSize: 12,
                   color: const Color(0xFF222222).withValues(alpha: 0.8),
                 ),
@@ -273,7 +281,8 @@ class EventDetailCard extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               card.cost == 0 ? 'Free' : '£${card.cost.toStringAsFixed(2)}',
-              style: GoogleFonts.merriweather(
+              style: TextStyle(
+                fontFamily: 'Merriweather',
                 fontSize: 12,
                 color: const Color(0xFF222222).withValues(alpha: 0.8),
               ),

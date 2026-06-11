@@ -15,7 +15,6 @@ dependencies:
   bulleted_list: ^0.0.1+0.1a
   intl: ^0.20.2
   flutter_profile_picture: ^2.0.0
-  google_fonts: ^8.1.0
   image_picker: ^1.2.2
   flutter_secure_storage: ^9.0.0
   app_links: ^6.0.0
@@ -33,3 +32,23 @@ flutter:
   uses-material-design: true
   assets: 
     - .env
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf
+        - asset: assets/fonts/Montserrat-Bold.ttf
+          weight: 700
+
+    - family: Lora
+      fonts:
+        - asset: assets/fonts/Lora-Regular.ttf
+        - asset: assets/fonts/Lora-Bold.ttf
+          weight: 700
+
+    - family: Bitter
+      fonts:
+        - asset: assets/fonts/Bitter-Regular.ttf
+    
+    - family: Merriweather
+      fonts:
+        - asset: assets/fonts/Merriweather_24pt-Regular.ttf
