@@ -141,6 +141,19 @@ class EventService {
     if (!result['is_society']) return 'is_society is false for id $societyId';
     return result['name'];
   }
+
+  Future<List<String>> eventsInCommon(String user1Id, String user2Id) async {
+    final rows = await supabase
+        .rpc('get_common_active_events', params: {
+          'user1_id': user1Id,
+          'user2_id': user2Id,
+        });
+  
+    return (rows as List)
+        .map((r) => r['event_name'] as String? ?? '')
+        .where((name) => name.isNotEmpty)
+        .toList();
+  }
 }
 
 // Combines "2026-06-03" + "18:00:00" → DateTime

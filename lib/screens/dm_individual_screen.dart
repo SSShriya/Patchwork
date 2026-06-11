@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:drp/models/dm_message.dart';
+import 'package:drp/services/event_service.dart';
 import 'package:drp/services/utils.dart';
 import 'package:drp/widgets/dm_chat_header.dart';
 import 'package:drp/widgets/dm_input_bar.dart';
@@ -25,11 +26,13 @@ class _DMScreenState extends State<DMScreen> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   final _conversationService = ConversationService();
+  final _eventService = EventService(); 
 
   // ── State ───────────────────────────────────
   late final String _myUserId;
   List<DmMessage> _messages = [];
   final List<GlobalKey> _messageKeys = [];
+  List<String> _eventsInCommon = []; 
   bool _isLoading = true;
   bool _isReady = false;
   Timer? _pollingTimer;
@@ -61,6 +64,7 @@ class _DMScreenState extends State<DMScreen> {
   Future<void> _initChatAndStartPolling() async {
     _myUserId = await loadUserId();
     await _loadMessages(forceScroll: true);
+    _eventsInCommon = await _eventService.eventsInCommon(_myUserId, widget.chat.otherUserId); 
     _pollingTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => _loadMessages(),
@@ -396,14 +400,50 @@ class _DMScreenState extends State<DMScreen> {
         if (!widget.chat.isSociety && widget.chat.event.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: Text(
-                'You are both going to: ${widget.chat.event.toUpperCase()}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black54,
-                ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEC0C6),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    textAlign: TextAlign.center,
+                    "You Are Both Attending:",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ..._eventsInCommon.map(
+                    (interest) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '★ ',
+                            style: TextStyle(fontSize: 13, color: Colors.black),
+                          ),
+                          Expanded(
+                            child: Text(
+                              interest,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
