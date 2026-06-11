@@ -94,7 +94,7 @@ class ChatSection extends StatelessWidget {
                       style: const TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 11,
-                        color: const Color.fromARGB(255, 228, 138, 150),
+                        color: Color.fromARGB(255, 228, 138, 150),
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,

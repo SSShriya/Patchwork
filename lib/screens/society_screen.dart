@@ -409,7 +409,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
               style: const TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 12,
-                color: const Color(0xFF4D5359),
+                color: Color(0xFF4D5359),
               ),
             ),
           ),
@@ -551,7 +551,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                   fontFamily: 'Lora',
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0XFF222222),
+                  color: Color(0XFF222222),
                 ),
               ),
               const SizedBox(height: 24),
@@ -621,7 +621,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
                       fontFamily: 'Lora',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0XFF222222),
+                      color: Color(0XFF222222),
                     ),
                   ),
                   TextButton.icon(

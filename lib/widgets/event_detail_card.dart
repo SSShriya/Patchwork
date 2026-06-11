@@ -188,7 +188,7 @@ class EventDetailCard extends StatelessWidget {
                   fontFamily: 'Bitter',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF222222),
+                  color: Color(0xFF222222),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

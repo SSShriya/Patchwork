@@ -15,7 +15,6 @@ dependencies:
   bulleted_list: ^0.0.1+0.1a
   intl: ^0.20.2
   flutter_profile_picture: ^2.0.0
-  google_fonts: ^8.1.0
   image_picker: ^1.2.2
   flutter_secure_storage: ^9.0.0
   app_links: ^6.0.0

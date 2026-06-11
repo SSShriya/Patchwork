@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import 'interactive_card.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class MatchRow extends StatelessWidget {
   final List<MatchCard> cards;
@@ -27,7 +26,7 @@ class MatchRow extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Bitter',
               fontSize: 18,
-              color: const Color(0xFF222222),
+              color: Color(0xFF222222),
               fontWeight: FontWeight.bold,
             ),
           ),
