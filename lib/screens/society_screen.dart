@@ -548,6 +548,17 @@ class _SocietyScreenState extends State<SocietyScreen> {
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');
   }
 
+  Future<void> _updateContactStatus() async {
+    try {
+    await supabase
+        .from('users')
+        .update({'can_message': _canContact})
+        .eq('id', societyId);
+    } catch(e) {
+      debugPrint('Error updating can_message field: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -659,8 +670,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
                         children: [
                           Checkbox(
                             value: _canContact,
-                            onChanged: (bool? _) =>
-                                setState(() => _canContact = !_canContact),
+                            onChanged: (bool? _) async {
+                                setState(() => _canContact = !_canContact);
+                                await _updateContactStatus();
+                            }
                           ),
 
                           Expanded(

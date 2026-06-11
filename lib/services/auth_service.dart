@@ -17,7 +17,8 @@ class AuthService {
         email: email,
         password: password,
         emailRedirectTo: redirectTo,
-        data: {'name': name, 'is_society': isSociety},
+        data: {'name': name, 'is_society': isSociety, 'can_message': !isSociety},
+        // all users can message, societies opt in to be open to messaging
       );
 
       final user = response.user;
