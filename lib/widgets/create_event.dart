@@ -210,7 +210,10 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() {
       if (isStart) {
         _startDate = picked;
-        if (_endDate != null && _endDate!.isBefore(picked)) _endDate = null;
+        // ── Autofill end date with start date if not already set ──────────
+        _endDate ??= picked;
+        // Clear end date if it's now before the new start date
+        if (_endDate!.isBefore(picked)) _endDate = picked;
       } else {
         _endDate = picked;
       }
@@ -236,7 +239,18 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       ),
     );
     if (picked == null) return;
-    setState(() => isStart ? _startTime = picked : _endTime = picked);
+    setState(() {
+      if (isStart) {
+        _startTime = picked;
+        // Autofill end time to 1 hour after start if not already set
+        _endTime ??= TimeOfDay(
+          hour: (picked.hour + 1) % 24,
+          minute: picked.minute,
+        );
+      } else {
+        _endTime = picked;
+      }
+    });
   }
 
   // ── Pick committee meeting time ────────────────────────────────────────
