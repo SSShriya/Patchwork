@@ -44,6 +44,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
     }
   }
 
+  // ── Edit event ─────────────────────────────────────────────────────────────
   Future<void> _editEvent(
     SocietySharedState state,
     Map<String, String> event,
@@ -51,6 +52,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
     final eventId = event['id'];
     if (eventId == null || eventId.isEmpty) return;
 
+    // ── Parse start date/time ──────────────────────────────────────────────
     DateTime? parsedStartDate;
     TimeOfDay? parsedStartTime;
     DateTime? parsedEndDate;
@@ -82,6 +84,34 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
     }
 
+    // ── Parse committee meeting time — separate try/catch so it can never
+    //    be silently wiped by the date parsing fallback above ───────────────
+    TimeOfDay? existingMeetingTime;
+    try {
+      final rawMeetingTime = event['committee_meeting_time'] ?? '';
+      if (rawMeetingTime.isNotEmpty) {
+        final tp = rawMeetingTime.split(':');
+        // Handle both "HH:mm" and "HH:mm:ss" formats
+        if (tp.length >= 2) {
+          existingMeetingTime = TimeOfDay(
+            hour: int.parse(tp[0].trim()),
+            minute: int.parse(tp[1].trim()),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to parse committee_meeting_time: $e');
+    }
+
+    debugPrint('meet_committee flag: ${event['meet_committee']}');
+    debugPrint(
+      'committee_meeting_location: ${event['committee_meeting_location']}',
+    );
+    debugPrint(
+      'committee_meeting_time raw: ${event['committee_meeting_time']}',
+    );
+    debugPrint('existingMeetingTime parsed: $existingMeetingTime');
+
     final result = await showNewEventPopup(
       context,
       existingName: event['title'],
@@ -94,6 +124,9 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       existingEndDate: parsedEndDate,
       existingEndTime: parsedEndTime,
       existingDescription: event['description'],
+      existingCommitteeCanMeet: event['meet_committee'] == 'true',
+      existingCommitteeMeetingLocation: event['committee_meeting_location'],
+      existingCommitteeMeetingTime: existingMeetingTime,
     );
 
     if (result == null) return;
@@ -112,7 +145,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         description: result.description,
         latitude: result.latitude,
         longitude: result.longitude,
-        // ── Committee fields ──────────────────────────────────────────
         committeeCanMeet: result.committeeCanMeet,
         committeeMeetingLocation: result.committeeMeetingLocation,
         committeeMeetingTime: result.committeeMeetingTime,
@@ -226,7 +258,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
             ),
         ],
       ),
-      // ── FAB to add a new event ─────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: state.isLoading ? null : () => _addNewEvent(state),
         backgroundColor: const Color(0xFF84DCC6),
@@ -245,7 +276,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Section header ───────────────────────────────────────────────
             const Text(
               'UPCOMING EVENTS',
               style: TextStyle(
@@ -257,7 +287,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Active events ────────────────────────────────────────────────
             if (active.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -279,7 +308,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
                     _eventCard(state, active[index]),
               ),
 
-            // ── Past events toggle ───────────────────────────────────────────
             if (archived.isNotEmpty) ...[
               const SizedBox(height: 8),
               InkWell(

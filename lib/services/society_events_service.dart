@@ -69,22 +69,43 @@ class SocietySharedState extends ChangeNotifier {
         for (final e in (eventsData as List)) {
           final endDay = DateTime.tryParse(e['end_day'] ?? '');
           final isPast = endDay != null && endDay.isBefore(today);
+
+          final startDayStr = e['start_day'] ?? '';
+          final endDayStr = e['end_day'] ?? '';
+          final startTimeStr = e['start_time'] ?? '';
+          final endTimeStr = e['end_time'] ?? '';
+
+          String startDisplay = '';
+          String endDisplay = '';
+          try {
+            startDisplay =
+                '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(startDayStr))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$startTimeStr'))}';
+            endDisplay =
+                '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(endDayStr))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$endTimeStr'))}';
+          } catch (_) {
+            startDisplay = startDayStr;
+            endDisplay = endDayStr;
+          }
+
           events.add({
             'id': '${e['event_id']}',
             'title': e['event_name'] ?? '',
-            'start_date':
-                '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['start_time']}'))}',
-            'end_date':
-                '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(e['end_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['end_time']}'))}',
-            'start_day_raw': e['start_day'] ?? '',
-            'start_time_raw': e['start_time'] ?? '',
-            'end_day_raw': e['end_day'] ?? '',
-            'end_time_raw': e['end_time'] ?? '',
+            'start_date': startDisplay,
+            'end_date': endDisplay,
+            'start_day_raw': startDayStr,
+            'start_time_raw': startTimeStr,
+            'end_day_raw': endDayStr,
+            'end_time_raw': endTimeStr,
             'location': e['location'] ?? '',
             'cost': '${e['cost']}',
+            'description': e['description'] ?? '',
             'latitude': e['latitude'] != null ? '${e['latitude']}' : '',
             'longitude': e['longitude'] != null ? '${e['longitude']}' : '',
             'is_past': isPast ? 'true' : 'false',
+            // ── Correct DB column names ──────────────────────────────
+            'meet_committee': '${e['meet_committee'] ?? false}',
+            'committee_meeting_location': e['committee_meeting_location'] ?? '',
+            'committee_meeting_time': e['committee_meeting_time'] ?? '',
           });
         }
 
@@ -206,7 +227,6 @@ class SocietySharedState extends ChangeNotifier {
     try {
       await EventService.uploadEventImage(image, societyId);
 
-      // Insert and return the new event_id
       final response = await supabase
           .from('events')
           .insert({
@@ -224,10 +244,11 @@ class SocietySharedState extends ChangeNotifier {
             'latitude': latitude,
             'longitude': longitude,
             'meet_committee': committeeCanMeet,
-            'meeting_location': committeeCanMeet
+            'committee_meeting_location': committeeCanMeet
                 ? committeeMeetingLocation
                 : null,
-            'meeting_time': committeeCanMeet && committeeMeetingTime != null
+            'committee_meeting_time':
+                committeeCanMeet && committeeMeetingTime != null
                 ? '${committeeMeetingTime.hour}:${committeeMeetingTime.minute.toString().padLeft(2, '0')}'
                 : null,
           })
@@ -236,7 +257,6 @@ class SocietySharedState extends ChangeNotifier {
 
       final String newEventId = response['event_id'] as String;
 
-      // Also mark the society as interested in their own event
       await supabase.from('interested_events').insert({
         'user_id': societyId,
         'event_id': newEventId,

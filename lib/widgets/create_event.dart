@@ -53,6 +53,9 @@ Future<NewEventData?> showNewEventPopup(
   double? existingLongitude,
   double? existingPrice,
   String? existingDescription,
+  bool existingCommitteeCanMeet = false,
+  String? existingCommitteeMeetingLocation,
+  TimeOfDay? existingCommitteeMeetingTime,
 }) {
   return showDialog<NewEventData>(
     context: context,
@@ -68,6 +71,9 @@ Future<NewEventData?> showNewEventPopup(
       existingLatitude: existingLatitude,
       existingPrice: existingPrice,
       existingDescription: existingDescription,
+      existingCommitteeCanMeet: existingCommitteeCanMeet,
+      existingCommitteeMeetingLocation: existingCommitteeMeetingLocation,
+      existingCommitteeMeetingTime: existingCommitteeMeetingTime,
     ),
   );
 }
@@ -85,6 +91,9 @@ class _CreateEventForm extends StatefulWidget {
   final double? existingLongitude;
   final double? existingPrice;
   final String? existingDescription;
+  final bool existingCommitteeCanMeet;
+  final String? existingCommitteeMeetingLocation;
+  final TimeOfDay? existingCommitteeMeetingTime;
 
   const _CreateEventForm({
     this.existingName,
@@ -97,6 +106,10 @@ class _CreateEventForm extends StatefulWidget {
     this.existingLatitude,
     this.existingPrice,
     this.existingDescription,
+    // ── NEW ────────────────────────────────────────────────────────────
+    this.existingCommitteeCanMeet = false,
+    this.existingCommitteeMeetingLocation,
+    this.existingCommitteeMeetingTime,
   });
 
   @override
@@ -151,7 +164,11 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       text: widget.existingDescription ?? '',
     );
 
-    _committeeMeetingLocationController = TextEditingController();
+    _committeeCanMeet = widget.existingCommitteeCanMeet;
+    _committeeMeetingLocationController = TextEditingController(
+      text: widget.existingCommitteeMeetingLocation ?? '',
+    );
+    _committeeMeetingTime = widget.existingCommitteeMeetingTime;
 
     _startDate = widget.existingStartDate;
     _startTime = widget.existingStartTime;
