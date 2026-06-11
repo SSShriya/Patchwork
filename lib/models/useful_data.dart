@@ -37,14 +37,14 @@ const List<String> londonBoroughs = [
 
 // ── Year group options ─────────────────────────────────────────────────────
 const List<String> yearGroups = [
-  'Year 1',
-  'Year 2',
-  'Year 3',
-  'Year 4',
-  'Year 5',
-  'Year 6',
-  'Masters',
-  'PhD',
+  'Year 1 (Undergrad)',
+  'Year 2 (Undergrad)',
+  'Year 3 (Undergrad)',
+  'Year 4 (Undergrad)',
+  'Year 5 (Undergrad)',
+  'Year 6 (Undergrad)',
+  'Masters (Postgrad)',
+  'PhD (Postgrad)',
 ];
 
 // ── All London Universities ────────────────────────────────────────────────

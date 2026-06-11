@@ -682,12 +682,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: InputDecoration(
             labelText: label,
             labelStyle: const TextStyle(fontFamily: 'Merriweather'),
-            prefixIcon: Icon(prefixIcon),
-            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            floatingLabelBehavior: FloatingLabelBehavior.always, // ← add this
             floatingLabelStyle: const TextStyle(
               fontFamily: 'Montserrat',
               fontWeight: FontWeight.bold,
             ),
+            prefixIcon: Icon(prefixIcon),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -736,14 +737,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildYearGroupField() {
     return DropdownButtonFormField<String>(
       initialValue: _selectedYearGroup,
-      style: const TextStyle(fontFamily: 'Merriweather'),
+      style: const TextStyle(
+        fontFamily: 'Merriweather',
+        fontSize: 15,
+        color: Colors.black,
+      ),
       decoration: InputDecoration(
-        labelText: 'Year Group (optional)',
-        labelStyle: const TextStyle(
+        labelText: 'Year Group',
+        labelStyle: const TextStyle(fontFamily: 'Merriweather'),
+        floatingLabelStyle: const TextStyle(
           fontFamily: 'Montserrat',
           fontWeight: FontWeight.bold,
         ),
         prefixIcon: const Icon(Icons.calendar_today_outlined),
+        suffixIcon: const SizedBox.shrink(), // hides default dropdown arrow gap
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -752,28 +759,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       borderRadius: BorderRadius.circular(12),
       icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-      hint: const Text('Select year group'),
+      hint: const Text(
+        'Select year group',
+        style: TextStyle(fontFamily: 'Merriweather'),
+      ),
       items: yearGroups.map((year) {
-        final bool isPostgrad = year == 'Masters' || year == 'PhD';
         return DropdownMenuItem<String>(
           value: year,
-          child: Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isPostgrad
-                      ? const Color(0xFF84DCC6)
-                      : year == 'Alumnus'
-                      ? Colors.grey.shade400
-                      : Colors.blue.shade200,
-                ),
-              ),
-              Text(year),
-            ],
+          child: Text(
+            year,
+            style: const TextStyle(fontFamily: 'Merriweather', fontSize: 15),
           ),
         );
       }).toList(),
@@ -898,6 +893,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildUniversityField(),
                       const SizedBox(height: 16),
 
+                      _buildYearGroupField(),
+                      const SizedBox(height: 16),
+
                       if (!widget.isSociety) ...[
                         _buildTextField(
                           controller: _courseController,
@@ -905,9 +903,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           icon: Icons.book_outlined,
                           required: false,
                         ),
-                        const SizedBox(height: 16),
-
-                        _buildYearGroupField(),
                         const SizedBox(height: 16),
 
                         _buildBoroughField(),
