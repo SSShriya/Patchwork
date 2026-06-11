@@ -6,7 +6,6 @@ import 'package:drp/services/soc_service.dart';
 import 'package:drp/services/supabase_client.dart';
 import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -149,7 +148,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
       builder: (context) => AlertDialog(
         title: Text(
           'Edit About Section',
-          style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Montserrat',
+          ),
         ),
         content: TextField(
           controller: tempController,
@@ -393,7 +395,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
           ),
           title: Text(
             event['title']!,
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
+              fontFamily: 'Montserrat',
               fontWeight: FontWeight.bold,
               fontSize: 15,
               color: isPast ? Colors.grey : Colors.black87,
@@ -403,7 +406,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               "${event['start_date']} • ${event['location']}",
-              style: GoogleFonts.montserrat(
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
                 fontSize: 12,
                 color: const Color(0xFF4D5359),
               ),
@@ -543,7 +547,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
               // 2. Society Title Name Display
               Text(
                 _societyName ?? 'UNKNOWN',
-                style: GoogleFonts.lora(
+                style: const TextStyle(
+                  fontFamily: 'Lora',
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: const Color(0XFF222222),
@@ -568,7 +573,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
                         children: [
                           Text(
                             "ABOUT THE SOCIETY",
-                            style: GoogleFonts.montserrat(
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.1,
@@ -592,7 +598,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
                         _aboutController.text.isNotEmpty
                             ? _aboutController.text
                             : "No description provided yet. Click the edit icon to write something!",
-                        style: GoogleFonts.montserrat(
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
                           fontSize: 14,
                           color: Color(0x9F4D5359),
                           height: 1.5,
@@ -610,7 +617,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
                 children: [
                   Text(
                     'YOUR EVENTS',
-                    style: GoogleFonts.lora(
+                    style: const TextStyle(
+                      fontFamily: 'Lora',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: const Color(0XFF222222),
@@ -622,7 +630,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
                     label: const Text("New Event"),
                     style: TextButton.styleFrom(
                       foregroundColor: const Color(0xFF4D5359),
-                      textStyle: GoogleFonts.montserrat(
+                      textStyle: const TextStyle(
+                        fontFamily: 'Montserrat',
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -650,7 +659,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Text(
                             "No upcoming events. Tap + New Event to add one.",
-                            style: GoogleFonts.montserrat(
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
                               color: Colors.grey,
                               fontSize: 14,
                             ),
@@ -681,10 +691,11 @@ class _SocietyScreenState extends State<SocietyScreen> {
                               children: [
                                 Text(
                                   'Past events (${archived.length})',
-                                  style: GoogleFonts.montserrat(
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF4D5359),
+                                    color: Color(0xFF4D5359),
                                     letterSpacing: 0.5,
                                   ),
                                 ),
