@@ -381,7 +381,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: photoInterests.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final interest = photoInterests[index];
                 final photoUrl = widget.card.interestPhotos[interest]!;
@@ -430,7 +430,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
                                     ),
                                   );
                                 },
-                                errorBuilder: (_, __, ___) => Container(
+                                errorBuilder: (_, _, _) => Container(
                                   color: Colors.grey.shade200,
                                   child: Icon(
                                     Icons.broken_image_outlined,
@@ -491,7 +491,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
               itemCount: events.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, i) => _OtherEventCard(
                 event: events[i],
                 onTap: () => Navigator.push(
