@@ -1,4 +1,4 @@
-import 'package:drp/models/society_shared_state.dart';
+import 'package:drp/services/society_events_service.dart';
 import 'package:drp/widgets/create_event.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,18 +30,21 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         description: result.description,
         latitude: result.latitude,
         longitude: result.longitude,
+        // ── Committee fields ──────────────────────────────────────────
+        committeeCanMeet: result.committeeCanMeet,
+        committeeMeetingLocation: result.committeeMeetingLocation,
+        committeeMeetingTime: result.committeeMeetingTime,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Event created successfully!')),
         );
       }
-    } catch (_) {
-      _snack('Failed to create event.');
+    } catch (e) {
+      _snack('Failed to create event: $e');
     }
   }
 
-  // ── Edit event ─────────────────────────────────────────────────────────────
   Future<void> _editEvent(
     SocietySharedState state,
     Map<String, String> event,
@@ -110,14 +113,18 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         description: result.description,
         latitude: result.latitude,
         longitude: result.longitude,
+        // ── Committee fields ──────────────────────────────────────────
+        committeeCanMeet: result.committeeCanMeet,
+        committeeMeetingLocation: result.committeeMeetingLocation,
+        committeeMeetingTime: result.committeeMeetingTime,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Event updated successfully!')),
         );
       }
-    } catch (_) {
-      _snack('Failed to update event.');
+    } catch (e) {
+      _snack('Failed to update event: $e');
     }
   }
 

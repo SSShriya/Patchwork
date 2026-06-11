@@ -1,4 +1,4 @@
-import 'package:drp/models/society_shared_state.dart';
+import 'package:drp/services/society_events_service.dart';
 import 'package:drp/screens/dm_home_screen.dart';
 import 'package:drp/screens/society_events_screen.dart';
 import 'package:drp/screens/society_profile_screen.dart';

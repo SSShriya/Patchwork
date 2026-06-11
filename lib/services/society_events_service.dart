@@ -197,6 +197,9 @@ class SocietySharedState extends ChangeNotifier {
     String? description,
     double? latitude,
     double? longitude,
+    bool committeeCanMeet = false,
+    String? committeeMeetingLocation,
+    TimeOfDay? committeeMeetingTime,
   }) async {
     isLoading = true;
     notifyListeners();
@@ -216,6 +219,14 @@ class SocietySharedState extends ChangeNotifier {
         'description': description,
         'latitude': latitude,
         'longitude': longitude,
+        'meet_committee': committeeCanMeet,
+        'committee_meeting_location': committeeCanMeet
+            ? committeeMeetingLocation
+            : null,
+        'committee_meeting_time':
+            committeeCanMeet && committeeMeetingTime != null
+            ? '${committeeMeetingTime.hour}:${committeeMeetingTime.minute.toString().padLeft(2, '0')}'
+            : null,
       });
       await loadProfile();
     } catch (e) {
@@ -240,6 +251,9 @@ class SocietySharedState extends ChangeNotifier {
     String? description,
     double? latitude,
     double? longitude,
+    bool committeeCanMeet = false,
+    String? committeeMeetingLocation,
+    TimeOfDay? committeeMeetingTime,
   }) async {
     isLoading = true;
     notifyListeners();
@@ -260,6 +274,14 @@ class SocietySharedState extends ChangeNotifier {
             'description': description,
             'latitude': latitude,
             'longitude': longitude,
+            'meet_committee': committeeCanMeet,
+            'committee_meeting_location': committeeCanMeet
+                ? committeeMeetingLocation
+                : null,
+            'committee_meeting_time':
+                committeeCanMeet && committeeMeetingTime != null
+                ? '${committeeMeetingTime.hour}:${committeeMeetingTime.minute.toString().padLeft(2, '0')}'
+                : null,
           })
           .eq('event_id', eventId);
       await loadProfile();
