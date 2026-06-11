@@ -66,11 +66,11 @@ Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
 
 Future<List<Map<String, dynamic>>> getCommittee(String societyId) async {
   try {
-  return await supabase
-      .from('committee_members')
-      .select()
-      .eq('society_id', societyId);
-  } catch(e) {
+    return await supabase
+        .from('committee_members')
+        .select()
+        .eq('society_id', societyId);
+  } catch (e) {
     debugPrint('Error fetching committee data: $e');
     return [];
   }

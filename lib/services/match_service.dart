@@ -30,8 +30,6 @@ class MatchService {
   }
 
   Future<List<MatchCard>> getPendingMatches(String currentUserId) async {
-    debugPrint("getPendingMatches() has been called");
-
     // ── Fetch current user — include photo_url in user_interests ──────────
     final currentUserData = await supabase
         .from('users')
