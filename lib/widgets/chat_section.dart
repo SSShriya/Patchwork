@@ -24,10 +24,7 @@ class ChatSection extends StatelessWidget {
     return ExpansionTile(
       title: Text(
         title,
-        style: const TextStyle(
-          fontFamily: 'Montserrat',
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontFamily: 'Lora', fontWeight: FontWeight.bold),
       ),
       initiallyExpanded: currentChats,
       children: [
@@ -109,6 +106,8 @@ class ChatSection extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 12,
                   color: chat.unreadCount > 0
                       ? Colors.black87
                       : Colors.grey[600],
@@ -121,23 +120,20 @@ class ChatSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    chat.time,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  if (chat.unreadCount > 0)
+                  // Text(
+                  //   chat.time,
+                  //   style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  // ),
+                  // const SizedBox(height: 4),
+                  if (chat.numMessages == 0)
                     Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
                       child: Text(
-                        '${chat.unreadCount}',
+                        'NEW',
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
+                          fontFamily: 'Montserrat',
+                          color: Color.fromARGB(255, 234, 78, 67),
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

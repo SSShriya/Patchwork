@@ -138,10 +138,10 @@ class _MainAppState extends State<MainApp> {
           );
         },
       ),
-      routes: {
-        '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const MainShell(),
-      },
+      // routes: {
+      //   '/signup': (context) => const SignUpScreen(),
+      //   '/home': (context) => const MainShell(),
+      // },
     );
   }
 }

@@ -126,6 +126,7 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                   const Text(
                     'Suggest a Meeting',
                     style: TextStyle(
+                      fontFamily: 'Lora',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Color(0XFF8789C0),
@@ -143,7 +144,11 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
               // 1. Date Selector Button
               const Text(
                 'Date *',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontFamily: 'Bitter',
+                ),
               ),
               const SizedBox(height: 6),
               OutlinedButton.icon(
@@ -163,6 +168,7 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                       fontWeight: _selectedDate != null
                           ? FontWeight.w500
                           : FontWeight.normal,
+                      fontFamily: 'Bitter',
                     ),
                   ),
                 ),
@@ -186,7 +192,11 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
               // 2. Time Selector Button
               const Text(
                 'Time *',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(
+                  fontFamily: 'Bitter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 6),
               OutlinedButton.icon(
@@ -200,6 +210,7 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
                   child: Text(
                     timeButtonText,
                     style: TextStyle(
+                      fontFamily: 'Bitter',
                       color: _selectedTime != null
                           ? const Color(0XFF222222)
                           : Colors.grey[600],
@@ -229,19 +240,25 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
               // 3. Location Input Field
               const Text(
                 'Location (Optional)',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(
+                  fontFamily: 'Bitter',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _locationController,
                 decoration: InputDecoration(
                   hintText: 'Enter a venue or postcode...',
+                  hintStyle: const TextStyle(fontFamily: 'Bitter'),
                   prefixIcon: const Icon(
                     Icons.location_on,
                     color: Color(0XFF8789C0),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: const Color(0XFF8789C0)),
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),

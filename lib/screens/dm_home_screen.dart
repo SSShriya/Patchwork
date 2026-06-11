@@ -16,15 +16,15 @@ class DMOverviewScreen extends StatefulWidget {
 
 class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   final _conversationService = ConversationService();
-  final _eventService = EventService(); 
+  final _eventService = EventService();
   List<ChatConversation> _conversations = [];
   bool isLoading = true;
 
   // For filtering events
-  String? _selectedEventId; 
+  String? _selectedEventId;
   List<MapEntry<String, String>> _eventFilters = [];
   Map<String, ({String endDay, String endTime})> _eventEndTimes = {};
-  Map<String, List<String>> _eventsInCommon = {}; 
+  Map<String, List<String>> _eventsInCommon = {};
 
   String _searchQuery = '';
 
@@ -64,14 +64,14 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
     final convos = await _conversationService.getConversations();
 
     final eventIds = convos
-      .map((c) => c.eventId)
-      .where((id) => id.isNotEmpty)
-      .toSet()
-      .toList();
-    
+        .map((c) => c.eventId)
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+
     final endTimes = await _conversationService.getEventEndTimes(eventIds);
 
-    final myId = await loadUserId(); 
+    final myId = await loadUserId();
 
     // Map of otherUserId to all events in common
     final Map<String, List<String>> eventsInCommon = {};
@@ -82,15 +82,18 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
     for (final chat in convos) {
       if (_isChatCurrent(chat) && seen.add(chat.eventId)) {
         filters.add(MapEntry(chat.eventId, chat.event));
-        eventsInCommon[chat.otherUserId] = await _eventService.eventsInCommon(myId, chat.otherUserId);
+        eventsInCommon[chat.otherUserId] = await _eventService.eventsInCommon(
+          myId,
+          chat.otherUserId,
+        );
       }
     }
 
     setState(() {
       _conversations = convos;
-      _eventEndTimes = endTimes; 
-      _eventFilters = filters; 
-      _eventsInCommon = eventsInCommon; 
+      _eventEndTimes = endTimes;
+      _eventFilters = filters;
+      _eventsInCommon = eventsInCommon;
       isLoading = false;
     });
   }
@@ -151,15 +154,17 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
         .toList();
 
     final currentChatUserIds = filteredCurrentConvos
-      .map((chat) => chat.otherUserId)
-      .toSet();
+        .map((chat) => chat.otherUserId)
+        .toSet();
 
     // Ensure the old conversations have no current user IDs
     final filteredOldConvos = filteredConversations
-        .where((chat) => 
-          !chat.isSociety && 
-          !_isChatCurrent(chat) && 
-          !currentChatUserIds.contains(chat.otherUserId))
+        .where(
+          (chat) =>
+              !chat.isSociety &&
+              !_isChatCurrent(chat) &&
+              !currentChatUserIds.contains(chat.otherUserId),
+        )
         .toList();
 
     return Scaffold(
@@ -171,16 +176,16 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
         title: const Text(
           'Messages',
           style: TextStyle(
-            color: Colors.black,
             fontWeight: FontWeight.bold,
-            fontSize: 22,
+            fontSize: 25,
+            fontFamily: 'Lora',
           ),
         ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _loadConversations, 
+              onRefresh: _loadConversations,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
@@ -197,10 +202,17 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                         },
                         decoration: InputDecoration(
                           hintText: 'Search by name or event...',
-                          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                          hintStyle: const TextStyle(fontFamily: 'Montserrat'),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Color(0xFF4D5359),
+                          ),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear, color: Colors.grey),
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    color: Color(0xFF4D5359),
+                                  ),
                                   onPressed: () {
                                     FocusScope.of(context).unfocus();
                                     setState(() => _searchQuery = '');
@@ -208,8 +220,10 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                                 )
                               : null,
                           filled: true,
-                          fillColor: Colors.grey[100],
-                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                          fillColor: Color(0XBFFEFEFA),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
                             borderSide: BorderSide.none,
@@ -231,7 +245,10 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                         child: Center(
                           child: Text(
                             'No conversations found matching criteria.',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       )
@@ -255,7 +272,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                           onRefresh: _loadConversations,
                           currentChats: true,
                         ),
-                        
+
                       // Old Chats Section
                       if (filteredOldConvos.isNotEmpty)
                         ChatSection(
@@ -286,13 +303,16 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
-              label: const Text('All'),
+              label: const Text('All', style: TextStyle(fontFamily: 'Bitter')),
               selected: _selectedEventId == null,
               onSelected: (_) => setState(() => _selectedEventId = null),
-              selectedColor: const Color(0xFF84DCC6),
+              selectedColor: const Color(0XFFFC89AC),
               backgroundColor: Colors.grey[200],
               labelStyle: TextStyle(
-                color: _selectedEventId == null ? Colors.black : Colors.grey[700],
+                fontFamily: 'Bitter',
+                color: _selectedEventId == null
+                    ? Colors.black
+                    : Colors.grey[700],
                 fontWeight: _selectedEventId == null
                     ? FontWeight.bold
                     : FontWeight.normal,
@@ -306,15 +326,17 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
             return Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: ChoiceChip(
-                label: Text(entry.value),   // displays eventName
+                label: Text(
+                  entry.value,
+                  style: TextStyle(fontFamily: 'Bitter'),
+                ), // displays eventName
                 selected: isSelected,
                 onSelected: (_) => setState(() => _selectedEventId = entry.key),
-                selectedColor: const Color(0xFF84DCC6),
+                selectedColor: const Color(0xFFFC89AC),
                 backgroundColor: Colors.grey[200],
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.black : Colors.grey[700],
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             );

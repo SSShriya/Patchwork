@@ -17,7 +17,12 @@ class AuthService {
         email: email,
         password: password,
         emailRedirectTo: redirectTo,
-        data: {'name': name, 'is_society': isSociety},
+        data: {
+          'name': name,
+          'is_society': isSociety,
+          'can_message': !isSociety,
+        },
+        // all users can message, societies opt in to be open to messaging
       );
 
       final user = response.user;
@@ -32,10 +37,11 @@ class AuthService {
         throw Exception('An account with this email already exists.');
       }
 
-      if(response.session == null) {
-        throw Exception('Email address has not been verified. Please check your inbox.');
+      if (response.session == null) {
+        throw Exception(
+          'Email address has not been verified. Please check your inbox.',
+        );
       }
-      
     } on AuthException catch (e) {
       // Re-map Supabase auth error messages to friendlier ones
       if (e.message.toLowerCase().contains('already registered') ||
@@ -57,7 +63,7 @@ class AuthService {
     final session = response.session;
 
     if (user == null || session == null) {
-      throw Exception('Login failed. Please check your credentials.');
+      throw AuthException('Login failed. Please check your credentials.');
     }
 
     await SessionManager.saveSession(userId: user.id);

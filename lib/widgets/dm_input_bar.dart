@@ -28,6 +28,7 @@ class DmInputBar extends StatelessWidget {
                 onSubmitted: (_) => onSend(),
                 decoration: InputDecoration(
                   hintText: 'Message $recipientName...',
+                  hintStyle: const TextStyle(fontFamily: 'Montserrat'),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 10,

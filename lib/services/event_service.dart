@@ -11,11 +11,11 @@ import 'supabase_client.dart';
 
 class EventService {
   Future<List<EventCard>> getInterestedEvents(String currentUserId) async {
-    // get interested events
+    // 1. Get interested events
     final rows = await supabase
         .from('interested_events')
         .select(
-          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, society_id)',
+          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, society_id, latitude, longitude)',
         )
         .eq('user_id', currentUserId);
 
@@ -33,23 +33,39 @@ class EventService {
 
     if (eventIds.isEmpty) return [];
 
-    // fetch all confirmed match counts
+    // 2. Map eventId to its society_id for quick local lookup
+    final eventToSocietyMap = <String, String>{};
+    for (final row in validRows) {
+      final e = row['events'] as Map<String, dynamic>;
+      eventToSocietyMap[e['event_id'] as String] = e['society_id'] ?? '';
+    }
+
+    // 3. Fetch all confirmed matches, adding user1_id and user2_id to the select statement
     final matchCounts = await supabase
         .from('matches')
-        .select('event_id')
+        .select('event_id, user1_id, user2_id') // Added user IDs here
         .inFilter('event_id', eventIds)
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
-    // build a map of eventId to count
+    // 4. Build a map of eventId to count, filtering out matches involving the society_id
     final countMap = <String, int>{};
     for (final row in matchCounts as List) {
       final eventId = row['event_id'] as String;
+      final user1Id = row['user1_id'] as String;
+      final user2Id = row['user2_id'] as String;
+      final societyId = eventToSocietyMap[eventId];
+
+      // SKIP this row if either user matches the society_id for this specific event
+      if (user1Id == societyId || user2Id == societyId) {
+        continue;
+      }
+
       countMap[eventId] = (countMap[eventId] ?? 0) + 1;
     }
 
-    // build EventCards using the count map
+    // 5. Build EventCards using the filtered count map
     return validRows.map((row) {
       final e = row['events'] as Map<String, dynamic>;
       final eventId = e['event_id'] as String;
@@ -57,7 +73,7 @@ class EventService {
       return EventCard(
         title: e['event_name'] ?? '',
         subtitle: e['description'] ?? '',
-        numMatches: countMap[eventId] ?? 0,
+        numMatches: countMap[eventId] ?? 0, // Now reflects the filtered total
         startDateTime: _parseDateTime(e['start_day'], e['start_time']),
         endDateTime: _parseDateTime(e['end_day'], e['end_time']),
         location: e['location'] ?? '',
