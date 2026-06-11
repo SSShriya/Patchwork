@@ -170,7 +170,7 @@ class EventService {
         .toList();
   }
 
-  Future<List<String>> otherUserEvents(
+  Future<List<EventCard>> otherUserEvents(
     String currentUserId,
     String otherUserId,
   ) async {
@@ -179,10 +179,30 @@ class EventService {
       params: {'current_user_id': currentUserId, 'other_user_id': otherUserId},
     );
 
-    return (rows as List)
-        .map((r) => r['title'] as String? ?? '')
-        .where((name) => name.isNotEmpty)
-        .toList();
+    debugPrint('=== otherUserEvents raw rows: $rows ===');
+
+    final events = (rows as List).map((e) {
+      return EventCard(
+        eventId: e['event_id'] ?? '',
+        societyId: e['society_id'] ?? '',
+        title: e['title'] ?? '',
+        subtitle: e['subtitle'] ?? '',
+        numMatches: 0,
+        startDateTime: _parseDateTime(e['start_day'], e['start_time']),
+        endDateTime: _parseDateTime(e['end_day'], e['end_time']),
+        location: e['location'] ?? '',
+        latitude: (e['latitude'] as num?)?.toDouble(),
+        longitude: (e['longitude'] as num?)?.toDouble(),
+        cost: (e['cost'] as num?)?.toDouble() ?? 0.0,
+        icon: Icons.event,
+        color: const Color(0XFFFED766),
+        imageUrl: e['image_url'] ?? '',
+      );
+    }).toList();
+
+    // sort ascending — soonest first
+    events.sort((a, b) => b.startDateTime.compareTo(a.startDateTime));
+    return events;
   }
 }
 

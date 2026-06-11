@@ -5,6 +5,9 @@ import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../screens/dm_individual_screen.dart';
 import '../models/match_convo.dart';
 import '../services/event_service.dart';
+import '../models/event_card.dart';
+import 'package:intl/intl.dart';
+import '../screens/event_profile_screen.dart';
 
 class UserProfileCard extends StatefulWidget {
   final MatchCard card;
@@ -17,7 +20,7 @@ class UserProfileCard extends StatefulWidget {
 }
 
 class _UserProfileCardState extends State<UserProfileCard> {
-  late Future<List<String>> _otherEventsFuture;
+  late Future<List<EventCard>> _otherEventsFuture;
 
   @override
   void initState() {
@@ -235,6 +238,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
           // ── Bio ───────────────────────────────────────────────────────
           _Card(
             color: const Color.fromARGB(255, 221, 226, 243),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -251,13 +255,18 @@ class _UserProfileCardState extends State<UserProfileCard> {
           const SizedBox(height: 12),
 
           // ── Other Interested Events ───────────────────────────────────
-          FutureBuilder<List<String>>(
+          FutureBuilder<List<EventCard>>(
             future: _otherEventsFuture,
             builder: (context, snapshot) {
+              debugPrint('=== snapshot state: ${snapshot.connectionState} ===');
+              debugPrint('=== snapshot error: ${snapshot.error} ===');
+              debugPrint('=== snapshot data: ${snapshot.data} ===');
+
+              if (snapshot.hasError) return Text('Error: ${snapshot.error}');
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const SizedBox.shrink();
               }
-              return _buildOtherEvents(snapshot.data!);
+              return _buildOtherEvents(context, snapshot.data!);
             },
           ),
 
@@ -356,7 +365,9 @@ class _UserProfileCardState extends State<UserProfileCard> {
     if (photoInterests.isEmpty) return const SizedBox.shrink();
 
     return _Card(
-      color: const Color.fromARGB(202, 255, 229, 181),
+      color: const Color.fromARGB(167, 255, 213, 166),
+
+      //color: const Color.fromARGB(202, 255, 229, 181),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -462,69 +473,34 @@ class _UserProfileCardState extends State<UserProfileCard> {
   }
 
   // ── Other interested events card ──────────────────────────────────────────
-  Widget _buildOtherEvents(List<String> events) {
+  Widget _buildOtherEvents(BuildContext context, List<EventCard> events) {
     return _Card(
-      color: const Color.fromARGB(180, 180, 220, 255),
+      color: const Color.fromARGB(167, 232, 211, 253),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Other events they\'re interested in:',
+            'Other Current/Past Events:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 80,
+            height: 130,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
               itemCount: events.length,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                final name =
-                    events[i][0].toUpperCase() + events[i].substring(1);
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+              itemBuilder: (_, i) => _OtherEventCard(
+                event: events[i],
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EventProfileScreen(card: events[i]),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(2, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.event,
-                        size: 18,
-                        color: Color(0xFF344966),
-                      ),
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 160),
-                        child: Text(
-                          name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF344966),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                ),
+              ),
             ),
           ),
         ],
@@ -797,6 +773,83 @@ class _Card extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: child,
+    );
+  }
+}
+
+class _OtherEventCard extends StatelessWidget {
+  final EventCard event;
+  final VoidCallback onTap;
+
+  const _OtherEventCard({required this.event, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateFormat('d MMM').format(event.startDateTime);
+    final time =
+        '${DateFormat('HH:mm').format(event.startDateTime)}–${DateFormat('HH:mm').format(event.endDateTime)}';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 170,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(216, 247, 229, 151),
+
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 6,
+              offset: const Offset(2, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Date chip ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(180, 180, 220, 255),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$date  ·  $time',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF344966),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // ── Event name ─────────────────────────────────────────
+            Text(
+              event.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF222222),
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // ── Subtitle ───────────────────────────────────────────
+            Text(
+              event.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
