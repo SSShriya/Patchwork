@@ -1,3 +1,4 @@
+import 'package:drp/screens/society_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';
@@ -37,7 +38,9 @@ class DmChatHeader extends StatelessWidget implements PreferredSizeWidget {
                   foregroundColor: Colors.white,
                   title: Text(card.title),
                 ),
-                body: UserProfileCard(card: card, accepted: true),
+                body: chat.isSociety ? 
+                        SocietyInfoScreen(societyId: chat.matchCard.otherUserId, eventId: chat.matchCard.eventId) : 
+                        UserProfileCard(card: card, accepted: true),
               ),
             ),
           );
