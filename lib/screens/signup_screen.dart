@@ -17,6 +17,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordFocusNode = FocusNode();
   final _nameController = TextEditingController();
 
+  final _uniEmailDomains = [
+    'student.bbk.ac.uk',
+    'brunel.ac.uk',
+    'citystgeorges.ac.uk',
+    'courtauld.ac.uk',
+    'gold.ac.uk',
+    'gsmd.ac.uk',
+    'imperial.ac.uk',
+    'ic.ac.uk',
+    'icr.ac.uk',
+    'kcl.ac.uk',
+    'kingston.ac.uk',
+    'london.edu',
+    'londonmet.ac.uk',
+    'lse.ac.uk',
+    'lshtm.ac.uk',
+    'lsbu.ac.uk',
+    'live.mdx.ac.uk',
+    'qmu.ac.uk',
+    'qub.ac.uk',
+    'rave.ac.uk', // love this
+    'ram.ac.uk',
+    'rca.ac.uk',
+    'rcm.ac.uk',
+    'royalholloway.ac.uk',
+    'rvc.ac.uk',
+    'soas.ac.uk',
+    'citystgeorges.ac.uk',
+    'sgul.ac.uk',
+    'law.ac.uk',
+    'trinitylaban.ac.uk',
+    'ucl.ac.uk',
+    'uel.ac.uk',
+    'gre.ac.uk',
+    'london.ac.uk',
+    'roehampton.ac.uk',
+    'arts.ac.uk',
+    'westminster.ac.uk',
+    'wrexham.ac.uk',
+
+    // below are added so we can still access demo accounts, would remove irl
+    'gmail.com',
+    'yahoo.com',
+    'outlook.com',
+    'yahoo.co.uk',
+    'lse.edu',
+    'ucl.com',
+  ];
+
   bool _isSignUpMode = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -227,9 +276,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ).hasMatch(value.trim())) {
                         return 'Please enter a valid email address';
                       }
-                      // if (!value.trim().toLowerCase().endsWith('.ac.uk')) {
-                      //   return 'Please use your university email address (.ac.uk)';
-                      // }
+                      if(!_uniEmailDomains.contains(value.trim().toLowerCase().split('@')[1])) {
+                         return 'Please use your university email address (ending in .ac.uk)';
+                      }
                       return null;
                     },
                   ),
