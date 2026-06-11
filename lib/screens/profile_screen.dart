@@ -12,7 +12,6 @@ import '../models/interest_data.dart';
 import '../services/interest_suggestion_service.dart';
 import '../widgets/interests_categories.dart';
 import 'dart:typed_data';
-import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isSociety;
@@ -665,13 +664,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
-          style: GoogleFonts.montserrat(),
+          style: const TextStyle(fontFamily: 'Montserrat'),
           decoration: InputDecoration(
             labelText: label,
-            labelStyle: GoogleFonts.montserrat(),
+            labelStyle: const TextStyle(fontFamily: 'Montserrat'),
             prefixIcon: Icon(prefixIcon),
             suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-            floatingLabelStyle: GoogleFonts.montserrat(
+            floatingLabelStyle: const TextStyle(
+              fontFamily: 'Montserrat',
               fontWeight: FontWeight.bold,
             ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -722,10 +722,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildYearGroupField() {
     return DropdownButtonFormField<String>(
       initialValue: _selectedYearGroup,
-      style: GoogleFonts.montserrat(),
+      style: const TextStyle(fontFamily: 'Montserrat'),
       decoration: InputDecoration(
         labelText: 'Year Group (optional)',
-        labelStyle: GoogleFonts.montserrat(),
+        labelStyle: const TextStyle(fontFamily: 'Montserrat'),
         prefixIcon: const Icon(Icons.calendar_today_outlined),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
@@ -861,7 +861,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       Text(
                         'Your Information',
-                        style: GoogleFonts.lora(
+                        style: const TextStyle(
+                          fontFamily: 'Lora',
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
@@ -901,7 +902,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Text(
                               'Your Interests',
-                              style: GoogleFonts.lora(
+                              style: const TextStyle(
+                                fontFamily: 'Lora',
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
@@ -909,7 +911,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             Text(
                               '${_interests.length}/$_maxInterests',
-                              style: GoogleFonts.montserrat(
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
                                 fontSize: 13,
                                 color: Colors.grey.shade600,
                               ),
@@ -919,7 +922,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 4),
                         Text(
                           'Pick categories to explore interests',
-                          style: GoogleFonts.montserrat(
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
                             fontSize: 13,
                             color: Colors.grey,
                           ),
@@ -955,7 +959,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       category.name,
-                                      style: GoogleFonts.montserrat(
+                                      style: const TextStyle(
+                                        fontFamily: 'Montserrat',
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.black87,
@@ -1163,12 +1168,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return TextFormField(
       controller: controller,
       textInputAction: TextInputAction.next,
-      style: GoogleFonts.montserrat(),
+      style: const TextStyle(fontFamily: 'Montserrat'),
       decoration: InputDecoration(
         labelText: required ? label : '$label (optional)',
-        labelStyle: GoogleFonts.montserrat(),
+        labelStyle: const TextStyle(fontFamily: 'Montserrat'),
         prefixIcon: Icon(icon),
-        floatingLabelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
+        floatingLabelStyle: const TextStyle(
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.bold,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
