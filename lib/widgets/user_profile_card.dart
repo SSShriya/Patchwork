@@ -4,12 +4,29 @@ import '../models/match_card.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../screens/dm_individual_screen.dart';
 import '../models/match_convo.dart';
+import '../services/event_service.dart';
 
-class UserProfileCard extends StatelessWidget {
+class UserProfileCard extends StatefulWidget {
   final MatchCard card;
   final bool accepted;
 
   const UserProfileCard({super.key, required this.card, this.accepted = false});
+
+  @override
+  State<UserProfileCard> createState() => _UserProfileCardState();
+}
+
+class _UserProfileCardState extends State<UserProfileCard> {
+  late Future<List<String>> _otherEventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _otherEventsFuture = EventService().otherUserEvents(
+      widget.card.currentUserId,
+      widget.card.otherUserId,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,15 +40,17 @@ class UserProfileCard extends StatelessWidget {
             child: Column(
               children: [
                 ProfilePicture(
-                  name: card.title,
+                  name: widget.card.title,
                   radius: 60,
                   fontsize: 48,
                   random: false,
-                  img: card.imageUrl.isNotEmpty ? card.imageUrl : null,
+                  img: widget.card.imageUrl.isNotEmpty
+                      ? widget.card.imageUrl
+                      : null,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  card.title,
+                  widget.card.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 24,
@@ -39,7 +58,7 @@ class UserProfileCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (card.yearGroup != "")
+                if (widget.card.yearGroup != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -48,7 +67,7 @@ class UserProfileCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Flexible(
                         child: Text(
-                          card.yearGroup,
+                          widget.card.yearGroup,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
@@ -67,7 +86,7 @@ class UserProfileCard extends StatelessWidget {
                     const SizedBox(width: 2),
                     Flexible(
                       child: Text(
-                        card.university,
+                        widget.card.university,
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.grey,
@@ -78,7 +97,7 @@ class UserProfileCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (card.course != "")
+                if (widget.card.course != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -87,7 +106,7 @@ class UserProfileCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Flexible(
                         child: Text(
-                          card.course,
+                          widget.card.course,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
@@ -99,7 +118,7 @@ class UserProfileCard extends StatelessWidget {
                     ],
                   ),
                 const SizedBox(height: 10),
-                if (card.location != "")
+                if (widget.card.location != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -108,7 +127,7 @@ class UserProfileCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Flexible(
                         child: Text(
-                          card.location,
+                          widget.card.location,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
@@ -119,8 +138,8 @@ class UserProfileCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                if (accepted) const SizedBox(height: 14),
-                if (accepted)
+                if (widget.accepted) const SizedBox(height: 14),
+                if (widget.accepted)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 10,
@@ -131,13 +150,18 @@ class UserProfileCard extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => DMScreen(
-                                chat: ChatConversation(matchCard: card),
+                                chat: ChatConversation(matchCard: widget.card),
                               ),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color.fromARGB(197, 199, 162, 251),
+                          backgroundColor: const Color.fromARGB(
+                            197,
+                            199,
+                            162,
+                            251,
+                          ),
                           foregroundColor: Colors.black,
                         ),
                         child: const Text("Message"),
@@ -148,14 +172,19 @@ class UserProfileCard extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => DMScreen(
-                                chat: ChatConversation(matchCard: card),
+                                chat: ChatConversation(matchCard: widget.card),
                                 suggestMeeting: true,
                               ),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color.fromARGB(197, 199, 162, 251),
+                          backgroundColor: const Color.fromARGB(
+                            197,
+                            199,
+                            162,
+                            251,
+                          ),
                           foregroundColor: Colors.black,
                         ),
                         child: const Text("Invite to Meet"),
@@ -180,7 +209,7 @@ class UserProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  card.eventName.toUpperCase(),
+                  widget.card.eventName.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF344966),
@@ -201,7 +230,7 @@ class UserProfileCard extends StatelessWidget {
           // ── Photo Gallery ──
           _buildGallery(context),
 
-          if (card.interestPhotos.isNotEmpty) const SizedBox(height: 12),
+          if (widget.card.interestPhotos.isNotEmpty) const SizedBox(height: 12),
 
           // ── Bio ───────────────────────────────────────────────────────
           _Card(
@@ -214,12 +243,25 @@ class UserProfileCard extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text(card.bio, style: const TextStyle(fontSize: 16)),
+                Text(widget.card.bio, style: const TextStyle(fontSize: 16)),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
+          // ── Other Interested Events ───────────────────────────────────
+          FutureBuilder<List<String>>(
+            future: _otherEventsFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return _buildOtherEvents(snapshot.data!);
+            },
+          ),
+
+          const SizedBox(height: 20),
 
           // ── Block button ──────────────────────────────────────────────
           SizedBox(
@@ -250,7 +292,7 @@ class UserProfileCard extends StatelessWidget {
               onPressed: () => _report(context),
               icon: const Icon(Icons.report, color: Colors.red),
               label: const Text(
-                'Report user',
+                'Report User',
                 style: TextStyle(color: Colors.red),
               ),
               style: OutlinedButton.styleFrom(
@@ -269,7 +311,7 @@ class UserProfileCard extends StatelessWidget {
     );
   }
 
-  // ── Interests card — pure star bullets ───────────────────────────────────
+  // ── Interests card ────────────────────────────────────────────────────────
   Widget _buildInterests() {
     return _Card(
       color: const Color(0X8FBFCC94),
@@ -281,7 +323,7 @@ class UserProfileCard extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 3),
-          ...card.interests.map(
+          ...widget.card.interests.map(
             (interest) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
@@ -305,12 +347,10 @@ class UserProfileCard extends StatelessWidget {
 
   // ── Polaroid photo gallery card ───────────────────────────────────────────
   Widget _buildGallery(BuildContext context) {
-    // Only show if at least one interest has a photo
-    if (card.interestPhotos.isEmpty) return const SizedBox.shrink();
+    if (widget.card.interestPhotos.isEmpty) return const SizedBox.shrink();
 
-    // Only include interests that actually have a photo
-    final photoInterests = card.interests
-        .where((i) => card.interestPhotos.containsKey(i))
+    final photoInterests = widget.card.interests
+        .where((i) => widget.card.interestPhotos.containsKey(i))
         .toList();
 
     if (photoInterests.isEmpty) return const SizedBox.shrink();
@@ -325,16 +365,15 @@ class UserProfileCard extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-
           SizedBox(
             height: 200,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: photoInterests.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (context, index) {
                 final interest = photoInterests[index];
-                final photoUrl = card.interestPhotos[interest]!;
+                final photoUrl = widget.card.interestPhotos[interest]!;
                 final displayName =
                     interest[0].toUpperCase() + interest.substring(1);
 
@@ -357,7 +396,6 @@ class UserProfileCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // ── Photo ────────────────────────────────────────
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(6, 6, 6, 0),
@@ -381,7 +419,7 @@ class UserProfileCard extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                errorBuilder: (_, _, _) => Container(
+                                errorBuilder: (_, __, ___) => Container(
                                   color: Colors.grey.shade200,
                                   child: Icon(
                                     Icons.broken_image_outlined,
@@ -393,8 +431,6 @@ class UserProfileCard extends StatelessWidget {
                             ),
                           ),
                         ),
-
-                        // ── Caption ──────────────────────────────────────
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: 8,
@@ -425,7 +461,78 @@ class UserProfileCard extends StatelessWidget {
     );
   }
 
-  // ── Full screen image viewer (single photo with interest label) ───────────
+  // ── Other interested events card ──────────────────────────────────────────
+  Widget _buildOtherEvents(List<String> events) {
+    return _Card(
+      color: const Color.fromARGB(180, 180, 220, 255),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Other events they\'re interested in:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 80,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: events.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                final name =
+                    events[i][0].toUpperCase() + events[i].substring(1);
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(2, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.event,
+                        size: 18,
+                        color: Color(0xFF344966),
+                      ),
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 160),
+                        child: Text(
+                          name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF344966),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Full screen image viewer ──────────────────────────────────────────────
   void _showFullScreenImage(
     BuildContext context,
     String photoUrl,
@@ -440,7 +547,6 @@ class UserProfileCard extends StatelessWidget {
         insetPadding: EdgeInsets.zero,
         child: Stack(
           children: [
-            // ── Full screen photo ───────────────────────────────────────
             Center(
               child: InteractiveViewer(
                 child: Image.network(
@@ -459,8 +565,6 @@ class UserProfileCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // ── Close button ────────────────────────────────────────────
             Positioned(
               top: 40,
               right: 16,
@@ -476,8 +580,6 @@ class UserProfileCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // ── Interest label overlay ──────────────────────────────────
             Positioned(
               bottom: 40,
               left: 0,
@@ -511,7 +613,7 @@ class UserProfileCard extends StatelessWidget {
 
   Future<void> _handleBlock(BuildContext context) async {
     try {
-      await MatchService().blockUser(card);
+      await MatchService().blockUser(widget.card);
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       if (context.mounted) {
@@ -528,7 +630,7 @@ class UserProfileCard extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Block user?'),
         content: Text(
-          'You won\'t be matched with ${card.title} again. This cannot be undone.',
+          'You won\'t be matched with ${widget.card.title} again. This cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -555,7 +657,7 @@ class UserProfileCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: ((ctx, setState) => AlertDialog(
+        builder: (ctx, setState) => AlertDialog(
           title: const Text('Report user?'),
           content: SingleChildScrollView(
             child: Column(
@@ -563,7 +665,7 @@ class UserProfileCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Please describe why you\'re reporting ${card.title}.',
+                  'Please describe why you\'re reporting ${widget.card.title}.',
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 16),
@@ -644,7 +746,7 @@ class UserProfileCard extends StatelessWidget {
               child: const Text('Submit'),
             ),
           ],
-        )),
+        ),
       ),
     );
   }
@@ -655,8 +757,8 @@ class UserProfileCard extends StatelessWidget {
     bool blockUser = false,
   }) async {
     try {
-      await MatchService().reportUser(card, description);
-      if (blockUser) await MatchService().blockUser(card);
+      await MatchService().reportUser(widget.card, description);
+      if (blockUser) await MatchService().blockUser(widget.card);
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(

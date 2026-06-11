@@ -143,14 +143,28 @@ class EventService {
   }
 
   Future<List<String>> eventsInCommon(String user1Id, String user2Id) async {
-    final rows = await supabase
-        .rpc('get_common_active_events', params: {
-          'user1_id': user1Id,
-          'user2_id': user2Id,
-        });
-  
+    final rows = await supabase.rpc(
+      'get_common_active_events',
+      params: {'user1_id': user1Id, 'user2_id': user2Id},
+    );
+
     return (rows as List)
         .map((r) => r['event_name'] as String? ?? '')
+        .where((name) => name.isNotEmpty)
+        .toList();
+  }
+
+  Future<List<String>> otherUserEvents(
+    String currentUserId,
+    String otherUserId,
+  ) async {
+    final rows = await supabase.rpc(
+      'get_other_user_events',
+      params: {'current_user_id': currentUserId, 'other_user_id': otherUserId},
+    );
+
+    return (rows as List)
+        .map((r) => r['title'] as String? ?? '')
         .where((name) => name.isNotEmpty)
         .toList();
   }
