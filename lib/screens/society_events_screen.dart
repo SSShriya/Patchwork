@@ -15,7 +15,10 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
 
   // ── Add new event ──────────────────────────────────────────────────────────
   Future<void> _addNewEvent(SocietySharedState state) async {
-    final result = await showNewEventPopup(context);
+    final result = await showNewEventPopup(
+      context,
+      societyId: state.societyId, // ← ADD THIS
+    );
     if (result == null) return;
     try {
       await state.createEvent(
@@ -33,6 +36,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         committeeCanMeet: result.committeeCanMeet,
         committeeMeetingLocation: result.committeeMeetingLocation,
         committeeMeetingTime: result.committeeMeetingTime,
+        committeeMemberId: result.committeeMemberId, // ← ADD THIS
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +131,8 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       existingCommitteeCanMeet: event['meet_committee'] == 'true',
       existingCommitteeMeetingLocation: event['committee_meeting_location'],
       existingCommitteeMeetingTime: existingMeetingTime,
+      existingCommitteeMemberId: event['committee_member_id'],
+      societyId: state.societyId,
     );
 
     if (result == null) return;
@@ -148,6 +154,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         committeeCanMeet: result.committeeCanMeet,
         committeeMeetingLocation: result.committeeMeetingLocation,
         committeeMeetingTime: result.committeeMeetingTime,
+        committeeMemberId: result.committeeMemberId,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

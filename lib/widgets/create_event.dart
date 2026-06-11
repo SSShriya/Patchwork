@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:drp/services/supabase_client.dart';
 import 'package:drp/widgets/pick_location_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,8 @@ class NewEventData {
   final bool committeeCanMeet;
   final String? committeeMeetingLocation;
   final TimeOfDay? committeeMeetingTime;
+  // ── NEW ──────────────────────────────────────────────────────────────────
+  final String? committeeMemberId;
 
   const NewEventData({
     required this.name,
@@ -37,6 +40,7 @@ class NewEventData {
     required this.committeeCanMeet,
     this.committeeMeetingLocation,
     this.committeeMeetingTime,
+    this.committeeMemberId,
   });
 }
 
@@ -56,6 +60,9 @@ Future<NewEventData?> showNewEventPopup(
   bool existingCommitteeCanMeet = false,
   String? existingCommitteeMeetingLocation,
   TimeOfDay? existingCommitteeMeetingTime,
+  // ── NEW ────────────────────────────────────────────────────────────────
+  String? existingCommitteeMemberId,
+  String? societyId,
 }) {
   return showDialog<NewEventData>(
     context: context,
@@ -74,6 +81,8 @@ Future<NewEventData?> showNewEventPopup(
       existingCommitteeCanMeet: existingCommitteeCanMeet,
       existingCommitteeMeetingLocation: existingCommitteeMeetingLocation,
       existingCommitteeMeetingTime: existingCommitteeMeetingTime,
+      existingCommitteeMemberId: existingCommitteeMemberId,
+      societyId: societyId,
     ),
   );
 }
@@ -94,6 +103,8 @@ class _CreateEventForm extends StatefulWidget {
   final bool existingCommitteeCanMeet;
   final String? existingCommitteeMeetingLocation;
   final TimeOfDay? existingCommitteeMeetingTime;
+  final String? existingCommitteeMemberId;
+  final String? societyId;
 
   const _CreateEventForm({
     this.existingName,
@@ -106,10 +117,11 @@ class _CreateEventForm extends StatefulWidget {
     this.existingLatitude,
     this.existingPrice,
     this.existingDescription,
-    // ── NEW ────────────────────────────────────────────────────────────
     this.existingCommitteeCanMeet = false,
     this.existingCommitteeMeetingLocation,
     this.existingCommitteeMeetingTime,
+    this.existingCommitteeMemberId,
+    this.societyId,
   });
 
   @override
@@ -122,27 +134,26 @@ class _CreateEventFormState extends State<_CreateEventForm> {
 
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   late final TextEditingController _nameController;
   late final TextEditingController _locationController;
   late final TextEditingController _priceController;
   late final TextEditingController _descController;
-
-  // For if a committee member can meet or not
   late final TextEditingController _committeeMeetingLocationController;
+
   bool _committeeCanMeet = false;
   TimeOfDay? _committeeMeetingTime;
-  // ────────────────────────────────────────────────────────────────────────────
 
-  // Date / time state
+  // ── NEW: selected committee member ────────────────────────────────────────
+  String? _selectedCommitteeMemberId;
+  List<Map<String, dynamic>> _committeeMembers = [];
+  bool _loadingMembers = false;
+
   DateTime? _startDate;
   TimeOfDay? _startTime;
   DateTime? _endDate;
   TimeOfDay? _endTime;
 
-  // Location
   LatLng? _pickedLocation;
-
   File? _imageFile;
   bool _isSaving = false;
 
@@ -163,12 +174,12 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     _descController = TextEditingController(
       text: widget.existingDescription ?? '',
     );
-
     _committeeCanMeet = widget.existingCommitteeCanMeet;
     _committeeMeetingLocationController = TextEditingController(
       text: widget.existingCommitteeMeetingLocation ?? '',
     );
     _committeeMeetingTime = widget.existingCommitteeMeetingTime;
+    _selectedCommitteeMemberId = widget.existingCommitteeMemberId;
 
     _startDate = widget.existingStartDate;
     _startTime = widget.existingStartTime;
@@ -179,6 +190,29 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         (widget.existingLatitude != null && widget.existingLongitude != null)
         ? LatLng(widget.existingLatitude!, widget.existingLongitude!)
         : null;
+
+    // Load committee members if societyId provided
+    if (widget.societyId != null) {
+      _loadCommitteeMembers();
+    }
+  }
+
+  // ── Load committee members from Supabase ──────────────────────────────────
+  Future<void> _loadCommitteeMembers() async {
+    setState(() => _loadingMembers = true);
+    try {
+      final data = await supabase
+          .from('committee_members')
+          .select('id, name, role, avatar_url')
+          .eq('society_id', widget.societyId!);
+      setState(() {
+        _committeeMembers = List<Map<String, dynamic>>.from(data);
+      });
+    } catch (e) {
+      debugPrint('Error loading committee members: $e');
+    } finally {
+      if (mounted) setState(() => _loadingMembers = false);
+    }
   }
 
   @override
@@ -190,8 +224,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     _committeeMeetingLocationController.dispose();
     super.dispose();
   }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
   String _fmt(DateTime? d) =>
       d == null ? 'Select date' : '${d.day}/${d.month}/${d.year}';
@@ -227,9 +259,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() {
       if (isStart) {
         _startDate = picked;
-        // ── Autofill end date with start date if not already set ──────────
         _endDate ??= picked;
-        // Clear end date if it's now before the new start date
         if (_endDate!.isBefore(picked)) _endDate = picked;
       } else {
         _endDate = picked;
@@ -259,7 +289,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() {
       if (isStart) {
         _startTime = picked;
-        // Autofill end time to 1 hour after start if not already set
         _endTime ??= TimeOfDay(
           hour: (picked.hour + 1) % 24,
           minute: picked.minute,
@@ -270,7 +299,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     });
   }
 
-  // ── Pick committee meeting time ────────────────────────────────────────
   Future<void> _pickCommitteeMeetingTime() async {
     final picked = await showTimePicker(
       context: context,
@@ -288,7 +316,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     if (picked == null) return;
     setState(() => _committeeMeetingTime = picked);
   }
-  // ────────────────────────────────────────────────────────────────────────────
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -306,9 +333,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         builder: (_) => PickLocationMap(initialLocation: _pickedLocation),
       ),
     );
-    if (result != null) {
-      setState(() => _pickedLocation = result);
-    }
+    if (result != null) setState(() => _pickedLocation = result);
   }
 
   Future<void> _save() async {
@@ -319,7 +344,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       _snack('Please type an address or select a location on the map.');
       return;
     }
-
     if (_startDate == null || _startTime == null) {
       _snack('Please set a start date and time.');
       return;
@@ -328,9 +352,11 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       _snack('Please set an end date and time.');
       return;
     }
-
-    // ── Validate committee meeting fields if toggle is on ───────────────
     if (_committeeCanMeet) {
+      if (_selectedCommitteeMemberId == null) {
+        _snack('Please select a committee member.');
+        return;
+      }
       if (_committeeMeetingLocationController.text.trim().isEmpty) {
         _snack('Please enter a meeting location for the committee member.');
         return;
@@ -340,7 +366,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         return;
       }
     }
-    // ─────────────────────────────────────────────────────────────────────────
 
     final startDT = DateTime(
       _startDate!.year,
@@ -385,7 +410,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
           ? _committeeMeetingLocationController.text.trim()
           : null,
       committeeMeetingTime: _committeeCanMeet ? _committeeMeetingTime : null,
-      // ────────────────────────────────────────────────────────────────────────
+      committeeMemberId: _committeeCanMeet ? _selectedCommitteeMemberId : null,
     );
 
     if (mounted) Navigator.of(context).pop(result);
@@ -394,6 +419,161 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: Colors.redAccent),
+    );
+  }
+
+  // ── Committee member picker widget ────────────────────────────────────────
+  Widget _buildCommitteeMemberPicker() {
+    if (_loadingMembers) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (_committeeMembers.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(
+          'No committee members added yet. Add some in your profile.',
+          style: TextStyle(
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      );
+    }
+
+    final bool showError =
+        _committeeCanMeet && _selectedCommitteeMemberId == null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Select Committee Member',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            // ── Required star ──────────────────────────────────────────
+            const Text(
+              ' *',
+              style: TextStyle(fontSize: 12, color: Colors.redAccent),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _committeeMembers.map((member) {
+              final id = '${member['id']}';
+              final name = member['name'] as String? ?? '';
+              final role = member['role'] as String? ?? '';
+              final avatarUrl = member['avatar_url'] as String?;
+              final isSelected = _selectedCommitteeMemberId == id;
+
+              return GestureDetector(
+                onTap: () => setState(() {
+                  _selectedCommitteeMemberId = isSelected ? null : id;
+                }),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.only(right: 10, bottom: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF84DCC6).withValues(alpha: 0.15)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF84DCC6)
+                          : showError
+                          ? Colors.redAccent
+                          : Colors.grey.shade300,
+                      width: isSelected || showError ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.grey.shade300,
+                        backgroundImage:
+                            (avatarUrl != null && avatarUrl.isNotEmpty)
+                            ? NetworkImage(avatarUrl)
+                            : null,
+                        child: (avatarUrl == null || avatarUrl.isEmpty)
+                            ? const Icon(
+                                Icons.person,
+                                size: 16,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? const Color(0xFF4D5359)
+                                  : Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            role,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Color(0xFF84DCC6),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        // ── Error hint ───────────────────────────────────────────────────
+        if (showError)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              'Please select a committee member',
+              style: TextStyle(fontSize: 11, color: Colors.redAccent),
+            ),
+          ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
@@ -409,7 +589,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Header ───────────────────────────────────────────────────────
             Container(
               width: double.infinity,
               color: const Color.fromARGB(255, 131, 187, 219),
@@ -448,7 +627,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Start Date & Time ───────────────────────────────────
                       _SectionLabel(
                         label: 'Start Date & Time',
                         color: Colors.black,
@@ -499,7 +677,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── End Date & Time ─────────────────────────────────────
                       _SectionLabel(
                         label: 'End Date & Time',
                         color: Colors.black,
@@ -550,7 +727,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Location ────────────────────────────────────────────
                       TextFormField(
                         controller: _locationController,
                         decoration: InputDecoration(
@@ -610,7 +786,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                         ),
                       const SizedBox(height: 14),
 
-                      // ── Price ───────────────────────────────────────────────
                       _field(
                         controller: _priceController,
                         label: 'Price (£)',
@@ -635,7 +810,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Description ─────────────────────────────────────────
                       _field(
                         controller: _descController,
                         label: 'Description (optional)',
@@ -644,7 +818,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── NEW: Committee Member Meeting Section ────────────────
+                      // ── Committee Member Meeting Section ─────────────────────
                       const Divider(),
                       const SizedBox(height: 4),
                       _SectionLabel(
@@ -653,7 +827,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 4),
 
-                      // Toggle tile
                       Container(
                         decoration: BoxDecoration(
                           color: _committeeCanMeet
@@ -680,17 +853,16 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                           onChanged: (val) {
                             setState(() {
                               _committeeCanMeet = val;
-                              // Reset sub-fields when toggled off
                               if (!val) {
                                 _committeeMeetingLocationController.clear();
                                 _committeeMeetingTime = null;
+                                _selectedCommitteeMemberId = null;
                               }
                             });
                           },
                         ),
                       ),
 
-                      // Animated reveal of sub-fields
                       AnimatedCrossFade(
                         duration: const Duration(milliseconds: 250),
                         crossFadeState: _committeeCanMeet
@@ -701,7 +873,11 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Where
+                              // ── Member picker ──────────────────────────
+                              if (widget.societyId != null)
+                                _buildCommitteeMemberPicker(),
+
+                              // ── Meeting location ───────────────────────
                               TextFormField(
                                 controller: _committeeMeetingLocationController,
                                 decoration: InputDecoration(
@@ -716,12 +892,10 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                // Validation is handled manually in _save()
-                                // so the field stays quiet when the toggle is off.
                               ),
                               const SizedBox(height: 12),
 
-                              // What time
+                              // ── Meeting time ───────────────────────────
                               InkWell(
                                 onTap: _pickCommitteeMeetingTime,
                                 borderRadius: BorderRadius.circular(12),
@@ -764,11 +938,9 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                             ],
                           ),
                         ),
-                        // Empty box when hidden — keeps layout stable
                         secondChild: const SizedBox.shrink(),
                       ),
 
-                      // ── End Committee Section ────────────────────────────────
                       const SizedBox(height: 24),
 
                       _ActionButton(
@@ -835,7 +1007,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   }
 }
 
-// ── Unchanged helper widgets ──────────────────────────────────────────────────
+// ── Helper widgets ────────────────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   final String label;

@@ -106,6 +106,7 @@ class SocietySharedState extends ChangeNotifier {
             'meet_committee': '${e['meet_committee'] ?? false}',
             'committee_meeting_location': e['committee_meeting_location'] ?? '',
             'committee_meeting_time': e['committee_meeting_time'] ?? '',
+            'committee_member_id': e['committee_member_id'] ?? '',
           });
         }
 
@@ -221,12 +222,12 @@ class SocietySharedState extends ChangeNotifier {
     bool committeeCanMeet = false,
     String? committeeMeetingLocation,
     TimeOfDay? committeeMeetingTime,
+    String? committeeMemberId, // ← NEW
   }) async {
     isLoading = true;
     notifyListeners();
     try {
       await EventService.uploadEventImage(image, societyId);
-
       final response = await supabase
           .from('events')
           .insert({
@@ -251,17 +252,19 @@ class SocietySharedState extends ChangeNotifier {
                 committeeCanMeet && committeeMeetingTime != null
                 ? '${committeeMeetingTime.hour}:${committeeMeetingTime.minute.toString().padLeft(2, '0')}'
                 : null,
+            'committee_member_id': // ← NEW
+            committeeCanMeet
+                ? committeeMemberId
+                : null,
           })
           .select('event_id')
           .single();
 
       final String newEventId = response['event_id'] as String;
-
       await supabase.from('interested_events').insert({
         'user_id': societyId,
         'event_id': newEventId,
       });
-
       await loadProfile();
     } catch (e) {
       debugPrint('Error creating event: $e');
@@ -288,6 +291,7 @@ class SocietySharedState extends ChangeNotifier {
     bool committeeCanMeet = false,
     String? committeeMeetingLocation,
     TimeOfDay? committeeMeetingTime,
+    String? committeeMemberId, // ← NEW
   }) async {
     isLoading = true;
     notifyListeners();
@@ -315,6 +319,10 @@ class SocietySharedState extends ChangeNotifier {
             'committee_meeting_time':
                 committeeCanMeet && committeeMeetingTime != null
                 ? '${committeeMeetingTime.hour}:${committeeMeetingTime.minute.toString().padLeft(2, '0')}'
+                : null,
+            'committee_member_id': // ← NEW
+            committeeCanMeet
+                ? committeeMemberId
                 : null,
           })
           .eq('event_id', eventId);
