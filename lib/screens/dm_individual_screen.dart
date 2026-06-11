@@ -26,13 +26,13 @@ class _DMScreenState extends State<DMScreen> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   final _conversationService = ConversationService();
-  final _eventService = EventService(); 
+  final _eventService = EventService();
 
   // ── State ───────────────────────────────────
   late final String _myUserId;
   List<DmMessage> _messages = [];
   final List<GlobalKey> _messageKeys = [];
-  List<String> _eventsInCommon = []; 
+  List<String> _eventsInCommon = [];
   bool _isLoading = true;
   bool _isReady = false;
   Timer? _pollingTimer;
@@ -63,8 +63,11 @@ class _DMScreenState extends State<DMScreen> {
 
   Future<void> _initChatAndStartPolling() async {
     _myUserId = await loadUserId();
-    _eventsInCommon = await _eventService.eventsInCommon(_myUserId, widget.chat.otherUserId);
-    await _loadMessages(forceScroll: true); 
+    _eventsInCommon = await _eventService.eventsInCommon(
+      _myUserId,
+      widget.chat.otherUserId,
+    );
+    await _loadMessages(forceScroll: true);
     _pollingTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => _loadMessages(),
@@ -304,7 +307,7 @@ class _DMScreenState extends State<DMScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Prompts'),
+        title: const Text('Prompts', style: TextStyle(fontFamily: 'Lora')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,9 +331,9 @@ class _DMScreenState extends State<DMScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF84DCC6).withValues(alpha: 0.2),
+                      color: const Color(0xFFFFDF28).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF84DCC6)),
+                      border: Border.all(color: const Color(0xFFFFD800)),
                     ),
                     child: Text(prompt, style: const TextStyle(fontSize: 14)),
                   ),
@@ -414,6 +417,7 @@ class _DMScreenState extends State<DMScreen> {
                     textAlign: TextAlign.center,
                     "You Are Both Attending:",
                     style: const TextStyle(
+                      fontFamily: 'Merriweather',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
@@ -434,6 +438,7 @@ class _DMScreenState extends State<DMScreen> {
                             child: Text(
                               interest,
                               style: const TextStyle(
+                                fontFamily: 'Bitter',
                                 fontSize: 13,
                                 color: Colors.black,
                               ),
@@ -465,6 +470,7 @@ class _DMScreenState extends State<DMScreen> {
                   Text(
                     "${widget.chat.name}'s Interests:",
                     style: const TextStyle(
+                      fontFamily: 'Merriweather',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
@@ -485,6 +491,7 @@ class _DMScreenState extends State<DMScreen> {
                             child: Text(
                               interest,
                               style: const TextStyle(
+                                fontFamily: 'Bitter',
                                 fontSize: 13,
                                 color: Colors.black,
                               ),
@@ -617,7 +624,11 @@ class _DMScreenState extends State<DMScreen> {
               ),
               child: Text(
                 formatGroupDate(msg.createdAt),
-                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                style: const TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),
@@ -665,6 +676,7 @@ class _DMScreenState extends State<DMScreen> {
                       child: Text(
                         msg.text,
                         style: TextStyle(
+                          fontFamily: 'Bitter',
                           color: msg.fromMe ? Colors.white : Colors.black87,
                           fontSize: 15,
                         ),
@@ -673,7 +685,11 @@ class _DMScreenState extends State<DMScreen> {
                     const SizedBox(height: 2),
                     Text(
                       formatTime(msg.createdAt),
-                      style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ],
                 ),

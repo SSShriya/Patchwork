@@ -24,8 +24,10 @@ class _SocietyScreenState extends State<SocietyScreen> {
   String? _existingImageUrl;
   bool _isLoading = false;
   bool _showArchived = false;
+  bool _canContact = false;
 
   final List<Map<String, String>> _events = [];
+  List<Map<String, dynamic>> _committee = [];
 
   final _aboutController = TextEditingController();
 
@@ -67,6 +69,11 @@ class _SocietyScreenState extends State<SocietyScreen> {
           .select()
           .eq('society_id', societyId);
 
+      final committeeData = await supabase
+          .from('committee_members')
+          .select()
+          .eq('society_id', societyId);
+
       if (socData != null) {
         setState(() {
           _societyName = socData['name'] ?? '';
@@ -74,7 +81,9 @@ class _SocietyScreenState extends State<SocietyScreen> {
           _aboutController.text = socData['description'] ?? '';
 
           // Pre-populate avatar if one already exists
-          _existingImageUrl = socData['image_url'];
+          _existingImageUrl = socData['avatar_url'];
+
+          _committee = committeeData;
 
           // Pre-populate events list
           _events.clear();
@@ -308,7 +317,13 @@ class _SocietyScreenState extends State<SocietyScreen> {
         await uploadSocImage(_imageFile!, societyId);
       }
 
-      updateSocDetails(id: societyId, about: _aboutController.text.trim());
+      await updateSocDetails(
+        id: societyId,
+        about: _aboutController.text.trim(),
+      );
+
+      _imageFile = null;
+      await _loadExistingProfile();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -335,7 +350,6 @@ class _SocietyScreenState extends State<SocietyScreen> {
     }
   }
 
-  // Method placeholder for creating a new event
   void _addNewEvent() async {
     final result = await showNewEventPopup(context);
     if (result == null) return;
@@ -367,6 +381,79 @@ class _SocietyScreenState extends State<SocietyScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _addCommitteeMember(String name, String role) async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.from('committee_members').insert({
+        'name': name,
+        'role': role,
+        'society_id': societyId,
+      });
+      _loadExistingProfile(); // Refresh the list
+    } catch (e) {
+      _showError('Failed to add committee member: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _removeCommitteeMember(dynamic id) async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client
+          .from('committee_members')
+          .delete()
+          .eq('id', id);
+      _loadExistingProfile(); // Refresh the list
+    } catch (e) {
+      _showError('Failed to create event: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // Show Dialog Input Modal
+  void _showAddMemberDialog() {
+    final nameController = TextEditingController();
+    final roleController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Add Committee Member"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: "Name"),
+            ),
+            TextField(
+              controller: roleController,
+              decoration: InputDecoration(labelText: "Role"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty &&
+                  roleController.text.isNotEmpty) {
+                _addCommitteeMember(nameController.text, roleController.text);
+                Navigator.pop(context);
+              }
+            },
+            child: Text("Add"),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _eventCard(Map<String, String> event, {bool isPast = false}) {
@@ -461,6 +548,17 @@ class _SocietyScreenState extends State<SocietyScreen> {
     if (mounted) Navigator.pushReplacementNamed(context, '/signup');
   }
 
+  Future<void> _updateContactStatus() async {
+    try {
+    await supabase
+        .from('users')
+        .update({'can_message': _canContact})
+        .eq('id', societyId);
+    } catch(e) {
+      debugPrint('Error updating can_message field: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -502,7 +600,6 @@ class _SocietyScreenState extends State<SocietyScreen> {
             children: [
               const SizedBox(height: 10),
 
-              // 1. Society Picture Slot with Image rendering logic
               GestureDetector(
                 onTap: _pickSocietyImage,
                 child: Stack(
@@ -510,7 +607,6 @@ class _SocietyScreenState extends State<SocietyScreen> {
                     CircleAvatar(
                       radius: 60,
                       backgroundColor: Colors.grey.shade300,
-                      // Logic checks: 1. Newly selected local file -> 2. Network URL from DB -> 3. Default Icon
                       backgroundImage: _imageFile != null
                           ? FileImage(_imageFile!)
                           : (_existingImageUrl != null &&
@@ -546,7 +642,7 @@ class _SocietyScreenState extends State<SocietyScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 2. Society Title Name Display
+              // -- society name --
               Text(
                 _societyName ?? 'UNKNOWN',
                 style: const TextStyle(
@@ -556,6 +652,141 @@ class _SocietyScreenState extends State<SocietyScreen> {
                   color: Color(0XFF222222),
                 ),
               ),
+              const SizedBox(height: 24),
+
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                color: Color(0XFFEEDDEE),
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Checkbox(
+                            value: _canContact,
+                            onChanged: (bool? _) async {
+                                setState(() => _canContact = !_canContact);
+                                await _updateContactStatus();
+                            }
+                          ),
+
+                          Expanded(
+                            child: Text(
+                              "Check this box if your committee members can be contacted on this app!",
+                              style: TextStyle(
+                                color: Color(0XFF222222),
+                                fontSize: 13,
+                                fontFamily: 'Montserrat',
+                              ),
+                              softWrap: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              //const SizedBox(height: 24),
+              if (_canContact)
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  color: Color(0XFFEEDDEE),
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header section with Title and Add Button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "COMMITTEE MEMBERS",
+                              style: TextStyle(
+                                color: Color(0XFF222222),
+                                fontSize: 14,
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.add_circle,
+                                color: Color(0XFF4F3E92),
+                              ),
+                              onPressed: _showAddMemberDialog,
+                              tooltip: "Add Member",
+                            ),
+                          ],
+                        ),
+                        Divider(color: Colors.black12),
+
+                        if (_committee.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                            child: Text(
+                              "No committee members added yet.",
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          )
+                        else
+                          // Renders the list items sequentially
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: _committee.length,
+                            itemBuilder: (context, index) {
+                              final member = _committee[index];
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.white60,
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Color(0XFF222222),
+                                  ),
+                                ),
+                                title: Text(
+                                  member['name'] ?? '',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  member['role'] ?? '',
+                                  style: TextStyle(color: Colors.grey[800]),
+                                ),
+                                trailing: IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.redAccent,
+                                  ),
+                                  onPressed: () =>
+                                      _removeCommitteeMember(member['id']),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
               const SizedBox(height: 24),
 
               // -- about the soc --

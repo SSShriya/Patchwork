@@ -24,10 +24,7 @@ class ChatSection extends StatelessWidget {
     return ExpansionTile(
       title: Text(
         title,
-        style: const TextStyle(
-          fontFamily: 'Montserrat',
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontFamily: 'Lora', fontWeight: FontWeight.bold),
       ),
       initiallyExpanded: currentChats,
       children: [
@@ -109,6 +106,8 @@ class ChatSection extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 12,
                   color: chat.unreadCount > 0
                       ? Colors.black87
                       : Colors.grey[600],
