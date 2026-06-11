@@ -220,9 +220,9 @@ class SocietySharedState extends ChangeNotifier {
                 '${endTime.hour}:${endTime.minute.toString().padLeft(2, '0')}',
             'location': location,
             'cost': price,
-            ?'description': description,
-            ?'latitude': latitude,
-            ?'longitude': longitude,
+            'description': description,
+            'latitude': latitude,
+            'longitude': longitude,
             'meet_committee': committeeCanMeet,
             'meeting_location': committeeCanMeet
                 ? committeeMeetingLocation
