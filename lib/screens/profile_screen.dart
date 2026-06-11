@@ -1,7 +1,7 @@
 // import 'dart:io';
 import 'package:drp/screens/main_shell.dart';
-import 'package:drp/screens/society_screen.dart';
 import 'package:drp/services/supabase_client.dart';
+import 'package:drp/widgets/society_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -243,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) =>
-                widget.isSociety ? const SocietyScreen() : const MainShell(),
+                widget.isSociety ? const SocietyNavBar() : const MainShell(),
           ),
         );
       }

@@ -33,14 +33,14 @@ Future<void> uploadProfilePicture(XFile imageFile, String userId) async {
           fileOptions: FileOptions(upsert: true, contentType: contentType),
         );
 
-    // final String publicUrl = supabase.storage
-    //     .from('avatars')
-    //     .getPublicUrl(filePath);
-
+     final String publicUrl = supabase.storage
+         .from('avatars')
+         .getPublicUrl(filePath);
+/*
     final String publicUrl =
         '${supabase.storage.from('avatars').getPublicUrl(filePath)}'
         '?t=${DateTime.now().millisecondsSinceEpoch}';
-
+*/
     await supabase
         .from('users')
         .update({'avatar_url': publicUrl})

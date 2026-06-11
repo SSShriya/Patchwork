@@ -119,7 +119,7 @@ class MapPreview extends StatelessWidget {
                           child: const Icon(
                             Icons.location_pin,
                             size: 36,
-                            color: Color(0xFF84DCC6),
+                            color: Color.fromARGB(255, 88, 35, 220),
                           ),
                         ),
                       ],

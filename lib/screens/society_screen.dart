@@ -93,6 +93,8 @@ class _SocietyScreenState extends State<SocietyScreen> {
                   '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(e['start_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['start_time']}'))}',
               'end_date':
                   '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(e['end_day']))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T${e['end_time']}'))}',
+              'start_day_raw': e['start_day'] ?? '',
+              'start_time_raw': e['start_time'] ?? '',
               'end_day_raw': e['end_day'] ?? '',
               'end_time_raw': e['end_time'] ?? '',
               'location': e['location'] ?? '',
