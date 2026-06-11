@@ -21,10 +21,10 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   bool isLoading = true;
 
   // For filtering events
-  String? _selectedEventId;
+  String? _selectedEventName;
   List<MapEntry<String, String>> _eventFilters = [];
   Map<String, ({String endDay, String endTime})> _eventEndTimes = {};
-  Map<String, List<String>> _eventsInCommon = {};
+  Map<String, List<String>> _eventsInCommon = {};   // Map of otherUserId to list of eventNames
 
   String _searchQuery = '';
 
@@ -120,23 +120,40 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   /// Returns conversations that satisfy both the text search query
   /// and the currently selected event filter chip.
   List<ChatConversation> _applyFilters(List<ChatConversation> source) {
-    return source.where((chat) {
-      if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
-        final nameMatch = chat.name.toLowerCase().contains(query);
-        final interestMatch = chat.event.toLowerCase().contains(query);
-        if (!nameMatch && !interestMatch) return false;
-      }
+  return source.where((chat) {
 
-      // --- Event filter ---
-      // If no chip is selected, show everything
-      if (_selectedEventId != null && chat.eventId != _selectedEventId) {
-        return false;
-      }
+    // --- Search filter ---
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      final nameMatch = chat.name.toLowerCase().contains(query);
 
-      return true;
-    }).toList();
-  }
+      // Get all event names for this chat's user, falling back to an empty list
+      final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
+
+      // Match if any of the user's events contain the search query
+      final eventMatch = userEvents.any(
+        (eventName) => eventName.toLowerCase().contains(query),
+      );
+
+      if (!nameMatch && !eventMatch) return false;
+    }
+
+    // --- Event filter ---
+    if (_selectedEventName != null) {
+      // Get all event names for this chat's user
+      final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
+
+      // Keep this chat only if any of their events match the selected event name
+      final hasMatchingEvent = userEvents.any(
+        (eventName) => eventName == _selectedEventName,
+      );
+
+      if (!hasMatchingEvent) return false;
+    }
+
+    return true;
+  }).toList();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -304,16 +321,16 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
               label: const Text('All', style: TextStyle(fontFamily: 'Bitter')),
-              selected: _selectedEventId == null,
-              onSelected: (_) => setState(() => _selectedEventId = null),
+              selected: _selectedEventName == null,
+              onSelected: (_) => setState(() => _selectedEventName = null),
               selectedColor: const Color(0XFFFC89AC),
               backgroundColor: Colors.grey[200],
               labelStyle: TextStyle(
                 fontFamily: 'Bitter',
-                color: _selectedEventId == null
+                color: _selectedEventName == null
                     ? Colors.black
                     : Colors.grey[700],
-                fontWeight: _selectedEventId == null
+                fontWeight: _selectedEventName == null
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -322,7 +339,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
 
           // One chip per unique event
           ..._eventFilters.map((entry) {
-            final isSelected = _selectedEventId == entry.key;
+            final isSelected = _selectedEventName == entry.value;
             return Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: ChoiceChip(
@@ -331,7 +348,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                   style: TextStyle(fontFamily: 'Bitter'),
                 ), // displays eventName
                 selected: isSelected,
-                onSelected: (_) => setState(() => _selectedEventId = entry.key),
+                onSelected: (_) => setState(() => _selectedEventName = entry.value),
                 selectedColor: const Color(0xFFFC89AC),
                 backgroundColor: Colors.grey[200],
                 labelStyle: TextStyle(

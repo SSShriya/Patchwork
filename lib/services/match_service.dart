@@ -78,13 +78,15 @@ class MatchService {
       final user1Accepted = row['user1_accepted'] as bool?;
       final user2Accepted = row['user2_accepted'] as bool?;
       final eventId = row['event_id'] as String;
+      final user1IsSociety = row['user1']['is_society'] as bool?; 
+      final user2IsSociety = row['user2']['is_society'] as bool?; 
       final eventName =
           (row['events'] as Map<String, dynamic>?)?['event_name'] as String? ??
           '';
 
       final isUser1 = currentUserId == user1Id;
       final currentUserAccepted = isUser1 ? user1Accepted : user2Accepted;
-      if (currentUserAccepted != null) continue;
+      if (currentUserAccepted != null || user1IsSociety == true || user2IsSociety == true) continue;
 
       final otherUserData = isUser1
           ? row['user2'] as Map<String, dynamic>
