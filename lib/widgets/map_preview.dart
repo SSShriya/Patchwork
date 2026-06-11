@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MapPreview extends StatelessWidget {
   final double latitude;
@@ -11,7 +12,7 @@ class MapPreview extends StatelessWidget {
     super.key,
     required this.latitude,
     required this.longitude,
-    this.previewHeight = 90,
+    this.previewHeight = 100,
   });
 
   void _openFullMap(BuildContext context) {
@@ -27,13 +28,20 @@ class MapPreview extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Event Location'),
-              backgroundColor: const Color(0xFF84DCC6),
-              foregroundColor: Colors.white,
+              title: Text(
+                'Event Location',
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Color(0xFF4D5359),
+                ),
+              ),
+              backgroundColor: const Color(0xFFF19CBB),
+              foregroundColor: Color(0xFF4D5359),
               automaticallyImplyLeading: false,
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, size: 18),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -60,7 +68,7 @@ class MapPreview extends StatelessWidget {
                       child: const Icon(
                         Icons.location_pin,
                         size: 48,
-                        color: Color(0xFF84DCC6),
+                        color: Color(0xFFCF3476),
                       ),
                     ),
                   ],

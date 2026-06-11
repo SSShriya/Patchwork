@@ -8,6 +8,7 @@ import '../services/registration_service.dart';
 import 'package:intl/intl.dart';
 import '../services/event_service.dart';
 import '../widgets/map_preview.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EventProfileScreen extends StatefulWidget {
   final EventCard card;
@@ -152,8 +153,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                     children: [
                       Text(
                         widget.card.title,
-                        style: const TextStyle(
-                          fontSize: 20,
+                        style: GoogleFonts.lora(
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -163,16 +164,16 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                           const Icon(
                             Icons.access_time,
                             size: 16,
-                            color: Colors.grey,
+                            color: Color(0xFF4D5359),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
                             '${DateFormat('HH:mm').format(widget.card.startDateTime)}'
                             '-${DateFormat('HH:mm').format(widget.card.endDateTime)}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              color: Color(0xFF4D5359),
                             ),
                           ),
                         ],
@@ -188,11 +189,19 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             // ── Location ──
             Row(
               children: [
-                const Icon(Icons.location_on, size: 18, color: Colors.grey),
+                const Icon(
+                  Icons.location_on,
+                  size: 18,
+                  color: Color(0xFF4D5359),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   widget.card.location,
-                  style: const TextStyle(fontSize: 15, color: Colors.grey),
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 18,
+                    color: Color(0xFF4D5359),
+                  ),
                 ),
               ],
             ),
@@ -200,15 +209,13 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             // ── Map preview (only if coordinates exist) ──
             if (widget.card.latitude != null &&
                 widget.card.longitude != null) ...[
-              const SizedBox(height: 10),
               MapPreview(
                 latitude: widget.card.latitude!,
                 longitude: widget.card.longitude!,
-                previewHeight: 140,
               ),
             ],
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // ── Cost ──
             Row(
@@ -216,26 +223,30 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 const Icon(
                   Icons.confirmation_num,
                   size: 18,
-                  color: Colors.grey,
+                  color: Color(0xFF4D5359),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   widget.card.cost > 0
                       ? '£${widget.card.cost.toStringAsFixed(2)}'
                       : 'Free',
-                  style: const TextStyle(fontSize: 15, color: Colors.grey),
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 18,
+                    color: Color(0xFF4D5359),
+                  ),
                 ),
               ],
             ),
 
-            SizedBox(height: 8),
+            SizedBox(height: 12),
 
             Row(
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0XFFEEC0C6),
-                    foregroundColor: Colors.black,
+                    backgroundColor: Color(0XFFD0F0C0),
+                    foregroundColor: Color(0xFF4D5359),
                     textStyle: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   onPressed: () => Navigator.push(
@@ -247,7 +258,14 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                       ),
                     ),
                   ),
-                  child: Text('More About $societyName'),
+                  child: Text(
+                    'More About $societyName',
+                    style: GoogleFonts.lora(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -255,9 +273,13 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             const Divider(height: 32),
 
             // ── Description ──
-            const Text(
+            Text(
               'Description',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.lora(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.black87,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -279,7 +301,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _isRegistered
                       ? const Color(0XFFFD5757)
-                      : const Color(0XFF84DCC6),
+                      : const Color(0XFF81D8D0),
                   foregroundColor: const Color(0XFF222222),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -287,18 +309,20 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   ),
                 ),
                 child: _isRegistered
-                    ? const Text(
+                    ? Text(
                         "Cancel Registration",
-                        style: TextStyle(
-                          fontSize: 18,
+                        style: GoogleFonts.lora(
                           fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black87,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         "I'm going!",
-                        style: TextStyle(
-                          fontSize: 18,
+                        style: GoogleFonts.lora(
                           fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black87,
                         ),
                       ),
               ),
