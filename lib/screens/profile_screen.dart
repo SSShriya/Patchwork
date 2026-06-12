@@ -8,6 +8,8 @@ import '../models/useful_data.dart';
 import '../models/interest_data.dart';
 import '../services/interest_suggestion_service.dart';
 import '../widgets/interests_categories.dart';
+import '../widgets/society_nav_bar.dart';
+import '../screens/main_shell.dart';
 import 'dart:typed_data';
 
 class ProfileScreen extends StatefulWidget {
@@ -237,12 +239,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile saved successfully!')),
         );
-        // Navigator.of(context).pushReplacement(
-        //   MaterialPageRoute(
-        //     builder: (context) =>
-        //         widget.isSociety ? const SocietyNavBar() : const MainShell(),
-        //   ),
-        // );
+        Navigator.of(context).pushReplacement(
+           MaterialPageRoute(
+             builder: (context) =>
+                 widget.isSociety ? const SocietyNavBar() : const MainShell(),
+           ),
+        );
       }
     } on PostgrestException catch (e) {
       if (mounted) _showError(e.message);
