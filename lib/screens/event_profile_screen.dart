@@ -1,6 +1,7 @@
 import 'package:drp/screens/event_cancellation_popup.dart';
 import 'package:drp/screens/event_registered_popup.dart';
 import 'package:drp/screens/society_info_screen.dart';
+import 'package:drp/services/supabase_client.dart';
 import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
@@ -24,19 +25,38 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
   EventService eventService = EventService();
   String societyName = '';
 
+  // ── NEW: committee member details ─────────────────────────────────────────
+  Map<String, dynamic>? _committeeMember;
+
   @override
   void initState() {
     super.initState();
     _checkIfAlreadyRegistered();
     _setupSocName();
+    // ── NEW ──────────────────────────────────────────────────────────────────
+    if (widget.card.meetCommittee && widget.card.committeeMemberId != null) {
+      _loadCommitteeMember();
+    }
+  }
+
+  // ── NEW: fetch committee member row ───────────────────────────────────────
+  Future<void> _loadCommitteeMember() async {
+    try {
+      final data = await supabase
+          .from('committee_members')
+          .select('name, role, avatar_url')
+          .eq('id', widget.card.committeeMemberId!)
+          .maybeSingle();
+      if (mounted) setState(() => _committeeMember = data);
+    } catch (e) {
+      debugPrint('Error loading committee member: $e');
+    }
   }
 
   Future<void> _setupSocName() async {
     try {
       final name = await eventService.getSocietyName(widget.card.societyId);
-      if (mounted) {
-        setState(() => societyName = name);
-      }
+      if (mounted) setState(() => societyName = name);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -55,12 +75,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
       widget.card.eventId,
       userId,
     );
-
-    if (mounted) {
-      setState(() {
-        _isRegistered = isRegistered;
-      });
-    }
+    if (mounted) setState(() => _isRegistered = isRegistered);
   }
 
   Future<void> _register() async {
@@ -78,7 +93,7 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Registration failed, please try again later.'),
+            content: const Text('Registration failed, please try again later.'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -94,11 +109,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
             builder: (context) => EventCancellationPopup(),
           ) ??
           false;
-
       if (!confirmed) return;
-
       await registrationService.unregisterForEvent(widget.card.eventId);
-
       if (mounted) {
         setState(() => _isRegistered = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -108,17 +120,176 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
           ),
         );
       }
-      setState(() => _isRegistered = false);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cancellation failed, please try again later'),
+            content: const Text('Cancellation failed, please try again later'),
             backgroundColor: Colors.redAccent,
           ),
         );
       }
     }
+  }
+
+  // ── NEW: committee meeting card widget ────────────────────────────────────
+  Widget _buildCommitteeMeetingCard() {
+    if (!widget.card.meetCommittee) return const SizedBox.shrink();
+
+    final avatarUrl = _committeeMember?['avatar_url'] as String?;
+    final name = _committeeMember?['name'] as String? ?? 'Committee Member';
+    final role = _committeeMember?['role'] as String? ?? '';
+    final location = widget.card.committeeMeetingLocation ?? '';
+    final time = widget.card.committeeMeetingTime ?? '';
+
+    // Format time — strip seconds if present e.g. "09:00:00" → "09:00"
+    String displayTime = time;
+    final timeParts = time.split(':');
+    if (timeParts.length >= 2) {
+      displayTime = '${timeParts[0]}:${timeParts[1]}';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 32),
+        Row(
+          children: [
+            const Icon(
+              Icons.handshake_outlined,
+              size: 18,
+              color: Color(0xFF84DCC6),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Committee Member Available',
+              style: TextStyle(
+                fontFamily: 'Lora',
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'A committee member is available to meet before this event.',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 13,
+            color: Color(0xFF4D5359),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Member card ──────────────────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF84DCC6).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: const Color(0xFF84DCC6).withValues(alpha: 0.4),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Member info ────────────────────────────────────────────
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.grey.shade300,
+                    backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: (avatarUrl == null || avatarUrl.isEmpty)
+                        ? const Icon(
+                            Icons.person,
+                            size: 24,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      if (role.isNotEmpty)
+                        Text(
+                          role,
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              // ── Meeting details ────────────────────────────────────────
+              if (location.isNotEmpty)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.meeting_room_outlined,
+                      size: 16,
+                      color: Color(0xFF4D5359),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        location,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 13,
+                          color: Color(0xFF4D5359),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              if (location.isNotEmpty) const SizedBox(height: 6),
+              if (displayTime.isNotEmpty)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time_outlined,
+                      size: 16,
+                      color: Color(0xFF4D5359),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      displayTime,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 13,
+                        color: Color(0xFF4D5359),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -128,24 +299,21 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
         backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Event image, name & datetime ──
+            // ── Event image, name & datetime ─────────────────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Event image placeholder
                 CircleAvatar(
                   radius: 36,
                   backgroundColor: Colors.grey[300],
                   child: Icon(Icons.event, size: 36, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 16),
-
-                // Event name and datetime
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,10 +352,9 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
 
-            // ── Location ──
+            // ── Location ─────────────────────────────────────────────────
             Row(
               children: [
                 const Icon(
@@ -208,7 +375,6 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
               ],
             ),
 
-            // ── Map preview (only if coordinates exist) ──
             if (widget.card.latitude != null &&
                 widget.card.longitude != null) ...[
               MapPreview(
@@ -216,10 +382,9 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 longitude: widget.card.longitude!,
               ),
             ],
-
             const SizedBox(height: 10),
 
-            // ── Cost ──
+            // ── Cost ─────────────────────────────────────────────────────
             Row(
               children: [
                 const Icon(
@@ -241,16 +406,15 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                 ),
               ],
             ),
-
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             Row(
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0XFFD0F0C0),
-                    foregroundColor: Color(0xFF4D5359),
-                    textStyle: TextStyle(fontWeight: FontWeight.bold),
+                    backgroundColor: const Color(0XFFD0F0C0),
+                    foregroundColor: const Color(0xFF4D5359),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   onPressed: () => Navigator.push(
                     context,
@@ -276,10 +440,10 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
 
             const Divider(height: 32),
 
-            // ── Description ──
-            Text(
+            // ── Description ──────────────────────────────────────────────
+            const Text(
               'Description',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Lora',
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -297,9 +461,12 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
               ),
             ),
 
+            // ── NEW: Committee meeting section ───────────────────────────
+            _buildCommitteeMeetingCard(),
+
             const SizedBox(height: 32),
 
-            // ------ Registration Button ------
+            // ── Registration button ──────────────────────────────────────
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -315,18 +482,18 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
                   ),
                 ),
                 child: _isRegistered
-                    ? Text(
-                        "Cancel Registration",
-                        style: const TextStyle(
+                    ? const Text(
+                        'Cancel Registration',
+                        style: TextStyle(
                           fontFamily: 'Lora',
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                           color: Colors.black87,
                         ),
                       )
-                    : Text(
+                    : const Text(
                         "I'm going!",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Lora',
                           fontWeight: FontWeight.bold,
                           fontSize: 18,

@@ -15,16 +15,19 @@ class EventService {
     final rows = await supabase
         .from('interested_events')
         .select(
-          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, society_id, latitude, longitude)',
+          'events(event_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, society_id, latitude, longitude, meet_committee,committee_meeting_location, committee_meeting_time, committee_member_id)',
         )
         .eq('user_id', currentUserId);
 
     final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+
     final validRows = (rows as List).where((r) {
       if (r['events'] == null) return false;
       final e = r['events'] as Map<String, dynamic>;
       final endDay = DateTime.tryParse(e['end_day'] ?? '');
-      return endDay != null && endDay.isAfter(today);
+      // isAfter(startOfToday) means today and future are both included
+      return endDay != null && !endDay.isBefore(startOfToday);
     }).toList();
 
     final eventIds = validRows
@@ -85,6 +88,10 @@ class EventService {
         icon: Icons.event,
         color: const Color(0XFFFED766),
         imageUrl: e['image_url'] ?? '',
+        meetCommittee: e['meet_committee'] ?? false,
+        committeeMeetingLocation: e['committee_meeting_location'],
+        committeeMeetingTime: e['committee_meeting_time'],
+        committeeMemberId: e['committee_member_id'],
       );
     }).toList();
   }
@@ -93,7 +100,9 @@ class EventService {
     final rows = await supabase
         .from('active_events')
         .select(
-          'event_id, society_id, event_name, start_day, start_time, end_day, end_time, location, cost, description, image_url, latitude, longitude',
+          'event_id, society_id, event_name, start_day, start_time, end_day, '
+          'end_time, location, cost, description, image_url, latitude, longitude, '
+          'meet_committee, committee_meeting_location, committee_meeting_time, committee_member_id',
         );
 
     return (rows as List).map((e) {
@@ -112,6 +121,10 @@ class EventService {
         icon: Icons.event,
         color: const Color(0XFFFED766),
         imageUrl: e['image_url'] ?? '',
+        meetCommittee: e['meet_committee'] ?? false,
+        committeeMeetingLocation: e['committee_meeting_location'],
+        committeeMeetingTime: e['committee_meeting_time'],
+        committeeMemberId: e['committee_member_id'],
       );
     }).toList();
   }
