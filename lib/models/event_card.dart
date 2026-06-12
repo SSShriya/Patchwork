@@ -20,6 +20,11 @@ class EventCard extends BaseCard {
   final Color color;
   @override
   final String imageUrl;
+  // ── NEW ───────────────────────────────────────────────────────────────────
+  final bool meetCommittee;
+  final String? committeeMeetingLocation;
+  final String? committeeMeetingTime;
+  final String? committeeMemberId;
 
   const EventCard({
     required this.eventId,
@@ -34,8 +39,13 @@ class EventCard extends BaseCard {
     required this.cost,
     required this.icon,
     required this.color,
-    required this.societyId, // make required in future, default is for backwards compatibility
+    required this.societyId,
     this.imageUrl = '',
+    // ── NEW ─────────────────────────────────────────────────────────────────
+    this.meetCommittee = false,
+    this.committeeMeetingLocation,
+    this.committeeMeetingTime,
+    this.committeeMemberId,
   });
 
   factory EventCard.fromJson(Map<String, dynamic> json) => EventCard(
@@ -53,5 +63,9 @@ class EventCard extends BaseCard {
     icon: Icons.event,
     color: const Color(0xFF000000),
     imageUrl: json['image_url'] ?? '',
+    meetCommittee: json['meet_committee'] ?? false,
+    committeeMeetingLocation: json['committee_meeting_location'],
+    committeeMeetingTime: json['committee_meeting_time'],
+    committeeMemberId: json['committee_member_id'],
   );
 }
