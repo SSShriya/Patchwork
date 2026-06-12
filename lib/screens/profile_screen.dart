@@ -240,10 +240,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(content: Text('Profile saved successfully!')),
         );
         Navigator.of(context).pushReplacement(
-           MaterialPageRoute(
-             builder: (context) =>
-                 widget.isSociety ? const SocietyNavBar() : const MainShell(),
-           ),
+          MaterialPageRoute(
+            builder: (context) =>
+                widget.isSociety ? const SocietyNavBar() : const MainShell(),
+          ),
         );
       }
     } on PostgrestException catch (e) {
@@ -895,10 +895,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildUniversityField(),
                       const SizedBox(height: 16),
 
-                      _buildYearGroupField(),
-                      const SizedBox(height: 16),
-
                       if (!widget.isSociety) ...[
+                        _buildYearGroupField(),
+                        const SizedBox(height: 16),
+
                         _buildTextField(
                           controller: _courseController,
                           label: 'Course / Major',
@@ -1039,13 +1039,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       Text(
-                          'Favorite quotes? Ideal day off? Passion projects? Show off your personality and flare!',
-                          style: const TextStyle(
-                            fontFamily: 'Bitter',
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
+                        'Favorite quotes? Ideal day off? Passion projects? Show off your personality and flare!',
+                        style: const TextStyle(
+                          fontFamily: 'Bitter',
+                          fontSize: 13,
+                          color: Colors.grey,
                         ),
+                      ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _bioController,
