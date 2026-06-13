@@ -17,6 +17,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
   List<Map<String, String>> _events = [];
   bool _isLoading = false;
   bool _showArchived = false;
+  
 
   @override
   void initState() {

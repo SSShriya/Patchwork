@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drp/services/supabase_client.dart';
 import 'package:drp/services/event_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 // ── Profile queries ───────────────────────────────────────────────────────────
 
@@ -41,17 +41,24 @@ Future<void> updateSocDetails({
   await supabase.from('users').update(updates).eq('id', id);
 }
 
-Future<void> uploadSocImage(File imageFile, String socId) async {
+Future<void> uploadSocImage(XFile imageFile, String socId) async {
   final filePath = '$socId/profile.jpg';
   try {
+    final bytes = await imageFile.readAsBytes();
+
     await supabase.storage
         .from('avatars')
-        .upload(
+        .uploadBinary(
           filePath,
-          imageFile,
-          fileOptions: const FileOptions(upsert: true),
+          bytes,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
         );
+
     final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+
     await supabase
         .from('users')
         .update({'avatar_url': publicUrl})
@@ -108,7 +115,7 @@ Future<String> createSocietyEvent({
   required TimeOfDay endTime,
   required String location,
   required double price,
-  File? image,
+  XFile? image,
   String? description,
   double? latitude,
   double? longitude,
@@ -161,7 +168,7 @@ Future<void> updateSocietyEvent({
   required TimeOfDay endTime,
   required String location,
   required double price,
-  File? image,
+  XFile? image,
   String? description,
   double? latitude,
   double? longitude,

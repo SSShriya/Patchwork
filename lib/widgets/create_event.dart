@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:drp/services/supabase_client.dart';
 import 'package:drp/widgets/pick_location_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -18,7 +17,7 @@ class NewEventData {
   final double? longitude;
   final double price;
   final String? description;
-  final File? image;
+  final XFile? image;
   final bool committeeCanMeet;
   final String? committeeMeetingLocation;
   final TimeOfDay? committeeMeetingTime;
@@ -154,7 +153,8 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   TimeOfDay? _endTime;
 
   LatLng? _pickedLocation;
-  File? _imageFile;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   bool _isSaving = false;
 
   @override
@@ -318,12 +318,17 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
+    final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 70,
     );
-    if (file != null) setState(() => _imageFile = File(file.path));
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _imageFile = picked;
+        _imageBytes = bytes;
+      });
+    }
   }
 
   Future<void> _pickLocation() async {
@@ -614,7 +619,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _ImagePicker(file: _imageFile, onTap: _pickImage),
+                      _ImagePicker(bytes: _imageBytes, onTap: _pickImage),
                       const SizedBox(height: 25),
 
                       _field(
@@ -1030,9 +1035,9 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _ImagePicker extends StatelessWidget {
-  final File? file;
+  final Uint8List? bytes;
   final VoidCallback onTap;
-  const _ImagePicker({required this.file, required this.onTap});
+  const _ImagePicker({required this.bytes, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1043,11 +1048,13 @@ class _ImagePicker extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
-          image: file != null
-              ? DecorationImage(image: FileImage(file!), fit: BoxFit.cover)
+          image: bytes != null
+              ? DecorationImage(image: MemoryImage(bytes!), fit: BoxFit.cover)
               : null,
         ),
-        child: file == null
+        child:
+            bytes ==
+                null // ✅ was: file == null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1063,11 +1070,11 @@ class _ImagePicker extends StatelessWidget {
                   ),
                 ],
               )
-            : Align(
+            : const Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: const CircleAvatar(
+                  padding: EdgeInsets.all(8),
+                  child: CircleAvatar(
                     radius: 14,
                     backgroundColor: Color(0XFF84DCC6),
                     child: Icon(Icons.edit, size: 14, color: Colors.white),

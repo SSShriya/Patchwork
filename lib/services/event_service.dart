@@ -1,11 +1,11 @@
 // lib/services/event_service.dart
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/event_card.dart';
+import 'package:image_picker/image_picker.dart';
 import 'supabase_client.dart';
+import 'dart:typed_data';
 
 // import 'utils.dart';
 
@@ -129,32 +129,27 @@ class EventService {
     }).toList();
   }
 
-  static Future<void> uploadEventImage(File? imageFile, String eventId) async {
-    if (imageFile == null) return;
+  static Future<void> uploadEventImage(XFile? image, String societyId) async {
+    if (image == null) return;
 
-    final String filePath = '$eventId/profile.jpg';
-
+    final filePath = '$societyId/event.jpg';
     try {
+      final Uint8List bytes = await image.readAsBytes();
+
       await supabase.storage
-          .from('avatars')
-          .upload(
+          .from('event_images')
+          .uploadBinary(
             filePath,
-            imageFile,
-            fileOptions: const FileOptions(upsert: true),
+            bytes,
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
           );
-
-      final String publicUrl = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-      await supabase
-          .from('events')
-          .update({'image_url': publicUrl})
-          .eq('event_id', eventId);
     } on StorageException catch (e) {
-      throw Exception('Failed to upload profile picture: ${e.message}');
+      throw Exception('Failed to upload event image: ${e.message}');
     } catch (e) {
-      throw Exception('Unexpected error during profile picture upload: $e');
+      throw Exception('Unexpected error uploading event image: $e');
     }
   }
 

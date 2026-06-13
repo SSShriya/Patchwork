@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/session_manager.dart';
@@ -20,10 +19,10 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
   String _societyId = '';
   String? _societyName;
   String? _existingImageUrl;
-  File? _imageFile;
   bool _isLoading = false;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   bool _canContact = false;
-  //String _about = '';
   final _aboutController = TextEditingController();
   List<Map<String, dynamic>> _committee = [];
   bool _disposed = false;
@@ -88,10 +87,12 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
 
     setState(() => _isLoading = true);
     try {
+      // ── _saveDetails — clear both after upload ────────────────────────────────
       if (_imageFile != null) {
         await uploadSocImage(_imageFile!, _societyId);
         if (_disposed) return;
         _imageFile = null;
+        _imageBytes = null;
       }
       await updateSocDetails(id: _societyId, bio: _aboutController.text.trim());
       if (_disposed) return;
@@ -109,14 +110,18 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
   }
 
   // ── Image picker ───────────────────────────────────────────────────────────
+  // ── _pickImage ────────────────────────────────────────────────────────────
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
+    final XFile? picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 70,
     );
     if (picked != null && mounted) {
-      setState(() => _imageFile = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _imageFile = picked;
+        _imageBytes = bytes;
+      });
     }
   }
 
@@ -367,18 +372,18 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
                       onTap: _pickImage,
                       child: Stack(
                         children: [
+                          // ── Avatar in build — use MemoryImage for preview like ProfileScreen ──────
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.grey.shade300,
-                            backgroundImage: _imageFile != null
-                                ? FileImage(_imageFile!)
+                            backgroundImage: _imageBytes != null
+                                ? MemoryImage(_imageBytes!) as ImageProvider
                                 : (_existingImageUrl != null &&
                                       _existingImageUrl!.isNotEmpty)
                                 ? NetworkImage(_existingImageUrl!)
-                                      as ImageProvider
                                 : null,
                             child:
-                                (_imageFile == null &&
+                                (_imageBytes == null &&
                                     (_existingImageUrl == null ||
                                         _existingImageUrl!.isEmpty))
                                 ? const Icon(
@@ -388,6 +393,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
                                   )
                                 : null,
                           ),
+
                           const Positioned(
                             bottom: 0,
                             right: 4,
