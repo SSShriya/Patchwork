@@ -104,6 +104,11 @@ class MatchService {
       final otherUserId = otherUserData['id'] as String;
       final otherInterests = _parseInterests(otherUserData).toSet();
 
+      final sortedInterests = [
+        ...otherInterests.where((i) => currentInterests.contains(i)),
+        ...otherInterests.where((i) => !currentInterests.contains(i)),
+      ];
+
       int score = 0;
       score += currentInterests.intersection(otherInterests).length;
 
@@ -141,7 +146,7 @@ class MatchService {
           eventId: eventId,
           eventName: eventName,
           yearGroup: otherUserData['year_group'] ?? '',
-          interests: otherInterests.toList(),
+          interests: sortedInterests,
           location: otherLocation,
           imageUrl: otherUserData['avatar_url'] ?? '',
           interestPhotos: _parseInterestPhotos(otherUserData),
