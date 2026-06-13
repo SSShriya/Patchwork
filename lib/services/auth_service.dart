@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'session_manager.dart';
 import 'supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

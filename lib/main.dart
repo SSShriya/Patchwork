@@ -35,8 +35,6 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  Future<_UserRouteInfo>? _routeFuture;
-  String? _lastUserId;
   late final AppLinks _appLinks;
   late final StreamSubscription<AuthState> _authSubscription;
 

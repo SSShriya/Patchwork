@@ -23,7 +23,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
   File? _imageFile;
   bool _isLoading = false;
   bool _canContact = false;
-  String _about = '';
+  //String _about = '';
   final _aboutController = TextEditingController();
   List<Map<String, dynamic>> _committee = [];
   bool _disposed = false;
@@ -63,7 +63,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
         setState(() {
           _societyName = socData['name'] ?? '';
           _aboutController.text = socData['bio'] ?? '';
-          _about = _aboutController.text;
+          //_about = _aboutController.text;
           _existingImageUrl = socData['avatar_url'];
           _canContact = socData['can_message'] ?? false;
           _committee = committeeData;
@@ -157,7 +157,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
               if (!mounted) return;
               setState(() {
                 _aboutController.text = text;
-                _about = text;
+                //_about = text;
               });
               nav.pop();
             },
