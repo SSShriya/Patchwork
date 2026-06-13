@@ -22,6 +22,7 @@ class NewEventData {
   final String? committeeMeetingLocation;
   final TimeOfDay? committeeMeetingTime;
   final String? committeeMemberId;
+  final String? existingImageUrl;
 
   const NewEventData({
     required this.name,
@@ -39,6 +40,7 @@ class NewEventData {
     this.committeeMeetingLocation,
     this.committeeMeetingTime,
     this.committeeMemberId,
+    this.existingImageUrl,
   });
 }
 
@@ -91,6 +93,7 @@ Future<NewEventData?> showNewEventPopup(
   TimeOfDay? existingCommitteeMeetingTime,
   String? existingCommitteeMemberId,
   String? societyId,
+  String? existingImageUrl,
 }) {
   // Split full DateTimes if provided — they override the legacy params
   if (existingStartDateTime != null) {
@@ -123,6 +126,7 @@ Future<NewEventData?> showNewEventPopup(
       existingCommitteeMeetingTime: existingCommitteeMeetingTime,
       existingCommitteeMemberId: existingCommitteeMemberId,
       societyId: societyId,
+      existingImageUrl: existingImageUrl,
     ),
   );
 }
@@ -145,6 +149,7 @@ class _CreateEventForm extends StatefulWidget {
   final TimeOfDay? existingCommitteeMeetingTime;
   final String? existingCommitteeMemberId;
   final String? societyId;
+  final String? existingImageUrl;
 
   const _CreateEventForm({
     this.existingName,
@@ -162,6 +167,7 @@ class _CreateEventForm extends StatefulWidget {
     this.existingCommitteeMeetingTime,
     this.existingCommitteeMemberId,
     this.societyId,
+    this.existingImageUrl,
   });
 
   @override
@@ -195,6 +201,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   LatLng? _pickedLocation;
   XFile? _imageFile;
   Uint8List? _imageBytes;
+  String? _existingImageUrl;
   bool _isSaving = false;
 
   // ── Inline error messages ─────────────────────────────────────────────────
@@ -211,6 +218,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   @override
   void initState() {
     super.initState();
+    _existingImageUrl = widget.existingImageUrl;
     _nameController = TextEditingController(text: widget.existingName ?? '');
     _locationController = TextEditingController(
       text: widget.existingLocation ?? '',
@@ -430,6 +438,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       setState(() {
         _imageFile = picked;
         _imageBytes = bytes;
+        _existingImageUrl = null;
       });
     }
   }
@@ -556,6 +565,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
           : null,
       committeeMeetingTime: _committeeCanMeet ? _committeeMeetingTime : null,
       committeeMemberId: _committeeCanMeet ? _selectedCommitteeMemberId : null,
+      existingImageUrl: _existingImageUrl,
     );
 
     if (mounted) Navigator.of(context).pop(result);
@@ -849,7 +859,11 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _ImagePicker(bytes: _imageBytes, onTap: _pickImage),
+                      _ImagePicker(
+                        bytes: _imageBytes,
+                        onTap: _pickImage,
+                        networkUrl: _existingImageUrl,
+                      ),
                       const SizedBox(height: 25),
 
                       _field(
@@ -1297,10 +1311,19 @@ class _SectionLabel extends StatelessWidget {
 class _ImagePicker extends StatelessWidget {
   final Uint8List? bytes;
   final VoidCallback onTap;
-  const _ImagePicker({required this.bytes, required this.onTap});
+  final String? networkUrl;
+
+  const _ImagePicker({
+    required this.bytes,
+    required this.onTap,
+    this.networkUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bool hasLocal = bytes != null;
+    final bool hasRemote = networkUrl != null && networkUrl!.isNotEmpty;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1308,27 +1331,14 @@ class _ImagePicker extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
-          image: bytes != null
+          // Only use DecorationImage for local bytes (fast, no flicker)
+          image: hasLocal
               ? DecorationImage(image: MemoryImage(bytes!), fit: BoxFit.cover)
               : null,
         ),
-        child: bytes == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 32,
-                    color: Color(0xFF4D5359),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Add banner image (optional)',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF4D5359)),
-                  ),
-                ],
-              )
-            : const Align(
+        child: hasLocal
+            // ── Local image picked: show edit badge ────────────────────────
+            ? const Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
                   padding: EdgeInsets.all(8),
@@ -1338,10 +1348,64 @@ class _ImagePicker extends StatelessWidget {
                     child: Icon(Icons.edit, size: 14, color: Colors.white),
                   ),
                 ),
-              ),
+              )
+            : hasRemote
+            // ── Remote image from Supabase: load via network ───────────
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      networkUrl!,
+                      fit: BoxFit.cover,
+                      // Show a shimmer-style placeholder while loading
+                      loadingBuilder: (_, child, progress) => progress == null
+                          ? child
+                          : Container(color: Colors.grey.shade200),
+                      // On error fall back to the placeholder icon
+                      errorBuilder: (_, __, ___) => _placeholder(),
+                    ),
+                    // Edit badge in the corner
+                    const Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: EdgeInsets.all(8),
+                        child: CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Color(0XFF84DCC6),
+                          child: Icon(
+                            Icons.edit,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            // ── No image at all: empty placeholder ─────────────────────
+            : _placeholder(),
       ),
     );
   }
+
+  Widget _placeholder() => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: const [
+      Icon(
+        Icons.add_photo_alternate_outlined,
+        size: 32,
+        color: Color(0xFF4D5359),
+      ),
+      SizedBox(height: 6),
+      Text(
+        'Add banner image (optional)',
+        style: TextStyle(fontSize: 13, color: Color(0xFF4D5359)),
+      ),
+    ],
+  );
 }
 
 class _ActionButton extends StatelessWidget {

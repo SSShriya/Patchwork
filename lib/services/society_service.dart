@@ -35,9 +35,7 @@ Future<void> updateSocDetails({
   final updates = <String, dynamic>{};
   if (bio != null) updates['bio'] = bio;
   if (uni != null) updates['university'] = uni;
-
-  if (updates.isEmpty) return; // nothing to update
-
+  if (updates.isEmpty) return;
   await supabase.from('users').update(updates).eq('id', id);
 }
 
@@ -45,7 +43,6 @@ Future<void> uploadSocImage(XFile imageFile, String socId) async {
   final filePath = '$socId/profile.jpg';
   try {
     final bytes = await imageFile.readAsBytes();
-
     await supabase.storage
         .from('avatars')
         .uploadBinary(
@@ -56,9 +53,7 @@ Future<void> uploadSocImage(XFile imageFile, String socId) async {
             contentType: 'image/jpeg',
           ),
         );
-
     final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
-
     await supabase
         .from('users')
         .update({'avatar_url': publicUrl})
@@ -124,8 +119,7 @@ Future<String> createSocietyEvent({
   TimeOfDay? committeeMeetingTime,
   String? committeeMemberId,
 }) async {
-  await EventService.uploadEventImage(image, societyId);
-
+  // ── Step 1: insert the event row (without image_url yet) ─────────────────
   final response = await supabase
       .from('events')
       .insert({
@@ -155,7 +149,26 @@ Future<String> createSocietyEvent({
       .select('event_id')
       .single();
 
-  return response['event_id'] as String;
+  final eventId = response['event_id'] as String;
+
+  // ── Step 2: upload image using the real eventId as the filename ───────────
+  // This gives every event its own stable path: "<societyId>/events/<eventId>.jpg"
+  if (image != null) {
+    final imageUrl = await EventService.uploadEventImage(
+      image,
+      societyId,
+      eventId: eventId, // ← stable, per-event path
+    );
+    if (imageUrl != null) {
+      // ── Step 3: write the public URL back to the row ──────────────────────
+      await supabase
+          .from('events')
+          .update({'image_url': imageUrl})
+          .eq('event_id', eventId);
+    }
+  }
+
+  return eventId;
 }
 
 Future<void> updateSocietyEvent({
@@ -169,6 +182,7 @@ Future<void> updateSocietyEvent({
   required String location,
   required double price,
   XFile? image,
+  String? existingImageUrl, // ← carry the current URL through if no new image
   String? description,
   double? latitude,
   double? longitude,
@@ -177,7 +191,15 @@ Future<void> updateSocietyEvent({
   TimeOfDay? committeeMeetingTime,
   String? committeeMemberId,
 }) async {
-  if (image != null) await EventService.uploadEventImage(image, societyId);
+  // ── Upload new image if one was picked, otherwise keep the existing URL ───
+  String? imageUrl = existingImageUrl;
+  if (image != null) {
+    imageUrl = await EventService.uploadEventImage(
+      image,
+      societyId,
+      eventId: eventId, // ← overwrites the same per-event file on edit
+    );
+  }
 
   await supabase
       .from('events')
@@ -192,6 +214,8 @@ Future<void> updateSocietyEvent({
         'location': location,
         'cost': price,
         'description': description,
+        'image_url':
+            imageUrl, // ← always written: new URL, existing URL, or null
         'latitude': latitude,
         'longitude': longitude,
         'meet_committee': committeeCanMeet,

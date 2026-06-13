@@ -62,12 +62,10 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         parsed.add({
           'id': '${e['event_id']}',
           'title': e['event_name'] ?? '',
-          // Display strings (for UI only — never parsed back)
           'start_date': startDisplay,
           'end_date': endDisplay,
-          // Raw strings (used when opening the edit popup)
-          'start_day_raw': startDayStr, // e.g. "2026-06-03"
-          'start_time_raw': startTimeStr, // e.g. "18:00:00"
+          'start_day_raw': startDayStr,
+          'start_time_raw': startTimeStr,
           'end_day_raw': endDayStr,
           'end_time_raw': endTimeStr,
           'location': e['location'] ?? '',
@@ -80,6 +78,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
           'committee_meeting_location': e['committee_meeting_location'] ?? '',
           'committee_meeting_time': e['committee_meeting_time'] ?? '',
           'committee_member_id': e['committee_member_id'] ?? '',
+          'image_url': e['image_url'] ?? '',
         });
       }
 
@@ -179,7 +178,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
     final result = await showNewEventPopup(
       context,
       existingName: event['title'],
-      // Pass full DateTimes — showNewEventPopup splits them internally
       existingStartDateTime: existingStartDateTime,
       existingEndDateTime: existingEndDateTime,
       existingLocation: event['location'],
@@ -192,6 +190,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       existingCommitteeMeetingTime: existingMeetingTime,
       existingCommitteeMemberId: event['committee_member_id'],
       societyId: _societyId,
+      existingImageUrl: event['image_url'], 
     );
 
     if (result == null) return;
@@ -209,6 +208,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         location: result.location,
         price: result.price,
         image: result.image,
+        existingImageUrl: result.existingImageUrl,
         description: result.description,
         latitude: result.latitude,
         longitude: result.longitude,
