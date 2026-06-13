@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     } catch (e) {
       debugPrint('Error: $e');
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/signup');
+        if (mounted) setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

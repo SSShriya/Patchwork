@@ -287,11 +287,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirmed != true) return;
 
-    // if (mounted) Navigator.pushReplacementNamed(context, '/signup');
-
-    await supabase.auth.signOut();
-    await SessionManager.clearSession();
-    if (mounted) Navigator.pushReplacementNamed(context, '/signup');
+    try {
+      await supabase.auth.signOut(); // triggers the listener in main.dart
+      await SessionManager.clearSession(); // cleans up secure storage
+    } catch (e) {
+      debugPrint('Logout error: $e');
+    }
   }
 
   // ── Interest Photo Gallery Section ───────────────────────────────────────

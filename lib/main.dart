@@ -9,9 +9,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/signup_screen.dart';
 import 'services/supabase_client.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,15 +38,32 @@ class _MainAppState extends State<MainApp> {
   Future<_UserRouteInfo>? _routeFuture;
   String? _lastUserId;
   late final AppLinks _appLinks;
+  late final StreamSubscription<AuthState> _authSubscription;
 
   @override
   void initState() {
     super.initState();
+
+    _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SignUpScreen()),
+          (route) => false, // clears entire stack
+        );
+      }
+    });
+
     if (kIsWeb) {
       _handleWebAuthCallback();
     } else {
       _handleIncomingLinks();
     }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel(); // ADD
+    super.dispose();
   }
 
   Future<void> _handleWebAuthCallback() async {
@@ -89,6 +109,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       navigatorObservers: [routeObserver],
       home: StreamBuilder<AuthState>(
         stream: supabase.auth.onAuthStateChange,

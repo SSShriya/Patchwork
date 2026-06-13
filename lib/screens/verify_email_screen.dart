@@ -37,7 +37,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   Future<void> _logout() async {
     await supabase.auth.signOut();
-    if (mounted) Navigator.pushReplacementNamed(context, '/signup');
+    if (mounted) setState(() => _resentSuccess = false);
   }
 
   @override
