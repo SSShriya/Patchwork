@@ -42,14 +42,45 @@ class NewEventData {
   });
 }
 
+// ── Helper: split a full DateTime into its date + TimeOfDay parts ─────────────
+// Call this at the call-site when opening the edit popup from an EventCard,
+// e.g.:  final (date, time) = splitDateTime(eventCard.startDateTime);
+(DateTime, TimeOfDay) splitDateTime(DateTime dt) => (
+  DateTime(dt.year, dt.month, dt.day),
+  TimeOfDay(hour: dt.hour, minute: dt.minute),
+);
+
+// ── Helper: parse a "HH:mm:ss" string into a TimeOfDay ───────────────────────
+// Useful when the raw Supabase time string needs to be passed directly.
+TimeOfDay? parseTimeOfDay(String? raw) {
+  if (raw == null) return null;
+  final parts = raw.split(':');
+  if (parts.length < 2) return null;
+  return TimeOfDay(
+    hour: int.tryParse(parts[0]) ?? 0,
+    minute: int.tryParse(parts[1]) ?? 0,
+  );
+}
+
 /// Shows the popup and returns [NewEventData] if the user saves, or null if cancelled.
+///
+/// For **edit mode** pass the full [existingStartDateTime] / [existingEndDateTime]
+/// from your EventCard — the popup splits them into date + time internally.
+/// The old separate [existingStartDate]/[existingStartTime] etc. parameters are
+/// still accepted for backwards-compatibility but [existingStartDateTime] takes
+/// precedence when provided.
 Future<NewEventData?> showNewEventPopup(
   BuildContext context, {
   String? existingName,
+  // ── Preferred: pass the full DateTime from EventCard ──────────────────
+  DateTime? existingStartDateTime,
+  DateTime? existingEndDateTime,
+  // ── Legacy: individual date + time (used when no full DateTime available)
   DateTime? existingStartDate,
   TimeOfDay? existingStartTime,
   DateTime? existingEndDate,
   TimeOfDay? existingEndTime,
+  // ─────────────────────────────────────────────────────────────────────
   String? existingLocation,
   double? existingLatitude,
   double? existingLongitude,
@@ -61,6 +92,18 @@ Future<NewEventData?> showNewEventPopup(
   String? existingCommitteeMemberId,
   String? societyId,
 }) {
+  // Split full DateTimes if provided — they override the legacy params
+  if (existingStartDateTime != null) {
+    final (d, t) = splitDateTime(existingStartDateTime);
+    existingStartDate = d;
+    existingStartTime = t;
+  }
+  if (existingEndDateTime != null) {
+    final (d, t) = splitDateTime(existingEndDateTime);
+    existingEndDate = d;
+    existingEndTime = t;
+  }
+
   return showDialog<NewEventData>(
     context: context,
     barrierDismissible: false,
@@ -155,15 +198,15 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   bool _isSaving = false;
 
   // ── Inline error messages ─────────────────────────────────────────────────
-  // Each nullable string holds the current error for that field.
-  // null  → no error shown
-  // non-null → red error text rendered beneath the field
   String? _startDateError;
   String? _endDateError;
   String? _locationError;
   String? _committeeMemberError;
   String? _committeeMeetingLocationError;
   String? _committeeMeetingTimeError;
+
+  // True when we are editing an existing event (vs creating a new one)
+  bool get _isEditing => widget.existingName != null;
 
   @override
   void initState() {
@@ -253,6 +296,28 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   String _fmtTime(TimeOfDay? t) =>
       t == null ? 'Select time' : t.format(context);
 
+  // ── Auto-fill end to start + 1 hour (create mode only) ───────────────────
+  void _autoFillEnd() {
+    // In edit mode we never overwrite the existing end values
+    if (_isEditing) return;
+    if (_startDate == null || _startTime == null) return;
+
+    // Compute start as a full DateTime, then add 1 hour
+    final startDT = DateTime(
+      _startDate!.year,
+      _startDate!.month,
+      _startDate!.day,
+      _startTime!.hour,
+      _startTime!.minute,
+    );
+    final endDT = startDT.add(const Duration(hours: 1));
+
+    _endDate = DateTime(endDT.year, endDT.month, endDT.day);
+    _endTime = TimeOfDay(hour: endDT.hour, minute: endDT.minute);
+    // Clear any lingering end error now that it's populated
+    _endDateError = null;
+  }
+
   Future<void> _pickDate({required bool isStart}) async {
     final now = DateTime.now();
     final initial = isStart
@@ -281,13 +346,22 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() {
       if (isStart) {
         _startDate = picked;
-        // Clear the start date/time error as soon as a date is picked
         _startDateError = null;
-        _endDate ??= picked;
-        if (_endDate!.isBefore(picked)) _endDate = picked;
+        // Auto-fill end if time is already set; otherwise just update the date
+        // component of the auto-fill so it fires fully once time is also chosen
+        if (_startTime != null) {
+          _autoFillEnd();
+        } else {
+          // Partial auto-fill: keep end date in sync with start date for now
+          if (!_isEditing) {
+            _endDate = picked;
+            if (_endDate != null && _endDate!.isBefore(picked)) {
+              _endDate = picked;
+            }
+          }
+        }
       } else {
         _endDate = picked;
-        // Clear the end date/time error as soon as a date is picked
         _endDateError = null;
       }
     });
@@ -315,15 +389,11 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     setState(() {
       if (isStart) {
         _startTime = picked;
-        // Clear start error once both date+time are set
-        if (_startDate != null) _startDateError = null;
-        _endTime ??= TimeOfDay(
-          hour: (picked.hour + 1) % 24,
-          minute: picked.minute,
-        );
+        _startDateError = null;
+        // Always auto-fill end when start time is chosen (create mode only)
+        _autoFillEnd();
       } else {
         _endTime = picked;
-        // Clear end error once both date+time are set
         if (_endDate != null) _endDateError = null;
       }
     });
@@ -346,7 +416,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     if (picked == null) return;
     setState(() {
       _committeeMeetingTime = picked;
-      // Clear the meeting time error once a time is chosen
       _committeeMeetingTimeError = null;
     });
   }
@@ -375,18 +444,14 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     if (result != null) {
       setState(() {
         _pickedLocation = result;
-        // A map pin counts as a valid location — clear the error
         _locationError = null;
       });
     }
   }
 
   Future<void> _save() async {
-    // ── 1. Run Flutter form validators (name, price) ──────────────────────
     final formValid = _formKey.currentState!.validate();
 
-    // ── 2. Validate every custom (non-TextFormField) field ────────────────
-    //       Collect ALL errors before returning so every field lights up at once.
     String? startDateErr;
     String? endDateErr;
     String? locationErr;
@@ -415,7 +480,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
           : 'Please select an end time';
     }
 
-    // Only validate end > start when both are fully set
     if (startDateErr == null && endDateErr == null) {
       final startDT = DateTime(
         _startDate!.year,
@@ -448,7 +512,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       }
     }
 
-    // ── 3. Push all errors into state at once ─────────────────────────────
     setState(() {
       _startDateError = startDateErr;
       _endDateError = endDateErr;
@@ -458,7 +521,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       _committeeMeetingTimeError = committeeMeetingTimeErr;
     });
 
-    // ── 4. Bail out if anything is invalid ────────────────────────────────
     if (!formValid ||
         startDateErr != null ||
         endDateErr != null ||
@@ -470,14 +532,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
     }
 
     setState(() => _isSaving = true);
-
-    final startDT = DateTime(
-      _startDate!.year,
-      _startDate!.month,
-      _startDate!.day,
-      _startTime!.hour,
-      _startTime!.minute,
-    );
 
     final result = NewEventData(
       name: _nameController.text.trim(),
@@ -508,7 +562,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
   }
 
   // ── Inline error text widget ──────────────────────────────────────────────
-  // Renders a red error line that matches Flutter's native TextFormField style.
   Widget _errorText(String? error) {
     if (error == null) return const SizedBox.shrink();
     return Padding(
@@ -643,8 +696,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
       );
     }
 
-    // Use the dedicated state variable instead of a local derived bool so the
-    // error persists until the user actually selects a member.
     final bool showError = _committeeMemberError != null;
 
     return Column(
@@ -676,7 +727,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
               return GestureDetector(
                 onTap: () => setState(() {
                   _selectedCommitteeMemberId = isSelected ? null : id;
-                  // Clear error as soon as a member is tapped
                   if (!isSelected) _committeeMemberError = null;
                 }),
                 child: AnimatedContainer(
@@ -765,8 +815,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isEditingMode = widget.existingName != null;
-
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
@@ -781,7 +829,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
               color: const Color.fromARGB(255, 131, 187, 219),
               padding: const EdgeInsets.symmetric(vertical: 18),
               child: Text(
-                isEditingMode ? 'EDIT EVENT' : 'NEW EVENT',
+                _isEditing ? 'EDIT EVENT' : 'NEW EVENT',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Lora',
@@ -804,7 +852,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       _ImagePicker(bytes: _imageBytes, onTap: _pickImage),
                       const SizedBox(height: 25),
 
-                      // ── Event name ───────────────────────────────────────
                       _field(
                         controller: _nameController,
                         label: 'Event Name',
@@ -815,7 +862,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Start date & time ────────────────────────────────
                       _SectionLabel(
                         label: 'Start Date & Time',
                         color: Colors.black,
@@ -824,7 +870,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       _buildDateTimeRow(isStart: true, error: _startDateError),
                       const SizedBox(height: 14),
 
-                      // ── End date & time ──────────────────────────────────
                       _SectionLabel(
                         label: 'End Date & Time',
                         color: Colors.black,
@@ -923,7 +968,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Price ────────────────────────────────────────────
                       _field(
                         controller: _priceController,
                         label: 'Price (£)',
@@ -948,7 +992,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Description ──────────────────────────────────────
                       _field(
                         controller: _descController,
                         label: 'Description (optional)',
@@ -957,7 +1000,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Committee member meeting section ─────────────────
                       const Divider(),
                       const SizedBox(height: 4),
                       _SectionLabel(
@@ -996,7 +1038,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                                 _committeeMeetingLocationController.clear();
                                 _committeeMeetingTime = null;
                                 _selectedCommitteeMemberId = null;
-                                // Clear all committee-related errors
                                 _committeeMemberError = null;
                                 _committeeMeetingLocationError = null;
                                 _committeeMeetingTimeError = null;
@@ -1016,11 +1057,9 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // ── Member picker ────────────────────────────
                               if (widget.societyId != null)
                                 _buildCommitteeMemberPicker(),
 
-                              // ── Meeting location ─────────────────────────
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1078,7 +1117,6 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                               ),
                               const SizedBox(height: 12),
 
-                              // ── Meeting time ─────────────────────────────
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1173,7 +1211,7 @@ class _CreateEventFormState extends State<_CreateEventForm> {
                       _ActionButton(
                         label: _isSaving
                             ? ''
-                            : (isEditingMode ? 'SAVE CHANGES' : 'CREATE EVENT'),
+                            : (_isEditing ? 'SAVE CHANGES' : 'CREATE EVENT'),
                         color: const Color.fromARGB(255, 164, 204, 228),
                         onPressed: _isSaving ? null : _save,
                         child: _isSaving

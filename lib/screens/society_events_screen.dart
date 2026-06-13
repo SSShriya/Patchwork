@@ -17,7 +17,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
   List<Map<String, String>> _events = [];
   bool _isLoading = false;
   bool _showArchived = false;
-  
 
   @override
   void initState() {
@@ -46,22 +45,29 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         final startTimeStr = e['start_time'] ?? '';
         final endTimeStr = e['end_time'] ?? '';
 
+        // ── Human-readable display strings ──────────────────────────────────
         String startDisplay = startDayStr;
         String endDisplay = endDayStr;
         try {
           startDisplay =
-              '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(startDayStr))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$startTimeStr'))}';
+              '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(startDayStr))}'
+              ' at '
+              '${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$startTimeStr'))}';
           endDisplay =
-              '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(endDayStr))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$endTimeStr'))}';
+              '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(endDayStr))}'
+              ' at '
+              '${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$endTimeStr'))}';
         } catch (_) {}
 
         parsed.add({
           'id': '${e['event_id']}',
           'title': e['event_name'] ?? '',
+          // Display strings (for UI only — never parsed back)
           'start_date': startDisplay,
           'end_date': endDisplay,
-          'start_day_raw': startDayStr,
-          'start_time_raw': startTimeStr,
+          // Raw strings (used when opening the edit popup)
+          'start_day_raw': startDayStr, // e.g. "2026-06-03"
+          'start_time_raw': startTimeStr, // e.g. "18:00:00"
           'end_day_raw': endDayStr,
           'end_time_raw': endTimeStr,
           'location': e['location'] ?? '',
@@ -140,64 +146,46 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
     final eventId = event['id'];
     if (eventId == null || eventId.isEmpty) return;
 
-    DateTime? parsedStartDate;
-    TimeOfDay? parsedStartTime;
-    DateTime? parsedEndDate;
-    TimeOfDay? parsedEndTime;
+    // ── Build full DateTimes from the raw ISO strings stored in the map ──────
+    // e.g. start_day_raw = "2026-06-03", start_time_raw = "18:00:00"
+    // Combine them into "2026-06-03T18:00:00" and parse once.
+    // splitDateTime() (from create_event.dart) then separates the date part
+    // from the TimeOfDay part — no fragile display-string parsing needed.
+    DateTime? existingStartDateTime;
+    DateTime? existingEndDateTime;
 
-    try {
-      final startParts = event['start_date']!.split(' at ');
-      if (startParts.length == 2) {
-        parsedStartDate = DateTime.parse(startParts[0]);
-        final tp = startParts[1].split(':');
-        parsedStartTime = TimeOfDay(
-          hour: int.parse(tp[0]),
-          minute: int.parse(tp[1]),
-        );
-      }
-      final endParts = event['end_date']!.split(' at ');
-      if (endParts.length == 2) {
-        parsedEndDate = DateTime.parse(endParts[0]);
-        final tp = endParts[1].split(':');
-        parsedEndTime = TimeOfDay(
-          hour: int.parse(tp[0]),
-          minute: int.parse(tp[1]),
-        );
-      }
-    } catch (_) {
-      parsedStartDate = DateTime.now();
-      parsedStartTime = const TimeOfDay(hour: 9, minute: 0);
-      parsedEndDate = DateTime.now().add(const Duration(hours: 2));
-      parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
+    final startDayRaw = event['start_day_raw'] ?? '';
+    final startTimeRaw = event['start_time_raw'] ?? '';
+    final endDayRaw = event['end_day_raw'] ?? '';
+    final endTimeRaw = event['end_time_raw'] ?? '';
+
+    if (startDayRaw.isNotEmpty) {
+      final timeStr = startTimeRaw.isNotEmpty ? startTimeRaw : '00:00:00';
+      existingStartDateTime = DateTime.tryParse(
+        '${startDayRaw}T${timeStr.substring(0, 8)}',
+      );
+    }
+    if (endDayRaw.isNotEmpty) {
+      final timeStr = endTimeRaw.isNotEmpty ? endTimeRaw : '00:00:00';
+      existingEndDateTime = DateTime.tryParse(
+        '${endDayRaw}T${timeStr.substring(0, 8)}',
+      );
     }
 
-    TimeOfDay? existingMeetingTime;
-    try {
-      final rawMeetingTime = event['committee_meeting_time'] ?? '';
-      if (rawMeetingTime.isNotEmpty) {
-        final tp = rawMeetingTime.split(':');
-        if (tp.length >= 2) {
-          existingMeetingTime = TimeOfDay(
-            hour: int.parse(tp[0].trim()),
-            minute: int.parse(tp[1].trim()),
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Failed to parse committee_meeting_time: $e');
-    }
+    // ── Parse committee meeting time from "HH:mm:ss" ─────────────────────────
+    // parseTimeOfDay() is the helper exported from create_event.dart
+    final existingMeetingTime = parseTimeOfDay(event['committee_meeting_time']);
 
     final result = await showNewEventPopup(
       context,
       existingName: event['title'],
+      // Pass full DateTimes — showNewEventPopup splits them internally
+      existingStartDateTime: existingStartDateTime,
+      existingEndDateTime: existingEndDateTime,
       existingLocation: event['location'],
       existingLatitude: double.tryParse(event['latitude'] ?? ''),
       existingLongitude: double.tryParse(event['longitude'] ?? ''),
       existingPrice: double.tryParse(event['cost'] ?? '0') ?? 0.0,
-      existingStartDate: parsedStartDate,
-      existingStartTime: parsedStartTime,
-      existingEndDate: parsedEndDate,
-      existingEndTime: parsedEndTime,
       existingDescription: event['description'],
       existingCommitteeCanMeet: event['meet_committee'] == 'true',
       existingCommitteeMeetingLocation: event['committee_meeting_location'],
