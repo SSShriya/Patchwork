@@ -50,5 +50,5 @@ class MatchCard extends BaseCard {
   @override
   IconData get icon => Icons.person;
   @override
-  Color get color => const Color(0XFFEEC0C6);
+  Color get color => const Color(0XFFffb3c6);
 }
