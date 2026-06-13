@@ -4,7 +4,7 @@ import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:drp/screens/event_profile_screen.dart';
 import 'package:drp/services/event_service.dart';
-import 'package:drp/services/soc_service.dart';
+import 'package:drp/services/society_service.dart';
 import 'package:drp/services/supabase_client.dart';
 import 'package:drp/services/utils.dart';
 import 'package:flutter/material.dart';

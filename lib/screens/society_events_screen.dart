@@ -1,7 +1,10 @@
-import 'package:drp/services/society_events_service.dart';
-import 'package:drp/widgets/create_event.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:drp/services/supabase_client.dart';
+import 'package:drp/services/society_service.dart';
+import 'package:drp/services/utils.dart';
+import 'package:drp/widgets/create_event.dart';
 
 class SocietyEventsScreen extends StatefulWidget {
   const SocietyEventsScreen({super.key});
@@ -11,17 +14,94 @@ class SocietyEventsScreen extends StatefulWidget {
 }
 
 class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
+  String _societyId = '';
+  List<Map<String, String>> _events = [];
+  bool _isLoading = false;
   bool _showArchived = false;
 
-  // ── Add new event ──────────────────────────────────────────────────────────
-  Future<void> _addNewEvent(SocietySharedState state) async {
-    final result = await showNewEventPopup(
-      context,
-      societyId: state.societyId, // ← ADD THIS
-    );
-    if (result == null) return;
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
+
+  // ── Load ───────────────────────────────────────────────────────────────────
+  Future<void> _loadEvents() async {
+    setState(() => _isLoading = true);
     try {
-      await state.createEvent(
+      _societyId = await loadUserId();
+      if (_societyId.isEmpty) return;
+
+      final eventsData = await getSocietyEvents(_societyId);
+      if (!mounted) return;
+
+      final today = DateTime.now();
+      final parsed = <Map<String, String>>[];
+
+      for (final e in eventsData) {
+        final endDay = DateTime.tryParse(e['end_day'] ?? '');
+        final isPast = endDay != null && endDay.isBefore(today);
+        final startDayStr = e['start_day'] ?? '';
+        final endDayStr = e['end_day'] ?? '';
+        final startTimeStr = e['start_time'] ?? '';
+        final endTimeStr = e['end_time'] ?? '';
+
+        String startDisplay = startDayStr;
+        String endDisplay = endDayStr;
+        try {
+          startDisplay =
+              '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(startDayStr))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$startTimeStr'))}';
+          endDisplay =
+              '${DateFormat('EEE d MMM yyyy').format(DateTime.parse(endDayStr))} at ${DateFormat('HH:mm').format(DateTime.parse('1970-01-01T$endTimeStr'))}';
+        } catch (_) {}
+
+        parsed.add({
+          'id': '${e['event_id']}',
+          'title': e['event_name'] ?? '',
+          'start_date': startDisplay,
+          'end_date': endDisplay,
+          'start_day_raw': startDayStr,
+          'start_time_raw': startTimeStr,
+          'end_day_raw': endDayStr,
+          'end_time_raw': endTimeStr,
+          'location': e['location'] ?? '',
+          'cost': '${e['cost']}',
+          'description': e['description'] ?? '',
+          'latitude': e['latitude'] != null ? '${e['latitude']}' : '',
+          'longitude': e['longitude'] != null ? '${e['longitude']}' : '',
+          'is_past': isPast ? 'true' : 'false',
+          'meet_committee': '${e['meet_committee'] ?? false}',
+          'committee_meeting_location': e['committee_meeting_location'] ?? '',
+          'committee_meeting_time': e['committee_meeting_time'] ?? '',
+          'committee_member_id': e['committee_member_id'] ?? '',
+        });
+      }
+
+      parsed.sort((a, b) {
+        final aDate = DateTime.tryParse(a['start_day_raw']!) ?? DateTime.now();
+        final bDate = DateTime.tryParse(b['start_day_raw']!) ?? DateTime.now();
+        final aIsPast = a['is_past'] == 'true';
+        final bIsPast = b['is_past'] == 'true';
+        if (aIsPast != bIsPast) return aIsPast ? 1 : -1;
+        return aIsPast ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
+      });
+
+      setState(() => _events = parsed);
+    } catch (e) {
+      debugPrint('Error loading events: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Add new event ──────────────────────────────────────────────────────────
+  Future<void> _addNewEvent() async {
+    final result = await showNewEventPopup(context, societyId: _societyId);
+    if (result == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final newEventId = await createSocietyEvent(
+        societyId: _societyId,
         name: result.name,
         startDate: result.startDate,
         startTime: result.startTime,
@@ -36,8 +116,13 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         committeeCanMeet: result.committeeCanMeet,
         committeeMeetingLocation: result.committeeMeetingLocation,
         committeeMeetingTime: result.committeeMeetingTime,
-        committeeMemberId: result.committeeMemberId, // ← ADD THIS
+        committeeMemberId: result.committeeMemberId,
       );
+      await supabase.from('interested_events').insert({
+        'user_id': _societyId,
+        'event_id': newEventId,
+      });
+      await _loadEvents();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Event created successfully!')),
@@ -45,18 +130,16 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       }
     } catch (e) {
       _snack('Failed to create event: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   // ── Edit event ─────────────────────────────────────────────────────────────
-  Future<void> _editEvent(
-    SocietySharedState state,
-    Map<String, String> event,
-  ) async {
+  Future<void> _editEvent(Map<String, String> event) async {
     final eventId = event['id'];
     if (eventId == null || eventId.isEmpty) return;
 
-    // ── Parse start date/time ──────────────────────────────────────────────
     DateTime? parsedStartDate;
     TimeOfDay? parsedStartTime;
     DateTime? parsedEndDate;
@@ -88,14 +171,11 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       parsedEndTime = const TimeOfDay(hour: 11, minute: 0);
     }
 
-    // ── Parse committee meeting time — separate try/catch so it can never
-    //    be silently wiped by the date parsing fallback above ───────────────
     TimeOfDay? existingMeetingTime;
     try {
       final rawMeetingTime = event['committee_meeting_time'] ?? '';
       if (rawMeetingTime.isNotEmpty) {
         final tp = rawMeetingTime.split(':');
-        // Handle both "HH:mm" and "HH:mm:ss" formats
         if (tp.length >= 2) {
           existingMeetingTime = TimeOfDay(
             hour: int.parse(tp[0].trim()),
@@ -106,15 +186,6 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
     } catch (e) {
       debugPrint('Failed to parse committee_meeting_time: $e');
     }
-
-    debugPrint('meet_committee flag: ${event['meet_committee']}');
-    debugPrint(
-      'committee_meeting_location: ${event['committee_meeting_location']}',
-    );
-    debugPrint(
-      'committee_meeting_time raw: ${event['committee_meeting_time']}',
-    );
-    debugPrint('existingMeetingTime parsed: $existingMeetingTime');
 
     final result = await showNewEventPopup(
       context,
@@ -132,14 +203,16 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       existingCommitteeMeetingLocation: event['committee_meeting_location'],
       existingCommitteeMeetingTime: existingMeetingTime,
       existingCommitteeMemberId: event['committee_member_id'],
-      societyId: state.societyId,
+      societyId: _societyId,
     );
 
     if (result == null) return;
 
+    setState(() => _isLoading = true);
     try {
-      await state.updateEvent(
+      await updateSocietyEvent(
         eventId: eventId,
+        societyId: _societyId,
         name: result.name,
         startDate: result.startDate,
         startTime: result.startTime,
@@ -156,6 +229,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         committeeMeetingTime: result.committeeMeetingTime,
         committeeMemberId: result.committeeMemberId,
       );
+      await _loadEvents();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Event updated successfully!')),
@@ -163,6 +237,8 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       }
     } catch (e) {
       _snack('Failed to update event: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -173,11 +249,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
   }
 
   // ── Event card ─────────────────────────────────────────────────────────────
-  Widget _eventCard(
-    SocietySharedState state,
-    Map<String, String> event, {
-    bool isPast = false,
-  }) {
+  Widget _eventCard(Map<String, String> event, {bool isPast = false}) {
     return Opacity(
       opacity: isPast ? 0.55 : 1.0,
       child: Card(
@@ -186,7 +258,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: const Color(0x4F3E92CC),
         child: ListTile(
-          onTap: isPast ? null : () => _editEvent(state, event),
+          onTap: isPast ? null : () => _editEvent(event),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 8,
@@ -238,9 +310,8 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<SocietySharedState>();
-    final active = state.events.where((e) => e['is_past'] != 'true').toList();
-    final archived = state.events.where((e) => e['is_past'] == 'true').toList();
+    final active = _events.where((e) => e['is_past'] != 'true').toList();
+    final archived = _events.where((e) => e['is_past'] == 'true').toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0F6),
@@ -251,7 +322,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
-          if (state.isLoading)
+          if (_isLoading)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
@@ -266,7 +337,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: state.isLoading ? null : () => _addNewEvent(state),
+        onPressed: _isLoading ? null : _addNewEvent,
         backgroundColor: const Color(0xFF84DCC6),
         foregroundColor: const Color(0xFF222222),
         icon: const Icon(Icons.add),
@@ -311,8 +382,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: active.length,
-                itemBuilder: (context, index) =>
-                    _eventCard(state, active[index]),
+                itemBuilder: (context, index) => _eventCard(active[index]),
               ),
 
             if (archived.isNotEmpty) ...[
@@ -358,7 +428,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: archived.length,
                   itemBuilder: (context, index) =>
-                      _eventCard(state, archived[index], isPast: true),
+                      _eventCard(archived[index], isPast: true),
                 ),
                 crossFadeState: _showArchived
                     ? CrossFadeState.showSecond
