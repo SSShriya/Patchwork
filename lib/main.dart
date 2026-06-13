@@ -39,18 +39,51 @@ class _MainAppState extends State<MainApp> {
   late final AppLinks _appLinks;
   late final StreamSubscription<AuthState> _authSubscription;
 
+  bool _isLoggedIn = false;
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
     debugPrint('🟢 MAINAPP: initState — setting up auth listener');
 
-    // The StreamBuilder in build() already listens to onAuthStateChange
-    // and rebuilds with the correct screen. We only keep this subscription
-    // alive for debug logging — no imperative navigation here.
     _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
       debugPrint(
         '🟢 AUTH LISTENER: event=${data.event}, userId=${data.session?.user?.id ?? 'null'}',
       );
+
+      if (data.event == AuthChangeEvent.initialSession) {
+        // ✅ Only setState here — this sets the initial home widget ONCE
+        debugPrint(
+          '🟢 AUTH LISTENER: initialSession — setting up initial state',
+        );
+        if (mounted) {
+          setState(() {
+            _isLoggedIn = data.session != null;
+            _isInitialized = true;
+          });
+        }
+      } else if (data.event == AuthChangeEvent.signedIn) {
+        // ✅ No setState — just navigate imperatively
+        debugPrint('🟢 AUTH LISTENER: signedIn — navigating to _AppRouter');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const _AppRouter()),
+            (route) => false,
+          );
+          debugPrint('🟢 AUTH LISTENER: pushAndRemoveUntil(_AppRouter) done');
+        });
+      } else if (data.event == AuthChangeEvent.signedOut) {
+        // ✅ No setState — just navigate imperatively
+        debugPrint('🟢 AUTH LISTENER: signedOut — navigating to SignUpScreen');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const SignUpScreen()),
+            (route) => false,
+          );
+          debugPrint('🟢 AUTH LISTENER: pushAndRemoveUntil(SignUpScreen) done');
+        });
+      }
     });
 
     if (kIsWeb) {
@@ -62,6 +95,7 @@ class _MainAppState extends State<MainApp> {
 
   @override
   void dispose() {
+    debugPrint('🟢 MAINAPP: dispose — cancelling auth subscription');
     _authSubscription.cancel();
     super.dispose();
   }
@@ -117,66 +151,17 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      '🟢 MAINAPP: build called, _isInitialized=$_isInitialized, _isLoggedIn=$_isLoggedIn',
+    );
     return MaterialApp(
       navigatorKey: navigatorKey,
       navigatorObservers: [routeObserver],
-      home: StreamBuilder<AuthState>(
-        stream: supabase.auth.onAuthStateChange,
-        builder: (context, snapshot) {
-          debugPrint(
-            '🟢 STREAMBUILDER: connectionState=${snapshot.connectionState}, event=${snapshot.data?.event}',
-          );
-
-          // ── Still waiting for first event ───────────────────────────
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            debugPrint('🟢 STREAMBUILDER: waiting — showing loading spinner');
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          final session = snapshot.data?.session;
-          final user =
-              snapshot.data?.session?.user ?? supabase.auth.currentUser;
-
-          debugPrint(
-            '🟢 STREAMBUILDER: session=${session?.user?.id ?? 'null'}, user=${user?.id ?? 'null'}',
-          );
-
-          // // ── User exists but email not verified ──────────────────────
-          // if (user != null && user.emailConfirmedAt == null) {
-          //   return VerifyEmailScreen(email: user.email ?? '');
-          // }
-
-          // ── No user at all → sign up/login screen ───────────────────
-          // ── No user → sign up screen ────────────────────────────────
-          if (user == null || session == null) {
-            debugPrint(
-              '🟢 STREAMBUILDER: no user/session — scheduling pop to SignUpScreen',
-            );
-            // Use postFrameCallback so we don't navigate during build
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              debugPrint(
-                '🟢 STREAMBUILDER: postFrameCallback — pushAndRemoveUntil(SignUpScreen)',
-              );
-              navigatorKey.currentState?.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                (route) => false,
-              );
-            });
-            // Return SignUpScreen as the home widget too
-            return const SignUpScreen();
-          }
-
-          // Only re-fetch if the user changed
-          debugPrint('🟢 STREAMBUILDER: user exists — returning _AppRouter');
-          return const _AppRouter();
-          // routes: {
-          //   '/signup': (context) => const SignUpScreen(),
-          //   '/home': (context) => const MainShell(),
-          // },
-        },
-      ),
+      // ✅ Simple home — just a loading spinner until auth state is known.
+      // All navigation is handled imperatively via the auth listener above.
+      home: _isInitialized
+          ? (_isLoggedIn ? const _AppRouter() : const SignUpScreen())
+          : const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }

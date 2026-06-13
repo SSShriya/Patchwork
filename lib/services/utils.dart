@@ -10,11 +10,11 @@ Future<String> loadUserId() async {
   final id = await SessionManager.getUserId();
   if (id == null) {
     await SessionManager.clearSession();
-    throw Exception("User session not found. Please log in again.");
+    print('🔵 loadUserId: no session found, returning empty string');
+    return ''; // ✅ return empty instead of throwing — callers already guard for isEmpty
   }
   return id;
 }
-
 
 String formatGroupDate(DateTime dt) {
   final now = DateTime.now();

@@ -69,15 +69,17 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
         setState(() {
           _societyName = socData['name'] ?? '';
           _aboutController.text = socData['bio'] ?? '';
-          //_about = _aboutController.text;
+          // _about = aboutController.text;
           _existingImageUrl = socData['avatar_url'];
           _canContact = socData['can_message'] ?? false;
           _committee = committeeData;
         });
       }
     } catch (e) {
-      if (_disposed) return;
+      if (_disposed || !mounted) return;
       debugPrint('🟠 SOCIETYPROFILESCREEN: Error loading society profile: $e');
+      if (e.toString().contains('User session not found')) return;
+      _snack('Failed to load profile.');
     } finally {
       if (!_disposed && mounted) setState(() => _isLoading = false);
     }
@@ -290,11 +292,12 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
       return;
     }
 
-    debugPrint('🔴 LOGOUT: Calling SessionManager.clearSession()');
     try {
       debugPrint('🔴 LOGOUT: Calling supabase.auth.signOut()');
       await supabase.auth.signOut();
       debugPrint('🔴 LOGOUT: signOut() returned');
+      debugPrint('🔴 LOGOUT: Calling SessionManager.clearSession()');
+
       await SessionManager.clearSession();
       debugPrint('🔴 LOGOUT: clearSession() done');
 
