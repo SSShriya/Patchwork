@@ -49,7 +49,7 @@ class _MainAppState extends State<MainApp> {
 
     _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
       debugPrint(
-        '🟢 AUTH LISTENER: event=${data.event}, userId=${data.session?.user?.id ?? 'null'}',
+        '🟢 AUTH LISTENER: event=${data.event}, userId=${data.session?.user.id ?? 'null'}',
       );
 
       if (data.event == AuthChangeEvent.initialSession) {

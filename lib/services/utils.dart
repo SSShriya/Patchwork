@@ -10,8 +10,7 @@ Future<String> loadUserId() async {
   final id = await SessionManager.getUserId();
   if (id == null) {
     await SessionManager.clearSession();
-    print('🔵 loadUserId: no session found, returning empty string');
-    return ''; // ✅ return empty instead of throwing — callers already guard for isEmpty
+    return '';
   }
   return id;
 }
