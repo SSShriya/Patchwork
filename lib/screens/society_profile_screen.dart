@@ -93,10 +93,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
         if (_disposed) return;
         _imageFile = null;
       }
-      await updateSocDetails(
-        id: _societyId,
-        about: _aboutController.text.trim(),
-      );
+      await updateSocDetails(id: _societyId, bio: _aboutController.text.trim());
       if (_disposed) return;
       await _loadProfile();
       if (!_disposed && mounted) {
@@ -129,47 +126,67 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Edit About Section',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Montserrat',
-          ),
-        ),
-        content: TextField(
-          controller: tempController,
-          maxLines: 4,
-          decoration: InputDecoration(
-            hintText: 'Tell others about your society...',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final nav = Navigator.of(ctx);
-              final text = tempController.text.trim();
-              await updateSocDetails(id: _societyId, about: text);
-              if (!mounted) return;
-              setState(() {
-                _aboutController.text = text;
-                //_about = text;
-              });
-              nav.pop();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF84DCC6),
-            ),
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Edit About Section',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Montserrat',
+                ),
+              ),
+              content: TextField(
+                controller: tempController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Tell others about your society...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final text = tempController.text.trim();
+                    final nav = Navigator.of(ctx);
+
+                    try {
+                      await updateSocDetails(id: _societyId, bio: text);
+                    } catch (e) {
+                      if (mounted) _snack('Failed to update about section.');
+                      return; //
+                    }
+
+                    if (!mounted) return;
+                    setState(() => _aboutController.text = text);
+                    nav.pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF84DCC6),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) {
+      tempController.dispose();
+    });
   }
 
   // ── Contact toggle ─────────────────────────────────────────────────────────
@@ -250,7 +267,6 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   Future<void> _logout() async {
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -274,7 +290,6 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
       ),
     );
 
-
     if (confirmed != true) {
       return;
     }
@@ -294,7 +309,6 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
         );
       }
     }
-
   }
 
   void _snack(String msg) {

@@ -20,7 +20,7 @@ Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
     'id': row['id'],
     'name': row['name'],
     'uni': row['university'],
-    'about': row['bio'],
+    'bio': row['bio'],
     'location': row['location'],
     'image_url': row['avatar_url'],
     'can_message': row['can_message'],
@@ -29,13 +29,16 @@ Future<Map<String, dynamic>?> getSocDetails(String societyId) async {
 
 Future<void> updateSocDetails({
   required String id,
-  String? about,
+  String? bio,
   String? uni,
 }) async {
-  await supabase
-      .from('users')
-      .update({'bio': about, 'university': uni})
-      .eq('id', id);
+  final updates = <String, dynamic>{};
+  if (bio != null) updates['bio'] = bio;
+  if (uni != null) updates['university'] = uni;
+
+  if (updates.isEmpty) return; // nothing to update
+
+  await supabase.from('users').update(updates).eq('id', id);
 }
 
 Future<void> uploadSocImage(File imageFile, String socId) async {
