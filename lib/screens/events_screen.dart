@@ -72,8 +72,21 @@ class _EventsScreenState extends State<EventsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0F6),
       appBar: AppBar(
-        title: const Text('Events'),
-        backgroundColor: const Color(0XFF84DCC6),
+        title: const Text(
+          'Events',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 25,
+            fontFamily: 'Lora',
+          ),
+        ),
+        flexibleSpace: Opacity(
+          opacity: 0.6,
+          child: Image(
+            image: AssetImage('assets/images/teal_gingham.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
         foregroundColor: const Color(0XFF222222),
         automaticallyImplyLeading: false,
       ),

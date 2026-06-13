@@ -24,7 +24,8 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   String? _selectedEventName;
   List<MapEntry<String, String>> _eventFilters = [];
   Map<String, ({String endDay, String endTime})> _eventEndTimes = {};
-  Map<String, List<String>> _eventsInCommon = {};   // Map of otherUserId to list of eventNames
+  Map<String, List<String>> _eventsInCommon =
+      {}; // Map of otherUserId to list of eventNames
 
   String _searchQuery = '';
 
@@ -120,40 +121,39 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   /// Returns conversations that satisfy both the text search query
   /// and the currently selected event filter chip.
   List<ChatConversation> _applyFilters(List<ChatConversation> source) {
-  return source.where((chat) {
+    return source.where((chat) {
+      // --- Search filter ---
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final nameMatch = chat.name.toLowerCase().contains(query);
 
-    // --- Search filter ---
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      final nameMatch = chat.name.toLowerCase().contains(query);
+        // Get all event names for this chat's user, falling back to an empty list
+        final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
 
-      // Get all event names for this chat's user, falling back to an empty list
-      final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
+        // Match if any of the user's events contain the search query
+        final eventMatch = userEvents.any(
+          (eventName) => eventName.toLowerCase().contains(query),
+        );
 
-      // Match if any of the user's events contain the search query
-      final eventMatch = userEvents.any(
-        (eventName) => eventName.toLowerCase().contains(query),
-      );
+        if (!nameMatch && !eventMatch) return false;
+      }
 
-      if (!nameMatch && !eventMatch) return false;
-    }
+      // --- Event filter ---
+      if (_selectedEventName != null) {
+        // Get all event names for this chat's user
+        final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
 
-    // --- Event filter ---
-    if (_selectedEventName != null) {
-      // Get all event names for this chat's user
-      final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
+        // Keep this chat only if any of their events match the selected event name
+        final hasMatchingEvent = userEvents.any(
+          (eventName) => eventName == _selectedEventName,
+        );
 
-      // Keep this chat only if any of their events match the selected event name
-      final hasMatchingEvent = userEvents.any(
-        (eventName) => eventName == _selectedEventName,
-      );
+        if (!hasMatchingEvent) return false;
+      }
 
-      if (!hasMatchingEvent) return false;
-    }
-
-    return true;
-  }).toList();
-}
+      return true;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +187,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0F6),
       appBar: AppBar(
-        backgroundColor: const Color(0XFF84DCC6),
         foregroundColor: const Color(0XFF222222),
         elevation: 0,
         title: const Text(
@@ -196,6 +195,13 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
             fontWeight: FontWeight.bold,
             fontSize: 25,
             fontFamily: 'Lora',
+          ),
+        ),
+        flexibleSpace: Opacity(
+          opacity: 0.6,
+          child: Image(
+            image: AssetImage('assets/images/teal_gingham.png'),
+            fit: BoxFit.cover,
           ),
         ),
       ),
@@ -348,7 +354,8 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                   style: TextStyle(fontFamily: 'Bitter'),
                 ), // displays eventName
                 selected: isSelected,
-                onSelected: (_) => setState(() => _selectedEventName = entry.value),
+                onSelected: (_) =>
+                    setState(() => _selectedEventName = entry.value),
                 selectedColor: const Color(0xFFFC89AC),
                 backgroundColor: Colors.grey[200],
                 labelStyle: TextStyle(

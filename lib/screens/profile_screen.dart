@@ -785,9 +785,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text(
           'Setup Your Profile',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 25,
+            fontFamily: 'Lora',
+          ),
         ),
-        backgroundColor: Color(0XFF84DCC6),
+        flexibleSpace: Opacity(
+          opacity: 0.6,
+          child: Image(
+            image: AssetImage('assets/images/teal_gingham.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
         elevation: 0,
         centerTitle: true,
       ),
