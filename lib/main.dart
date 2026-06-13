@@ -44,12 +44,21 @@ class _MainAppState extends State<MainApp> {
   void initState() {
     super.initState();
 
+    // In main.dart — the auth listener
     _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.signedOut) {
         navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const SignUpScreen()),
-          (route) => false, // clears entire stack
+          (route) => false,
         );
+      } else if (data.event == AuthChangeEvent.signedIn) {
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const _AppRouter()),
+            (route) => false,
+          );
+        }
       }
     });
 
@@ -134,35 +143,14 @@ class _MainAppState extends State<MainApp> {
           if (user == null || session == null) return const SignUpScreen();
 
           // Only re-fetch if the user changed
-          if (_lastUserId != user.id) {
-            _lastUserId = user.id;
-            _routeFuture = _getUserRouteInfo(user.id);
-          }
 
-          return FutureBuilder<_UserRouteInfo>(
-            future: _routeFuture,
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              final info = snap.data;
-
-              if (info == null || !info.hasCompletedProfile) {
-                return ProfileScreen(isSociety: info?.isSociety ?? false);
-              }
-
-              return info.isSociety ? const SocietyNavBar() : const MainShell();
-            },
-          );
+          return const _AppRouter();
+          // routes: {
+          //   '/signup': (context) => const SignUpScreen(),
+          //   '/home': (context) => const MainShell(),
+          // },
         },
       ),
-      // routes: {
-      //   '/signup': (context) => const SignUpScreen(),
-      //   '/home': (context) => const MainShell(),
-      // },
     );
   }
 }
@@ -202,4 +190,47 @@ Future<_UserRouteInfo> _getUserRouteInfo(String userId) async {
   }
 
   return const _UserRouteInfo(isSociety: false, hasCompletedProfile: false);
+}
+
+// New widget — extract the FutureBuilder logic out of StreamBuilder
+class _AppRouter extends StatefulWidget {
+  const _AppRouter();
+
+  @override
+  State<_AppRouter> createState() => _AppRouterState();
+}
+
+class _AppRouterState extends State<_AppRouter> {
+  Future<_UserRouteInfo>? _routeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      _routeFuture = _getUserRouteInfo(userId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_UserRouteInfo>(
+      future: _routeFuture,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final info = snap.data;
+
+        if (info == null || !info.hasCompletedProfile) {
+          return ProfileScreen(isSociety: info?.isSociety ?? false);
+        }
+
+        return info.isSociety ? const SocietyNavBar() : const MainShell();
+      },
+    );
+  }
 }

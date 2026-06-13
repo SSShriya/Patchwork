@@ -54,18 +54,6 @@ class AuthService {
   }
 
   Future<void> signIn({required String email, required String password}) async {
-    final response = await supabase.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
-
-    final user = response.user;
-    final session = response.session;
-
-    if (user == null || session == null) {
-      throw AuthException('Login failed. Please check your credentials.');
-    }
-
-    await SessionManager.saveSession(userId: user.id);
+    await supabase.auth.signInWithPassword(email: email, password: password);
   }
 }
