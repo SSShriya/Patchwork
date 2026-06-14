@@ -136,8 +136,9 @@ class ConversationService {
       );
 
       String previewText(String content) {
-        if (content.startsWith('INVITATION_DATA:'))
+        if (content.startsWith('INVITATION_DATA:')) {
           return '📅 Invitation sent.';
+        }
         if (content == 'Invitation sent.') return '📅 Invitation sent.';
         if (content.startsWith('=== ') && content.endsWith(' ===')) {
           return content.replaceAll('=== ', '').replaceAll(' ===', '');
