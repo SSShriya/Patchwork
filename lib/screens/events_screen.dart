@@ -121,6 +121,7 @@ class _EventsScreenState extends State<EventsScreen> {
                 fit: BoxFit.cover,
               ),
             ),
+            centerTitle: true,
             foregroundColor: const Color(0XFF222222),
             automaticallyImplyLeading: false,
           ),

@@ -336,6 +336,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 fit: BoxFit.cover,
               ),
             ),
+            centerTitle: true,
             foregroundColor: const Color(0XFF222222),
             actions: [
               Stack(
