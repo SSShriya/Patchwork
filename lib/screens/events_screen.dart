@@ -27,6 +27,12 @@ class _EventsScreenState extends State<EventsScreen> {
     _loadEvents();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
+  }
+
   Future<void> _loadEvents() async {
     final events = await _eventService.getAllEvents();
     setState(() {
@@ -69,166 +75,208 @@ class _EventsScreenState extends State<EventsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F0F6),
-      appBar: AppBar(
-        title: const Text('Events'),
-        backgroundColor: const Color(0XFF84DCC6),
-        foregroundColor: const Color(0XFF222222),
-        automaticallyImplyLeading: false,
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search events...',
-                      hintStyle: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: _clearSearch,
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0XFF84DCC6)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0XFF84DCC6),
-                          width: 1.5,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0XFF84DCC6),
-                          width: 2,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
+    return Stack(
+      children: [
+        // BACKGROUND IMAGE
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/textures/bg_texture.jpg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                    BlendMode.multiply,
                   ),
                 ),
+              ),
+            ),
+          ),
+        ),
 
-                // Events Section
-                if (_filteredEvents.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'All Events',
-                          style: const TextStyle(
-                            fontFamily: 'Lora',
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+        // CONTENT
+        Scaffold(
+          // backgroundColor: const Color(0xFFF5F0F6),
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text(
+              'Events',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                fontFamily: 'Lora',
+              ),
+            ),
+            flexibleSpace: Opacity(
+              opacity: 0.6,
+              child: Image(
+                image: AssetImage('assets/images/teal_gingham.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            foregroundColor: const Color(0XFF222222),
+            automaticallyImplyLeading: false,
+          ),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search events...',
+                          hintStyle: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 14,
+                            color: Colors.grey,
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            _isGridView ? Icons.view_list : Icons.grid_view,
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: _clearSearch,
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0XFF84DCC6),
+                            ),
                           ),
-                          onPressed: () =>
-                              setState(() => _isGridView = !_isGridView),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0XFF84DCC6),
+                              width: 1.5,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0XFF84DCC6),
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  _isGridView
-                      ? LayoutBuilder(
-                          builder: (context, constraints) {
-                            final width = constraints.maxWidth;
-                            final crossAxisCount = width > 1200
-                                ? 5
-                                : width > 900
-                                ? 4
-                                : width > 600
-                                ? 3
-                                : 2;
-                            crossAxisCount;
-                            return GridView.builder(
+
+                    // Events Section
+                    if (_filteredEvents.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'All Events',
+                              style: const TextStyle(
+                                fontFamily: 'Lora',
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _isGridView ? Icons.view_list : Icons.grid_view,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _isGridView = !_isGridView),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _isGridView
+                          ? LayoutBuilder(
+                              builder: (context, constraints) {
+                                final width = constraints.maxWidth;
+                                final crossAxisCount = width > 1200
+                                    ? 5
+                                    : width > 900
+                                    ? 4
+                                    : width > 600
+                                    ? 3
+                                    : 2;
+                                crossAxisCount;
+                                return GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  itemCount: _filteredEvents.length,
+                                  itemBuilder: (_, i) => EventDetailCard(
+                                    card: _filteredEvents[i],
+                                    onTap: () =>
+                                        _openEventSummary(_filteredEvents[i]),
+                                  ),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: crossAxisCount,
+                                        mainAxisSpacing: 12,
+                                        crossAxisSpacing: 12,
+                                        childAspectRatio: 1.0,
+                                        mainAxisExtent: 230,
+                                      ),
+                                );
+                              },
+                            )
+                          : ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                               ),
                               itemCount: _filteredEvents.length,
-                              itemBuilder: (_, i) => EventDetailCard(
-                                card: _filteredEvents[i],
-                                onTap: () =>
-                                    _openEventSummary(_filteredEvents[i]),
-                              ),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: crossAxisCount,
-                                    mainAxisSpacing: 12,
-                                    crossAxisSpacing: 12,
-                                    childAspectRatio: 1.0,
-                                    mainAxisExtent: 230,
+                              itemBuilder: (_, i) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: SizedBox(
+                                  height: 150,
+                                  child: EventDetailCard(
+                                    card: _filteredEvents[i],
+                                    onTap: () =>
+                                        _openEventSummary(_filteredEvents[i]),
+                                    isListView: true,
                                   ),
-                            );
-                          },
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          itemCount: _filteredEvents.length,
-                          itemBuilder: (_, i) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: SizedBox(
-                              height: 150,
-                              child: EventDetailCard(
-                                card: _filteredEvents[i],
-                                onTap: () =>
-                                    _openEventSummary(_filteredEvents[i]),
-                                isListView: true,
+                                ),
                               ),
                             ),
+                    ] else
+                      Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No events found',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                ] else
-                  Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No events found',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
                       ),
-                    ),
-                  ),
-              ],
-            ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 }

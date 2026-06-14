@@ -33,6 +33,9 @@ flutter:
   uses-material-design: true
   assets: 
     - .env
+    - assets/textures/linen.jpg
+    - assets/textures/bg_texture.jpg
+    - assets/images/teal_gingham.png
   fonts:
     - family: Montserrat
       fonts:

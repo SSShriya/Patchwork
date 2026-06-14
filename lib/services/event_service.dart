@@ -73,6 +73,7 @@ class EventService {
         societyId: e['society_id'] ?? '',
         icon: Icons.event,
         color: const Color(0XFFFED766),
+        // color: const Color(0XFFfdffb6),
         imageUrl: e['image_url'] ?? '',
         meetCommittee: e['meet_committee'] ?? false,
         committeeMeetingLocation: e['committee_meeting_location'],

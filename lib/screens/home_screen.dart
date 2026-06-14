@@ -44,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
+    precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
   }
 
   @override
@@ -175,302 +176,240 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         .where((e) => (groupedMatches[e.eventId]?.isEmpty ?? true))
         .toList(); // already sorted by date from _loadMatches
 
-    return Scaffold(
-      backgroundColor: const Color(0XFFF5F0F6),
-      endDrawer: Drawer(
-        backgroundColor: const Color(0xFFF5F0F6),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Notifications',
-                  style: const TextStyle(
-                    fontFamily: 'Lora',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+    return Stack(
+      children: [
+        // BACKGROUND IMAGE
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/textures/bg_texture.jpg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                    BlendMode.multiply,
                   ),
                 ),
-                const SizedBox(height: 16),
+              ),
+            ),
+          ),
+        ),
 
-                // -- New matches --
-                Text(
-                  'New Connections !!',
-                  style: const TextStyle(
-                    fontFamily: 'Bitter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_mutualMatches.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'No new connections yet',
+        // CONTENT
+        Scaffold(
+          // backgroundColor: const Color(0XFFF5F0F6),
+          backgroundColor: Colors.transparent,
+          endDrawer: Drawer(
+            backgroundColor: const Color(0xFFF5F0F6),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Notifications',
+                      style: const TextStyle(
+                        fontFamily: 'Lora',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // -- New matches --
+                    Text(
+                      'New Connections !!',
+                      style: const TextStyle(
+                        fontFamily: 'Bitter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_mutualMatches.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          'No new connections yet',
+                          style: TextStyle(
+                            fontFamily: 'Merriweather',
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      )
+                    else
+                      ..._mutualMatches.map(
+                        (m) => _notifTile(
+                          m,
+                          isNew: !_seenNotificationIds.contains(
+                            'mutual_${m.otherUserId}',
+                          ),
+                          subtitle: m.eventName,
+                          badge: 'Matched',
+                          badgeColor: const Color(0XFF84DCC6),
+                          badgeTextColor: const Color(0XFF2A8C73),
+                        ),
+                      ),
+
+                    const Divider(height: 24),
+
+                    // -- Pending --
+                    Text(
+                      'Waiting for their response...',
+                      style: const TextStyle(
+                        fontFamily: 'Bitter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'You liked them — waiting to hear back',
                       style: TextStyle(
                         fontFamily: 'Merriweather',
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),
-                  )
-                else
-                  ..._mutualMatches.map(
-                    (m) => _notifTile(
-                      m,
-                      isNew: !_seenNotificationIds.contains(
-                        'mutual_${m.otherUserId}',
-                      ),
-                      subtitle: m.eventName,
-                      badge: 'Matched',
-                      badgeColor: const Color(0XFF84DCC6),
-                      badgeTextColor: const Color(0XFF2A8C73),
-                    ),
-                  ),
-
-                const Divider(height: 24),
-
-                // -- Pending --
-                Text(
-                  'Waiting for their response...',
-                  style: const TextStyle(
-                    fontFamily: 'Bitter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'You liked them — waiting to hear back',
-                  style: TextStyle(
-                    fontFamily: 'Merriweather',
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_awaitingMatches.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Center(
-                      child: Text(
-                        'No pending responses right now',
-                        style: TextStyle(
-                          fontFamily: 'Merriweather',
-                          fontSize: 13,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView(
-                      children: _awaitingMatches
-                          .map(
-                            (m) => _notifTile(
-                              m,
-                              isNew: !_seenNotificationIds.contains(
-                                'await_${m.otherUserId}',
-                              ),
-                              subtitle: m.eventName,
-                              badge: 'Pending',
-                              badgeColor: const Color(0XFFEFDD8D),
-                              badgeTextColor: const Color.fromARGB(
-                                255,
-                                86,
-                                66,
-                                3,
-                              ),
+                    const SizedBox(height: 8),
+                    if (_awaitingMatches.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Center(
+                          child: Text(
+                            'No pending responses right now',
+                            style: TextStyle(
+                              fontFamily: 'Merriweather',
+                              fontSize: 13,
+                              color: Colors.grey[500],
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-
-      appBar: AppBar(
-        title: Text(
-          'Welcome Back!',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 25,
-            fontFamily: 'Lora',
-          ),
-        ),
-        backgroundColor: const Color(0XFF84DCC6),
-        foregroundColor: const Color(0XFF222222),
-        actions: [
-          Stack(
-            children: [
-              Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () {
-                    final allCurrentIds = {
-                      ..._mutualMatches.map((m) => 'mutual_${m.otherUserId}'),
-                      ..._awaitingMatches.map((m) => 'await_${m.otherUserId}'),
-                    };
-                    setState(() => _seenNotificationIds = allCurrentIds);
-                    _saveSeenIds();
-                    Scaffold.of(ctx).openEndDrawer();
-                  },
+                          ),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView(
+                          children: _awaitingMatches
+                              .map(
+                                (m) => _notifTile(
+                                  m,
+                                  isNew: !_seenNotificationIds.contains(
+                                    'await_${m.otherUserId}',
+                                  ),
+                                  subtitle: m.eventName,
+                                  badge: 'Pending',
+                                  badgeColor: const Color(0XFFEFDD8D),
+                                  badgeTextColor: const Color.fromARGB(
+                                    255,
+                                    86,
+                                    66,
+                                    3,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (_unseenIds.isNotEmpty)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Color.fromARGB(255, 247, 101, 101),
-                      shape: BoxShape.circle,
+            ),
+          ),
+
+          appBar: AppBar(
+            title: Text(
+              'Welcome Back!',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                fontFamily: 'Lora',
+              ),
+            ),
+            flexibleSpace: Opacity(
+              opacity: 0.6,
+              child: Image(
+                image: AssetImage('assets/images/teal_gingham.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            foregroundColor: const Color(0XFF222222),
+            actions: [
+              Stack(
+                children: [
+                  Builder(
+                    builder: (ctx) => IconButton(
+                      icon: const Icon(Icons.notifications_outlined),
+                      onPressed: () {
+                        final allCurrentIds = {
+                          ..._mutualMatches.map(
+                            (m) => 'mutual_${m.otherUserId}',
+                          ),
+                          ..._awaitingMatches.map(
+                            (m) => 'await_${m.otherUserId}',
+                          ),
+                        };
+                        setState(() => _seenNotificationIds = allCurrentIds);
+                        _saveSeenIds();
+                        Scaffold.of(ctx).openEndDrawer();
+                      },
                     ),
-                    child: Center(
-                      child: Text(
-                        '${_unseenIds.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                  ),
+                  if (_unseenIds.isNotEmpty)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Color.fromARGB(255, 247, 101, 101),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${_unseenIds.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                ],
+              ),
             ],
+            automaticallyImplyLeading: false,
           ),
-        ],
-        automaticallyImplyLeading: false,
-      ),
 
-      body: RefreshIndicator(
-        onRefresh: _loadMatches,
-        color: const Color(0xFF84DCC6),
-        child: ListView(
-          // physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Your Upcoming Events",
-                    style: const TextStyle(
-                      fontFamily: 'Lora',
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tap an event to see who you\'re going with!',
-                    style: TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 140,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: _interestedEvents.length,
-                itemBuilder: (_, i) => InteractiveCard(
-                  card: _interestedEvents[i],
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EventMatchesScreen(
-                        allEvents: _interestedEvents,
-                        event: _interestedEvents[i],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Discover More People",
-                    style: const TextStyle(
-                      fontFamily: 'Lora',
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Connect with others going to your events!',
-                    style: TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // one MatchRow per event
-            // one MatchRow per event — with matches first, then without
-            if (_pendingMatches.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: Text("You've reviewed everyone!!")),
-              )
-            else ...[
-              // ── Events WITH matches ──
-              for (final event in eventsWithMatches)
-                MatchRow(
-                  cards: groupedMatches[event.eventId] ?? [],
-                  eventLabel: event.title,
-                  onTap: (i) {
-                    final cards = groupedMatches[event.eventId] ?? [];
-                    if (cards.isNotEmpty) _openProfile(cards[i]);
-                  },
-                ),
-
-              // ── Events WITHOUT matches ──
-              for (final event in eventsWithoutMatches)
+          body: RefreshIndicator(
+            onRefresh: _loadMatches,
+            color: const Color(0xFF84DCC6),
+            child: ListView(
+              // physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 24,
-                  ),
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        event.title,
+                        "Your Upcoming Events",
                         style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 18,
-                          color: Color(0XFF222222),
+                          fontFamily: 'Lora',
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'No one to connect with yet - check back soon!',
+                        'Tap an event to see who you\'re going with!',
                         style: TextStyle(
                           fontFamily: 'Merriweather',
                           fontSize: 14,
@@ -480,12 +419,109 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     ],
                   ),
                 ),
-            ],
+                SizedBox(
+                  height: 170,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _interestedEvents.length,
+                    itemBuilder: (_, i) => InteractiveCard(
+                      card: _interestedEvents[i],
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EventMatchesScreen(
+                            allEvents: _interestedEvents,
+                            event: _interestedEvents[i],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Discover More People",
+                        style: const TextStyle(
+                          fontFamily: 'Lora',
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Connect with others going to your events!',
+                        style: TextStyle(
+                          fontFamily: 'Merriweather',
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // one MatchRow per event
+                // one MatchRow per event — with matches first, then without
+                if (_pendingMatches.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: Text("You've reviewed everyone!!")),
+                  )
+                else ...[
+                  // ── Events WITH matches ──
+                  for (final event in eventsWithMatches)
+                    MatchRow(
+                      cards: groupedMatches[event.eventId] ?? [],
+                      eventLabel: event.title,
+                      onTap: (i) {
+                        final cards = groupedMatches[event.eventId] ?? [];
+                        if (cards.isNotEmpty) _openProfile(cards[i]);
+                      },
+                    ),
 
-            const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
-          ],
+                  // ── Events WITHOUT matches ──
+                  for (final event in eventsWithoutMatches)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event.title,
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              color: Color(0XFF222222),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'No one to connect with yet - check back soon!',
+                            style: TextStyle(
+                              fontFamily: 'Merriweather',
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+
+                const Padding(padding: EdgeInsets.fromLTRB(16, 24, 16, 12)),
+              ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

@@ -55,6 +55,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadExistingProfile();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
+  }
+
   Future<void> _loadExistingProfile() async {
     setState(() => _isLoading = true);
     try {
@@ -781,338 +787,377 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0XFFF5F0F6),
-      appBar: AppBar(
-        title: const Text(
-          'Setup Your Profile',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Color(0XFF84DCC6),
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0XFF84DCC6)),
-                ),
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── Profile Picture ────────────────────────────────
-                      Center(
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Profile Picture',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Upload a picture, preferably with you in it!',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 60,
-                                    backgroundColor: Colors.grey.shade200,
-                                    backgroundImage: _imageBytes != null
-                                        ? MemoryImage(_imageBytes!)
-                                              as ImageProvider
-                                        : _existingAvatarUrl != null
-                                        ? NetworkImage(_existingAvatarUrl!)
-                                        : null,
-                                    child:
-                                        (_imageBytes == null &&
-                                            _existingAvatarUrl == null)
-                                        ? Icon(
-                                            Icons.camera_alt_outlined,
-                                            size: 40,
-                                            color: Colors.grey.shade600,
-                                          )
-                                        : null,
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 4,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF4D5359),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.edit,
-                                        size: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      Text(
-                        'Your Information',
-                        style: const TextStyle(
-                          fontFamily: 'Lora',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _nameController,
-                        label: 'Full Name',
-                        icon: Icons.person_outline,
-                        required: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildUniversityField(),
-                      const SizedBox(height: 16),
-
-                      if (!widget.isSociety) ...[
-                        _buildYearGroupField(),
-                        const SizedBox(height: 16),
-
-                        _buildTextField(
-                          controller: _courseController,
-                          label: 'Course / Major',
-                          icon: Icons.book_outlined,
-                          required: false,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildBoroughField(),
-                        const SizedBox(height: 16),
-
-                        // ── Interests ──────────────────────────────────
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Your Interests',
-                              style: const TextStyle(
-                                fontFamily: 'Lora',
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              '${_interests.length}/$_maxInterests',
-                              style: const TextStyle(
-                                fontFamily: 'Merriweather',
-                                fontSize: 13,
-                                color: Color(0xFF4D5359),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          'Pick categories to explore interests',
-                          style: const TextStyle(
-                            fontFamily: 'Bitter',
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: interestCategories.map((category) {
-                            return GestureDetector(
-                              onTap: () => _openCategorySheet(category),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Color(0X8FADD8E6),
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      category.emoji,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      category.name,
-                                      style: const TextStyle(
-                                        fontFamily: 'Merriweather',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 12),
-
-                        if (_interests.isNotEmpty) ...[
-                          Wrap(
-                            spacing: 8.0,
-                            runSpacing: 4.0,
-                            children: _interests.map((interest) {
-                              return Chip(
-                                label: Text(
-                                  interest,
-                                  style: const TextStyle(
-                                    fontFamily: 'Merriweather',
-                                    color: Color(0xFF4D5359),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                backgroundColor: Color.fromARGB(
-                                  255,
-                                  210,
-                                  210,
-                                  249,
-                                ),
-                                side: const BorderSide(
-                                  color: Color(0XFF002147), // removes outline
-                                  width: 0,
-                                ),
-                                deleteIcon: const Icon(
-                                  Icons.cancel,
-                                  size: 18,
-                                  color: Color(0xFF4D5359),
-                                ),
-                                onDeleted: () => setState(() {
-                                  _interests.remove(interest);
-                                  _interestData.remove(interest);
-                                }),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // ── Interest Photos ────────────────────────────
-                          _buildPhotoGallery(),
-                          const SizedBox(height: 8),
-                        ],
-                        const SizedBox(height: 16),
-                      ],
-
-                      // ── Bio ───────────────────────────────────────────
-                      const Text(
-                        'Bio',
-                        style: TextStyle(
-                          fontFamily: 'Lora',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        'Favorite quotes? Ideal day off? Passion projects? Show off your personality and flare!',
-                        style: const TextStyle(
-                          fontFamily: 'Bitter',
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _bioController,
-                        maxLines: 3,
-                        keyboardType: TextInputType.multiline,
-                        decoration: InputDecoration(
-                          hintText: 'Introduce yourself!',
-                          hintStyle: TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0XFFDBB2D1),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'SAVE PROFILE',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _logout,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0XFFFD5757),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'LOG OUT',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
+    return Stack(
+      children: [
+        // BACKGROUND IMG
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/textures/bg_texture.jpg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                    BlendMode.multiply,
                   ),
                 ),
               ),
-      ),
+            ),
+          ),
+        ),
+
+        // CONTENT
+        Scaffold(
+          // backgroundColor: const Color(0XFFF5F0F6),
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text(
+              'Setup Your Profile',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                fontFamily: 'Lora',
+              ),
+            ),
+            flexibleSpace: Opacity(
+              opacity: 0.6,
+              child: Image(
+                image: AssetImage('assets/images/teal_gingham.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            elevation: 0,
+            centerTitle: true,
+          ),
+          body: SafeArea(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0XFF84DCC6),
+                      ),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ── Profile Picture ────────────────────────────────
+                          Center(
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Column(
+                                children: [
+                                  const Text(
+                                    'Profile Picture',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Upload a picture, preferably with you in it!',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Stack(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 60,
+                                        backgroundColor: Colors.grey.shade200,
+                                        backgroundImage: _imageBytes != null
+                                            ? MemoryImage(_imageBytes!)
+                                                  as ImageProvider
+                                            : _existingAvatarUrl != null
+                                            ? NetworkImage(_existingAvatarUrl!)
+                                            : null,
+                                        child:
+                                            (_imageBytes == null &&
+                                                _existingAvatarUrl == null)
+                                            ? Icon(
+                                                Icons.camera_alt_outlined,
+                                                size: 40,
+                                                color: Colors.grey.shade600,
+                                              )
+                                            : null,
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 4,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF4D5359),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.edit,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          Text(
+                            'Your Information',
+                            style: const TextStyle(
+                              fontFamily: 'Lora',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          _buildTextField(
+                            controller: _nameController,
+                            label: 'Full Name',
+                            icon: Icons.person_outline,
+                            required: true,
+                          ),
+                          const SizedBox(height: 16),
+
+                          _buildUniversityField(),
+                          const SizedBox(height: 16),
+
+                          if (!widget.isSociety) ...[
+                            _buildYearGroupField(),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              controller: _courseController,
+                              label: 'Course / Major',
+                              icon: Icons.book_outlined,
+                              required: false,
+                            ),
+                            const SizedBox(height: 16),
+
+                            _buildBoroughField(),
+                            const SizedBox(height: 16),
+
+                            // ── Interests ──────────────────────────────────
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Your Interests',
+                                  style: const TextStyle(
+                                    fontFamily: 'Lora',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  '${_interests.length}/$_maxInterests',
+                                  style: const TextStyle(
+                                    fontFamily: 'Merriweather',
+                                    fontSize: 13,
+                                    color: Color(0xFF4D5359),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              'Pick categories to explore interests',
+                              style: const TextStyle(
+                                fontFamily: 'Bitter',
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: interestCategories.map((category) {
+                                return GestureDetector(
+                                  onTap: () => _openCategorySheet(category),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Color(0X8FADD8E6),
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          category.emoji,
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          category.name,
+                                          style: const TextStyle(
+                                            fontFamily: 'Merriweather',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 12),
+
+                            if (_interests.isNotEmpty) ...[
+                              Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                children: _interests.map((interest) {
+                                  return Chip(
+                                    label: Text(
+                                      interest,
+                                      style: const TextStyle(
+                                        fontFamily: 'Merriweather',
+                                        color: Color(0xFF4D5359),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    backgroundColor: Color.fromARGB(
+                                      255,
+                                      210,
+                                      210,
+                                      249,
+                                    ),
+                                    side: const BorderSide(
+                                      color: Color(
+                                        0XFF002147,
+                                      ), // removes outline
+                                      width: 0,
+                                    ),
+                                    deleteIcon: const Icon(
+                                      Icons.cancel,
+                                      size: 18,
+                                      color: Color(0xFF4D5359),
+                                    ),
+                                    onDeleted: () => setState(() {
+                                      _interests.remove(interest);
+                                      _interestData.remove(interest);
+                                    }),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // ── Interest Photos ────────────────────────────
+                              _buildPhotoGallery(),
+                              const SizedBox(height: 8),
+                            ],
+                            const SizedBox(height: 16),
+                          ],
+
+                          // ── Bio ───────────────────────────────────────────
+                          const Text(
+                            'Bio',
+                            style: TextStyle(
+                              fontFamily: 'Lora',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Favorite quotes? Ideal day off? Passion projects? Show off your personality and flare!',
+                            style: const TextStyle(
+                              fontFamily: 'Bitter',
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: _bioController,
+                            maxLines: 3,
+                            keyboardType: TextInputType.multiline,
+                            decoration: InputDecoration(
+                              hintText: 'Introduce yourself!',
+                              hintStyle: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _saveProfile,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0XFFDBB2D1),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'SAVE PROFILE',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _logout,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0XFFFD5757),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'LOG OUT',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 

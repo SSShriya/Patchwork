@@ -38,6 +38,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
+    precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
   }
 
   @override
@@ -206,122 +207,163 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
           .toList(),
     );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F0F6),
-      appBar: AppBar(
-        backgroundColor: const Color(0XFF84DCC6),
-        foregroundColor: const Color(0XFF222222),
-        elevation: 0,
-        title: const Text(
-          'Messages',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 25,
-            fontFamily: 'Lora',
-          ),
-        ),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadConversations,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ----------- SEARCH BAR ----------
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                      child: TextField(
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Search by name or event...',
-                          hintStyle: const TextStyle(fontFamily: 'Montserrat'),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Color(0xFF4D5359),
-                          ),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(
-                                    Icons.clear,
-                                    color: Color(0xFF4D5359),
-                                  ),
-                                  onPressed: () {
-                                    FocusScope.of(context).unfocus();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: const Color(0XBFFEFEFA),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 0,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // --- EVENT FILTER CHIPS -----------------
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: _buildEventFilterRow(),
-                    ),
-
-                    // --- CONVERSATION SECTIONS ----------------
-                    if (filteredConversations.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40.0),
-                        child: Center(
-                          child: Text(
-                            'No conversations found matching criteria.',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      )
-                    else ...[
-                      if (filteredCurrentConvos.isNotEmpty)
-                        ChatSection(
-                          title: 'Current Chats',
-                          conversations: filteredCurrentConvos,
-                          eventsInCommon: _eventsInCommon,
-                          onRefresh: _loadConversations,
-                          currentChats: true,
-                        ),
-
-                      if (filteredSocietyConvos.isNotEmpty)
-                        ChatSection(
-                          title: 'Contact a Committee Member',
-                          conversations: filteredSocietyConvos,
-                          eventsInCommon: _eventsInCommon,
-                          onRefresh: _loadConversations,
-                          currentChats: true,
-                        ),
-
-                      if (filteredOldConvos.isNotEmpty)
-                        ChatSection(
-                          title: 'Old Chats',
-                          conversations: filteredOldConvos,
-                          eventsInCommon: _eventsInCommon,
-                          onRefresh: _loadConversations,
-                        ),
-                    ],
-                  ],
+    return Stack(
+      children: [
+        // BG IMG
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/textures/bg_texture.jpg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                    BlendMode.multiply,
+                  ),
                 ),
               ),
             ),
+          ),
+        ),
+
+        // CONTENT
+        Scaffold(
+          // backgroundColor: const Color(0xFFF5F0F6),
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            foregroundColor: const Color(0XFF222222),
+            elevation: 0,
+            title: const Text(
+              'Messages',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                fontFamily: 'Lora',
+              ),
+            ),
+            flexibleSpace: Opacity(
+              opacity: 0.6,
+              child: Image(
+                image: AssetImage('assets/images/teal_gingham.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _loadConversations,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ----------- SEARCH BAR ----------
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            16.0,
+                            16.0,
+                            16.0,
+                            8.0,
+                          ),
+                          child: TextField(
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Search by name or event...',
+                              hintStyle: const TextStyle(
+                                fontFamily: 'Montserrat',
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: Color(0xFF4D5359),
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.clear,
+                                        color: Color(0xFF4D5359),
+                                      ),
+                                      onPressed: () {
+                                        FocusScope.of(context).unfocus();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: Color(0XBFFEFEFA),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // --- EVENT FILTER CHIPS -----------------
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: _buildEventFilterRow(),
+                        ),
+
+                        // --- CONVERSATION SECTIONS ----------------
+                        if (filteredConversations.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40.0),
+                            child: Center(
+                              child: Text(
+                                'No conversations found matching criteria.',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          )
+                        else ...[
+                          // Current Chats Section
+                          if (filteredCurrentConvos.isNotEmpty)
+                            ChatSection(
+                              title: 'Current Chats',
+                              conversations: filteredCurrentConvos,
+                              eventsInCommon: _eventsInCommon,
+                              onRefresh: _loadConversations,
+                              currentChats: true,
+                            ),
+
+                          // Society Chats Section
+                          if (filteredSocietyConvos.isNotEmpty)
+                            ChatSection(
+                              title: 'Contact a Committee Member',
+                              conversations: filteredSocietyConvos,
+                              eventsInCommon: _eventsInCommon,
+                              onRefresh: _loadConversations,
+                              currentChats: true,
+                            ),
+
+                          // Old Chats Section
+                          if (filteredOldConvos.isNotEmpty)
+                            ChatSection(
+                              title: 'Old Chats',
+                              conversations: filteredOldConvos,
+                              eventsInCommon: _eventsInCommon,
+                              onRefresh: _loadConversations,
+                            ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
