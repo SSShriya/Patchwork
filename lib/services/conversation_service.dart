@@ -54,13 +54,12 @@ class ConversationService {
       final user1Data = r['user1'] as Map<String, dynamic>;
       final user2Data = r['user2'] as Map<String, dynamic>;
 
-      final bool isSociety =
-          user1Data['is_society'] == true || user2Data['is_society'] == true;
-
       final otherUser = currentUserId == user1Data['id']
           ? user2Data
           : user1Data;
       final actualOtherUserId = otherUser['id'] as String;
+
+      final bool isSociety = otherUser['is_society'] ?? otherUser['is_society'] == 'true' || false;
 
       final interestsList =
           (otherUser['user_interests'] as List<dynamic>? ?? [])
