@@ -13,6 +13,8 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../widgets/user_profile_card.dart';
 import '../screens/society_info_screen.dart';
 import '../services/event_service.dart';
+import '../services/utils.dart';
+import '../services/supabase_client.dart';
 
 class EventMatchesScreen extends StatefulWidget {
   final List<EventCard> allEvents;
@@ -83,6 +85,34 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
       const Duration(milliseconds: 300),
       () => _isAnimating = false,
     );
+  }
+
+  Future<void> _initiateSocietyChat(String societyId, String eventId) async {
+    final userId = await loadUserId();
+
+    // Respect the user_order check constraint (user1_id < user2_id)
+    final String user1;
+    final String user2;
+    if (societyId.compareTo(userId) <= 0) {
+      user1 = societyId;
+      user2 = userId;
+    } else {
+      user1 = userId;
+      user2 = societyId;
+    }
+
+    try {
+      await supabase.from('matches').insert({
+        'user1_id': user1,
+        'user2_id': user2,
+        'event_id': eventId,
+        'user1_accepted': true,
+        'user2_accepted': true,
+      });
+    } catch (e) {
+      // Row already exists — safe to ignore and proceed to chat
+      debugPrint('Match row already exists, proceeding: $e');
+    }
   }
 
   Widget _buildEventPage(EventCard event) {
@@ -289,33 +319,39 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
 
                       // Button 2: Message Society
                       GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DMScreen(
-                              chat: ChatConversation(
-                                matchCard: MatchCard(
-                                  currentUserId:
-                                      '', // filled in by DMScreen via loadUserId()
-                                  otherUserId: event.societyId,
-                                  title:
-                                      _societyNamesByEvent[event.eventId] ??
-                                      'Society',
-                                  university: '',
-                                  course: '',
-                                  bio: '',
-                                  eventId: event.eventId,
-                                  eventName: event.title,
-                                  yearGroup: '',
-                                  location: '',
-                                  interests: [],
-                                  imageUrl: '',
+                        onTap: () async {
+                          await _initiateSocietyChat(
+                            event.societyId,
+                            event.eventId,
+                          );
+                          if (!mounted) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DMScreen(
+                                chat: ChatConversation(
+                                  matchCard: MatchCard(
+                                    currentUserId: '',
+                                    otherUserId: event.societyId,
+                                    title:
+                                        _societyNamesByEvent[event.eventId] ??
+                                        'Society',
+                                    university: '',
+                                    course: '',
+                                    bio: '',
+                                    eventId: event.eventId,
+                                    eventName: event.title,
+                                    yearGroup: '',
+                                    location: '',
+                                    interests: [],
+                                    imageUrl: '',
+                                  ),
+                                  isSociety: true,
                                 ),
-                                isSociety: true,
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,

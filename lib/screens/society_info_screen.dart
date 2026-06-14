@@ -156,13 +156,29 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
   }
 
   Future<void> _initiateSocietyChat() async {
-    await supabase.from('matches').upsert({
-      'user1_id': widget.societyId,
-      'user2_id': userId,
-      'event_id': widget.eventId,
-      'user1_accepted': true,
-      'user2_accepted': true,
-    }, onConflict: 'user1_id,user2_id');
+    // ── Respect the user_order check constraint (user1_id < user2_id) ──
+    final String user1;
+    final String user2;
+    if (widget.societyId.compareTo(userId) <= 0) {
+      user1 = widget.societyId;
+      user2 = userId;
+    } else {
+      user1 = userId;
+      user2 = widget.societyId;
+    }
+
+    try {
+      await supabase.from('matches').insert({
+        'user1_id': user1,
+        'user2_id': user2,
+        'event_id': widget.eventId,
+        'user1_accepted': true,
+        'user2_accepted': true,
+      });
+    } catch (e) {
+      // Row already exists — safe to ignore and proceed to chat
+      debugPrint('Match row already exists, proceeding: $e');
+    }
   }
 
   // Helper check to see if the event item collection contains our current target ID
@@ -229,46 +245,56 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  if (_canMessage)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed:
-                              (_isLoading ||
-                                  _societyCard == null ||
-                                  !_isUserInterestedInCurrentEvent())
-                              ? null
-                              : () async {
-                                  final navigator = Navigator.of(context);
-                                  await _initiateSocietyChat();
-                                  if (!mounted) return;
-
-                                  navigator.push(
-                                    MaterialPageRoute(
-                                      builder: (context) => DMScreen(
-                                        chat: ChatConversation(
-                                          matchCard: _societyCard!,
-                                          isSociety: true,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0XFF84DCC6),
-                            foregroundColor: Colors.black,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          debugPrint('=== Message button pressed ===');
+                          debugPrint('_isLoading: $_isLoading');
+                          debugPrint('_societyCard: $_societyCard');
+                          debugPrint(
+                            '_isUserInterestedInCurrentEvent: ${_isUserInterestedInCurrentEvent()}',
+                          );
+                          try {
+                            final navigator = Navigator.of(context);
+                            await _initiateSocietyChat();
+                            if (!mounted) return;
+                            debugPrint('=== Navigating to DMScreen ===');
+                            navigator.push(
+                              MaterialPageRoute(
+                                builder: (context) => DMScreen(
+                                  chat: ChatConversation(
+                                    matchCard: _societyCard!,
+                                    isSociety: true,
+                                  ),
+                                ),
+                              ),
+                            );
+                          } catch (e, stack) {
+                            debugPrint('=== onPressed error: $e ===');
+                            debugPrint('=== stack: $stack ===');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            197,
+                            199,
+                            162,
+                            251,
                           ),
-                          child: Text(
-                            (_isLoading || _societyCard == null)
-                                ? "Loading..."
-                                : (_isUserInterestedInCurrentEvent()
-                                      ? "Message"
-                                      : "Express interest in an event to message!"),
-                          ),
+                          foregroundColor: Colors.black,
                         ),
-                      ],
-                    ),
+                        child: Text(
+                          (_isLoading || _societyCard == null)
+                              ? "Loading..."
+                              : (_isUserInterestedInCurrentEvent()
+                                    ? "Message"
+                                    : "Express interest in an event to message!"),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
