@@ -1,4 +1,5 @@
 import 'package:drp/services/utils.dart';
+import 'package:drp/tools/scalloped_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/match_card.dart';
@@ -351,75 +352,83 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ),
 
-          appBar: AppBar(
-            title: Text(
-              _userName.isNotEmpty
-                  ? 'Welcome, ${_userName.split(' ').first[0].toUpperCase()}${_userName.split(' ').first.substring(1)}!'
-                  : 'Welcome!',
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+            child: ClipPath(
+              clipper: ScallopedClipper(),
+              child: AppBar(
+                title: Text(
+                  _userName.isNotEmpty
+                      ? 'Welcome, ${_userName.split(' ').first[0].toUpperCase()}${_userName.split(' ').first.substring(1)}!'
+                      : 'Welcome!',
 
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                fontFamily: 'Montserrat',
-              ),
-            ),
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/teal_gingham.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            centerTitle: true,
-            foregroundColor: const Color(0XFF222222),
-            actions: [
-              Stack(
-                children: [
-                  Builder(
-                    builder: (ctx) => IconButton(
-                      icon: const Icon(Icons.notifications_outlined),
-                      onPressed: () {
-                        final allCurrentIds = {
-                          ..._mutualMatches.map(
-                            (m) => 'mutual_${m.otherUserId}',
-                          ),
-                          ..._awaitingMatches.map(
-                            (m) => 'await_${m.otherUserId}',
-                          ),
-                        };
-                        setState(() => _seenNotificationIds = allCurrentIds);
-                        _saveSeenIds();
-                        Scaffold.of(ctx).openEndDrawer();
-                      },
-                    ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 25,
+                    fontFamily: 'Lora',
                   ),
-                  if (_unseenIds.isNotEmpty)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 247, 101, 101),
-                          shape: BoxShape.circle,
+                ),
+                flexibleSpace: Opacity(
+                  opacity: 0.6,
+                  child: Image(
+                    image: AssetImage('assets/images/teal_gingham.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                centerTitle: true,
+                foregroundColor: const Color(0XFF222222),
+                actions: [
+                  Stack(
+                    children: [
+                      Builder(
+                        builder: (ctx) => IconButton(
+                          icon: const Icon(Icons.notifications_outlined),
+                          onPressed: () {
+                            final allCurrentIds = {
+                              ..._mutualMatches.map(
+                                (m) => 'mutual_${m.otherUserId}',
+                              ),
+                              ..._awaitingMatches.map(
+                                (m) => 'await_${m.otherUserId}',
+                              ),
+                            };
+                            setState(
+                              () => _seenNotificationIds = allCurrentIds,
+                            );
+                            _saveSeenIds();
+                            Scaffold.of(ctx).openEndDrawer();
+                          },
                         ),
-                        child: Center(
-                          child: Text(
-                            '${_unseenIds.length}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                      ),
+                      if (_unseenIds.isNotEmpty)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: Color.fromARGB(255, 247, 101, 101),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${_unseenIds.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                    ],
+                  ),
                 ],
+                automaticallyImplyLeading: false,
               ),
-            ],
-            automaticallyImplyLeading: false,
+            ),
           ),
 
           body: RefreshIndicator(

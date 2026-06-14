@@ -1,5 +1,6 @@
 import 'package:drp/services/utils.dart';
-
+import 'package:drp/tools/scalloped_clipper.dart';
+import 'package:drp/tools/stitched_search_bar.dart';
 import '../main.dart';
 import 'package:drp/widgets/chat_section.dart';
 import 'package:flutter/material.dart';
@@ -245,25 +246,31 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
         Scaffold(
           // backgroundColor: const Color(0xFFF5F0F6),
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            foregroundColor: const Color(0XFF222222),
-            elevation: 0,
-            title: const Text(
-              'Messages',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                fontFamily: 'Montserrat',
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+            child: ClipPath(
+              clipper: ScallopedClipper(),
+              child: AppBar(
+                foregroundColor: const Color(0XFF222222),
+                elevation: 0,
+                title: const Text(
+                  'Messages',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 25,
+                    fontFamily: 'Lora',
+                  ),
+                ),
+                flexibleSpace: Opacity(
+                  opacity: 0.6,
+                  child: Image(
+                    image: AssetImage('assets/images/teal_gingham.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                centerTitle: true,
               ),
             ),
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/teal_gingham.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            centerTitle: true,
           ),
           body: isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -282,44 +289,55 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                             16.0,
                             8.0,
                           ),
-                          child: TextField(
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                              });
+                          child: StitchedSearchBar(
+                            hintText: 'Search by name or event...',
+                            searchQuery: _searchQuery,
+                            borderRadius: 24,
+                            onChanged: (value) =>
+                                setState(() => _searchQuery = value),
+                            onClear: () {
+                              FocusScope.of(context).unfocus();
+                              setState(() => _searchQuery = '');
                             },
-                            decoration: InputDecoration(
-                              hintText: 'Search by name or event...',
-                              hintStyle: const TextStyle(
-                                fontFamily: 'Montserrat',
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.search,
-                                color: Color(0xFF4D5359),
-                              ),
-                              suffixIcon: _searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(
-                                        Icons.clear,
-                                        color: Color(0xFF4D5359),
-                                      ),
-                                      onPressed: () {
-                                        FocusScope.of(context).unfocus();
-                                        setState(() => _searchQuery = '');
-                                      },
-                                    )
-                                  : null,
-                              filled: true,
-                              fillColor: Color(0XBFFEFEFA),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 0,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
                           ),
+                          // child: TextField(
+                          //   onChanged: (value) {
+                          //     setState(() {
+                          //       _searchQuery = value;
+                          //     });
+                          //   },
+                          //   decoration: InputDecoration(
+                          //     hintText: 'Search by name or event...',
+                          //     hintStyle: const TextStyle(
+                          //       fontFamily: 'Montserrat',
+                          //     ),
+                          //     prefixIcon: const Icon(
+                          //       Icons.search,
+                          //       color: Color(0xFF4D5359),
+                          //     ),
+                          //     suffixIcon: _searchQuery.isNotEmpty
+                          //         ? IconButton(
+                          //             icon: const Icon(
+                          //               Icons.clear,
+                          //               color: Color(0xFF4D5359),
+                          //             ),
+                          //             onPressed: () {
+                          //               FocusScope.of(context).unfocus();
+                          //               setState(() => _searchQuery = '');
+                          //             },
+                          //           )
+                          //         : null,
+                          //     filled: true,
+                          //     fillColor: Color(0XBFFEFEFA),
+                          //     contentPadding: const EdgeInsets.symmetric(
+                          //       vertical: 0,
+                          //     ),
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(24),
+                          //       borderSide: BorderSide.none,
+                          //     ),
+                          //   ),
+                          // ),
                         ),
 
                         // --- EVENT FILTER CHIPS -----------------
