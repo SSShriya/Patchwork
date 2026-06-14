@@ -11,6 +11,7 @@ import '../widgets/interactive_card.dart';
 import '../screens/event_matches_screen.dart';
 import '../services/event_service.dart';
 import '../main.dart';
+import '../services/supabase_client.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onGoToEvents;
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final _eventService = EventService();
   List<MatchCard> _pendingMatches = [];
   List<EventCard> _interestedEvents = [];
+  String _userName = '';
   // List<MatchCard> _awaitingMatches = [];
   bool _loading = true;
   List<ChatConversation> conversations = [];
@@ -39,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
+    _loadUserName();
     _loadSeenIds().then((_) => _loadMatches());
   }
 
@@ -58,6 +61,32 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didPopNext() {
     _loadMatches();
+  }
+
+  Future<void> _loadUserName() async {
+    // Try metadata first (fast, no DB call)
+    final metaName =
+        supabase.auth.currentUser?.userMetadata?['name'] as String?;
+    if (metaName != null && metaName.trim().isNotEmpty) {
+      setState(() => _userName = metaName.trim());
+      return;
+    }
+
+    // Fall back to users table for older accounts
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final result = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', userId)
+          .maybeSingle();
+      if (result != null && mounted) {
+        setState(() => _userName = (result['name'] as String? ?? '').trim());
+      }
+    } catch (e) {
+      debugPrint('Could not load user name: $e');
+    }
   }
 
   Future<void> _loadMatches() async {
@@ -324,7 +353,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
           appBar: AppBar(
             title: Text(
-              'Welcome!',
+              _userName.isNotEmpty
+                  ? 'Welcome, ${_userName.split(' ').first[0].toUpperCase()}${_userName.split(' ').first.substring(1)}!'
+                  : 'Welcome!',
+
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 25,
