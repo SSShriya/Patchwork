@@ -84,7 +84,13 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
         filters.add(MapEntry(chat.eventId, chat.event));
       }
 
-      if (seenUsers.add(chat.otherUserId)) {
+      if (chat.isSociety) {
+        if (chat.eventId.isNotEmpty) {
+          (eventsInCommon[chat.otherUserId] ??= []).add(
+            MapEntry(chat.eventId, chat.event),
+          );
+        }
+      } else if (seenUsers.add(chat.otherUserId)) {
         eventsInCommon[chat.otherUserId] = await _eventService.eventsInCommon(
           myId,
           chat.otherUserId,
