@@ -2,6 +2,7 @@ import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
+import 'package:drp/widgets/waving_emoji.dart';
 
 class ChatSection extends StatelessWidget {
   final String title;
@@ -89,7 +90,9 @@ class ChatSection extends StatelessWidget {
                   ),
                   if (chat.event.isNotEmpty)
                     Text(
-                      (eventsInCommon[chat.otherUserId] ?? [chat.event]).join(", "),
+                      (eventsInCommon[chat.otherUserId] ?? [chat.event]).join(
+                        ", ",
+                      ),
                       style: const TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 11,
@@ -116,30 +119,29 @@ class ChatSection extends StatelessWidget {
                       : FontWeight.normal,
                 ),
               ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Text(
-                  //   chat.time,
-                  //   style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                  // ),
-                  // const SizedBox(height: 4),
-                  if (chat.numMessages == 0)
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      child: Text(
-                        'SAY HI!',
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          color: Color.fromARGB(255, 234, 78, 67),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+              trailing: chat.numMessages == 0
+                  ? SizedBox(
+                      height:
+                          56, // matches ListTile's constrained trailing height
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: const [
+                          WavingEmoji(size: 16),
+                          SizedBox(height: 3),
+                          Text(
+                            'Say Hi!',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              color: Color.fromARGB(255, 228, 138, 150),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                ],
-              ),
+                    )
+                  : null,
             );
           },
         ),
