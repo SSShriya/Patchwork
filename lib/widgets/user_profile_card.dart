@@ -702,7 +702,12 @@ class _UserProfileCardState extends State<UserProfileCard> {
   Future<void> _handleBlock(BuildContext context) async {
     try {
       await MatchService().blockUser(widget.card);
-      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        // Only pop if there is a route to pop back to
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(
@@ -848,7 +853,10 @@ class _UserProfileCardState extends State<UserProfileCard> {
       await MatchService().reportUser(widget.card, description);
       if (blockUser) await MatchService().blockUser(widget.card);
       if (context.mounted) {
-        Navigator.pop(context);
+        // Only pop if there is a route to pop back to
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
