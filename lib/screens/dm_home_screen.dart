@@ -389,8 +389,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                 selected: isSelected,
                 onSelected: (_) =>
                     setState(() => _selectedEventName = entry.value),
-                onSelected: (_) =>
-                    setState(() => _selectedEventName = entry.value),
                 selectedColor: const Color(0xFFFC89AC),
                 backgroundColor: Colors.grey[200],
                 labelStyle: TextStyle(
