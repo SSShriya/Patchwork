@@ -646,6 +646,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
               ),
             ),
           ),
+          _buildCommitteeMeetingCard(event),
 
           const SizedBox(height: 24),
 

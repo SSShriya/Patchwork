@@ -268,9 +268,9 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                     fit: BoxFit.cover,
                   ),
                 ),
+                centerTitle: true,
               ),
             ),
-            centerTitle: true,
           ),
           body: isLoading
               ? const Center(child: CircularProgressIndicator())
