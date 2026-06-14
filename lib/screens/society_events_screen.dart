@@ -363,7 +363,7 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
           child: AppBar(
             title: const Text(
               'Events',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 25,
                 fontFamily: 'Lora',
