@@ -33,7 +33,7 @@ class _DMScreenState extends State<DMScreen> {
   late final String _myUserId;
   List<DmMessage> _messages = [];
   final List<GlobalKey> _messageKeys = [];
-  List<String> _eventsInCommon = [];
+  List<MapEntry<String, String>> _eventsInCommon = [];
   bool _isLoading = true;
   bool _isReady = false;
   Timer? _pollingTimer;
@@ -468,7 +468,7 @@ class _DMScreenState extends State<DMScreen> {
                             ),
                             Expanded(
                               child: Text(
-                                interest,
+                                interest.value,
                                 style: const TextStyle(
                                   fontFamily: 'Bitter',
                                   fontSize: 13,

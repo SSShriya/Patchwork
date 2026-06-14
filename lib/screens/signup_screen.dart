@@ -16,7 +16,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _passwordFocusNode = FocusNode();
   final _nameController = TextEditingController();
-  /*
+
   final _uniEmailDomains = [
     'student.bbk.ac.uk',
     'brunel.ac.uk',
@@ -65,7 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'lse.edu',
     'ucl.com',
   ];
-*/
+
   bool _isSignUpMode = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -87,7 +87,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-   
+
     setState(() => _isLoading = true);
 
     try {
@@ -282,9 +282,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ).hasMatch(value.trim())) {
                         return 'Please enter a valid email address';
                       }
-                      //  if(!_uniEmailDomains.contains(value.trim().toLowerCase().split('@')[1])) {
-                      //     return 'Please use your university email address (ending in .ac.uk)';
-                      //  }
+                      if (!_uniEmailDomains.contains(
+                        value.trim().toLowerCase().split('@')[1],
+                      )) {
+                        return 'Please use your university email address (ending in .ac.uk)';
+                      }
                       return null;
                     },
                   ),

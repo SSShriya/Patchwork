@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import '../services/match_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'dm_individual_screen.dart';
+import '../models/match_convo.dart';
 
 class MatchProfileScreen extends StatefulWidget {
   final List<MatchCard> cards;
@@ -40,6 +42,146 @@ class _MatchProfileScreenState extends State<MatchProfileScreen> {
   }
 
   MatchCard get _current => _cards[_index];
+  // ── Committee card: single Message button ─────────────────────────────────
+  Widget _buildCommitteeControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton(
+          onPressed: () => _goToPage(
+            _index > 0 ? _index - 1 : _cards.length - 1,
+            goingForward: false,
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_back),
+              SizedBox(width: 4),
+              Text('Prev'),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF84DCC6),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+          icon: const Icon(Icons.message),
+          label: const Text('Message'),
+          onPressed: () => _acceptCommitteeCard(),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          onPressed: () =>
+              _goToPage(_index < _cards.length - 1 ? _index + 1 : 0),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Next'),
+              SizedBox(width: 4),
+              Icon(Icons.arrow_forward),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Regular match cards: accept/reject buttons ────────────────────────────
+  Widget _buildMatchControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton(
+          onPressed: () => _goToPage(
+            _index > 0 ? _index - 1 : _cards.length - 1,
+            goingForward: false,
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_back),
+              SizedBox(width: 4),
+              Text('Prev'),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.red,
+          ),
+          onPressed: () => _decide(false),
+          child: const Text('✕'),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.green,
+          ),
+          onPressed: () => _decide(true),
+          child: const Text('✓'),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          onPressed: () =>
+              _goToPage(_index < _cards.length - 1 ? _index + 1 : 0),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Next'),
+              SizedBox(width: 4),
+              Icon(Icons.arrow_forward),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Handle committee card message button ──────────────────────────────────
+  void _acceptCommitteeCard() async {
+    final card = _current;
+
+    // ── Set user_accepted = true in matches table ──
+    try {
+      await _matchService.acceptCommitteeCard(card);
+    } catch (e) {
+      debugPrint('acceptCommitteeCard error: $e');
+    }
+
+    if (!mounted) return;
+
+    // ── Navigate to the society's DM screen ──
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DMScreen(
+          chat: ChatConversation(
+            matchCard: MatchCard(
+              currentUserId: card.currentUserId,
+              otherUserId: card.societyId, // ← society user ID, not member ID
+              title: card.societyName,
+              university: '',
+              course: '',
+              bio: '',
+              eventId: card.eventId,
+              eventName: card.eventName,
+              yearGroup: '',
+              location: '',
+              interests: [],
+              imageUrl: '',
+            ),
+            isSociety: true,
+          ),
+        ),
+      ),
+    );
+  }
 
   void _goToPage(int newIndex, {bool goingForward = true}) {
     if (_isAnimating) return;
@@ -185,56 +327,9 @@ class _MatchProfileScreenState extends State<MatchProfileScreen> {
           // ── Controls ──
           Padding(
             padding: const EdgeInsets.only(bottom: 40),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton(
-                  onPressed: () => _goToPage(
-                    _index > 0 ? _index - 1 : _cards.length - 1,
-                    goingForward: false,
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back),
-                      SizedBox(width: 4),
-                      Text('Prev'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.red,
-                  ),
-                  onPressed: () => _decide(false),
-                  child: const Text('✕'),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
-                  ),
-                  onPressed: () => _decide(true),
-                  child: const Text('✓'),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () =>
-                      _goToPage(_index < _cards.length - 1 ? _index + 1 : 0),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Next'),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            child: _current.isCommitteeCard
+                ? _buildCommitteeControls()
+                : _buildMatchControls(),
           ),
         ],
       ),

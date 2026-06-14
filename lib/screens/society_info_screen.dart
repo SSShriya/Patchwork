@@ -164,13 +164,29 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
   }
 
   Future<void> _initiateSocietyChat() async {
-    await supabase.from('matches').upsert({
-      'user1_id': widget.societyId,
-      'user2_id': userId,
-      'event_id': widget.eventId,
-      'user1_accepted': true,
-      'user2_accepted': true,
-    }, onConflict: 'user1_id,user2_id');
+    // ── Respect the user_order check constraint (user1_id < user2_id) ──
+    final String user1;
+    final String user2;
+    if (widget.societyId.compareTo(userId) <= 0) {
+      user1 = widget.societyId;
+      user2 = userId;
+    } else {
+      user1 = userId;
+      user2 = widget.societyId;
+    }
+
+    try {
+      await supabase.from('matches').insert({
+        'user1_id': user1,
+        'user2_id': user2,
+        'event_id': widget.eventId,
+        'user1_accepted': true,
+        'user2_accepted': true,
+      });
+    } catch (e) {
+      // Row already exists — safe to ignore and proceed to chat
+      debugPrint('Match row already exists, proceeding: $e');
+    }
   }
 
   // Helper check to see if the event item collection contains our current target ID
@@ -279,261 +295,252 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      if (_canMessage)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed:
-                                  (_isLoading ||
-                                      _societyCard == null ||
-                                      !_isUserInterestedInCurrentEvent())
-                                  ? null
-                                  : () async {
-                                      final navigator = Navigator.of(context);
-                                      await _initiateSocietyChat();
-                                      if (!mounted) return;
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          debugPrint('=== Message button pressed ===');
+                          debugPrint('_isLoading: $_isLoading');
+                          debugPrint('_societyCard: $_societyCard');
+                          debugPrint(
+                            '_isUserInterestedInCurrentEvent: ${_isUserInterestedInCurrentEvent()}',
+                          );
+                          try {
+                            final navigator = Navigator.of(context);
+                            await _initiateSocietyChat();
+                            if (!mounted) return;
+                            debugPrint('=== Navigating to DMScreen ===');
+                            navigator.push(
+                              MaterialPageRoute(
+                                builder: (context) => DMScreen(
+                                  chat: ChatConversation(
+                                    matchCard: _societyCard!,
+                                    isSociety: true,
+                                  ),
+                                ),
+                              ),
+                            );
+                          } catch (e, stack) {
+                            debugPrint('=== onPressed error: $e ===');
+                            debugPrint('=== stack: $stack ===');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            197,
+                            199,
+                            162,
+                            251,
+                          ),
+                          foregroundColor: Colors.black,
+                        ),
+                        child: Text(
+                          (_isLoading || _societyCard == null)
+                              ? "Loading..."
+                              : (_isUserInterestedInCurrentEvent()
+                                    ? "Message"
+                                    : "Express interest in an event to message!"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
 
-                                      navigator.push(
-                                        MaterialPageRoute(
-                                          builder: (context) => DMScreen(
-                                            chat: ChatConversation(
-                                              matchCard: _societyCard!,
-                                              isSociety: true,
+            // ── About ──
+            _Card(
+              color: const Color(0XFFbde0fe),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'About:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _about.isEmpty
+                        ? 'No description provided for $_name.'
+                        : _about,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Events section ──
+            _Card(
+              color: const Color(0X8FE6AACE),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Events:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : _events.isEmpty
+                      ? const Text('No events listed.')
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _events.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, i) {
+                            final event = _events[i];
+                            return InkWell(
+                              onTap: () => _openEventSummary(event),
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: event.imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              event.imageUrl,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Container(
+                                              width: 60,
+                                              height: 60,
+                                              color: const Color(0XFFC0EDF7),
+                                              child: const Icon(
+                                                Icons.event,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            event.title,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0XFF84DCC6),
-                                foregroundColor: Colors.black,
+                                          if (event.subtitle.isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              event.subtitle,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black54,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.black38,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: Text(
-                                (_isLoading || _societyCard == null)
-                                    ? "Loading..."
-                                    : (_isUserInterestedInCurrentEvent()
-                                          ? "Message"
-                                          : "Express interest in an event to message!"),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
 
-                // ── About ──
-                _Card(
-                  color: const Color(0XFFbde0fe),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'About:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _about.isEmpty
-                            ? 'No description provided for $_name.'
-                            : _about,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                if (_canMessage)
-                  _Card(
-                    color: Color(0XFFd0f4de),
-                    child: Column(
+            if (_canMessage)
+              _Card(
+                color: Color(0X8FAAFFAA),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "COMMITTEE MEMBERS",
-                              style: TextStyle(
-                                color: Color(0XFF222222),
-                                fontSize: 14,
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(color: Colors.black12),
-
-                        if (_committee.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                            child: Text(
-                              "No committee members added yet.",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          )
-                        else
-                          // Renders the list items sequentially
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: _committee.length,
-                            itemBuilder: (context, index) {
-                              final member = _committee[index];
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.white60,
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Color(0XFF222222),
-                                  ),
-                                ),
-                                title: Text(
-                                  member['name'] ?? '',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Montserrat',
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  member['role'] ?? '',
-                                  style: TextStyle(color: Colors.grey[800]),
-                                ),
-                              );
-                            },
+                        Text(
+                          "COMMITTEE MEMBERS",
+                          style: TextStyle(
+                            color: Color(0XFF222222),
+                            fontSize: 14,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
                       ],
                     ),
-                  ),
+                    Divider(color: Colors.black12),
 
-                const SizedBox(height: 12),
-
-                // ── Events section ──
-                _Card(
-                  color: const Color(0X8FE6AACE),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Events:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    if (_committee.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Text(
+                          "No committee members added yet.",
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey[700],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : _events.isEmpty
-                          ? const Text('No events listed.')
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _events.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, i) {
-                                final event = _events[i];
-                                return InkWell(
-                                  onTap: () => _openEventSummary(event),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          child: event.imageUrl.isNotEmpty
-                                              ? Image.network(
-                                                  event.imageUrl,
-                                                  width: 60,
-                                                  height: 60,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  width: 60,
-                                                  height: 60,
-                                                  color: const Color(
-                                                    0XFFC0EDF7,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.event,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                event.title,
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              if (event
-                                                  .subtitle
-                                                  .isNotEmpty) ...[
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  event.subtitle,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          color: Colors.black38,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
+                      )
+                    else
+                      // Renders the list items sequentially
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _committee.length,
+                        itemBuilder: (context, index) {
+                          final member = _committee[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.white60,
+                              child: Icon(
+                                Icons.person,
+                                color: Color(0XFF222222),
+                              ),
                             ),
-                    ],
-                  ),
+                            title: Text(
+                              member['name'] ?? '',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Montserrat',
+                              ),
+                            ),
+                            subtitle: Text(
+                              member['role'] ?? '',
+                              style: TextStyle(color: Colors.grey[800]),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
+              ),
+            const SizedBox(height: 32),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

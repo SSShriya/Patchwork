@@ -2,8 +2,9 @@ import 'package:drp/tools/zig_zag_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
+import '../services/event_service.dart';
 
-class EventDetailCard extends StatelessWidget {
+class EventDetailCard extends StatefulWidget {
   final EventCard card;
   final VoidCallback? onTap;
   final bool isListView;
@@ -16,13 +17,42 @@ class EventDetailCard extends StatelessWidget {
   });
 
   @override
+  State<EventDetailCard> createState() => _EventDetailCardState();
+}
+
+class _EventDetailCardState extends State<EventDetailCard> {
+  final _eventService = EventService();
+  String _societyName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.card.societyId.isNotEmpty) {
+      _fetchSocietyName(widget.card.societyId);
+    }
+  }
+
+  Future<void> _fetchSocietyName(String societyId) async {
+    try {
+      final name = await _eventService.getSocietyName(societyId);
+      if (mounted) {
+        setState(() => _societyName = name);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _societyName = '');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ClipPath(
       clipper: ZigZagClipper(toothSize: 6.8),
       child: Material(
-        color: card.color,
+        color: widget.card.color,
         child: InkWell(
-          onTap: onTap ?? () {},
+          onTap: widget.onTap ?? () {},
           child: Stack(
             children: [
               // LINEN TEXTURE
@@ -39,7 +69,9 @@ class EventDetailCard extends StatelessWidget {
               // CONTENT
               Padding(
                 padding: const EdgeInsets.all(14),
-                child: isListView ? _buildListLayout() : _buildGridLayout(),
+                child: widget.isListView
+                    ? _buildListLayout()
+                    : _buildGridLayout(),
               ),
             ],
           ),
@@ -53,10 +85,10 @@ class EventDetailCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // ── Circle image ──
-        if (card.imageUrl.isNotEmpty)
+        if (widget.card.imageUrl.isNotEmpty)
           CircleAvatar(
             radius: 32,
-            backgroundImage: NetworkImage(card.imageUrl),
+            backgroundImage: NetworkImage(widget.card.imageUrl),
             onBackgroundImageError: (_, _) {},
             backgroundColor: const Color(0xFF222222).withValues(alpha: 0.1),
           )
@@ -78,8 +110,9 @@ class EventDetailCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // ── Title ──
               Text(
-                card.title,
+                widget.card.title,
                 style: const TextStyle(
                   fontFamily: 'Bitter',
                   fontSize: 16,
@@ -89,10 +122,38 @@ class EventDetailCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (card.subtitle.isNotEmpty) ...[
+
+              // ── Society Name ── 👈 added here
+              if (_societyName.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.group,
+                      size: 12,
+                      color: const Color(0xFF222222).withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        _societyName,
+                        style: TextStyle(
+                          fontFamily: 'Merriweather',
+                          fontSize: 12,
+                          color: const Color(0xFF222222).withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              if (widget.card.subtitle.isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Text(
-                  card.subtitle,
+                  widget.card.subtitle,
                   style: TextStyle(
                     fontFamily: 'Merriweather',
                     fontSize: 12,
@@ -112,9 +173,9 @@ class EventDetailCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 3),
                   Text(
-                    '${DateFormat('d MMM').format(card.startDateTime)}  ·  '
-                    '${DateFormat('HH:mm').format(card.startDateTime)}'
-                    '-${DateFormat('HH:mm').format(card.endDateTime)}',
+                    '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
+                    '${DateFormat('HH:mm').format(widget.card.startDateTime)}'
+                    '-${DateFormat('HH:mm').format(widget.card.endDateTime)}',
                     style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 11,
@@ -135,7 +196,7 @@ class EventDetailCard extends StatelessWidget {
                   const SizedBox(width: 3),
                   Expanded(
                     child: Text(
-                      card.location,
+                      widget.card.location,
                       style: TextStyle(
                         fontFamily: 'Merriweather',
                         fontSize: 11,
@@ -153,9 +214,9 @@ class EventDetailCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 3),
                   Text(
-                    card.cost == 0
+                    widget.card.cost == 0
                         ? 'Free'
-                        : '£${card.cost.toStringAsFixed(2)}',
+                        : '£${widget.card.cost.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 11,
@@ -176,12 +237,12 @@ class EventDetailCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        // ── Image header (only when there's an image) ──
-        if (card.imageUrl.isNotEmpty)
+        // ── Image header ──
+        if (widget.card.imageUrl.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.network(
-              card.imageUrl,
+              widget.card.imageUrl,
               height: 75,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -189,16 +250,14 @@ class EventDetailCard extends StatelessWidget {
             ),
           ),
 
-        if (card.imageUrl.isNotEmpty) const SizedBox(height: 8),
+        if (widget.card.imageUrl.isNotEmpty) const SizedBox(height: 8),
 
-        // ── Icon + Title row ──
+        // ── Title ──
         Row(
           children: [
-            // Icon(card.icon, size: 20, color: const Color(0xFF222222)),
-            // const SizedBox(width: 6),
             Expanded(
               child: Text(
-                card.title,
+                widget.card.title,
                 style: const TextStyle(
                   fontFamily: 'Bitter',
                   fontSize: 16,
@@ -211,13 +270,41 @@ class EventDetailCard extends StatelessWidget {
             ),
           ],
         ),
+
+        // ── Society Name ──
+        if (_societyName.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          Row(
+            children: [
+              Icon(
+                Icons.group,
+                size: 12,
+                color: const Color(0xFF222222).withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _societyName,
+                  style: TextStyle(
+                    fontFamily: 'Merriweather',
+                    fontSize: 12,
+                    color: const Color(0xFF222222).withValues(alpha: 0.7),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+
         const SizedBox(height: 3),
 
         // ── Subtitle ──
-        if (card.subtitle.isNotEmpty)
+        if (widget.card.subtitle.isNotEmpty)
           Expanded(
             child: Text(
-              card.subtitle,
+              widget.card.subtitle,
               style: TextStyle(
                 fontFamily: 'Merriweather',
                 fontSize: 12,
@@ -244,9 +331,9 @@ class EventDetailCard extends StatelessWidget {
             const SizedBox(width: 4),
             Expanded(
               child: Text(
-                '${DateFormat('d MMM').format(card.startDateTime)}  ·  '
-                '${DateFormat('HH:mm').format(card.startDateTime)}'
-                '-${DateFormat('HH:mm').format(card.endDateTime)}',
+                '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
+                '${DateFormat('HH:mm').format(widget.card.startDateTime)}'
+                '-${DateFormat('HH:mm').format(widget.card.endDateTime)}',
                 style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 12,
@@ -271,7 +358,7 @@ class EventDetailCard extends StatelessWidget {
             const SizedBox(width: 4),
             Expanded(
               child: Text(
-                card.location,
+                widget.card.location,
                 style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 12,
@@ -295,7 +382,9 @@ class EventDetailCard extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              card.cost == 0 ? 'Free' : '£${card.cost.toStringAsFixed(2)}',
+              widget.card.cost == 0
+                  ? 'Free'
+                  : '£${widget.card.cost.toStringAsFixed(2)}',
               style: TextStyle(
                 fontFamily: 'Merriweather',
                 fontSize: 12,

@@ -7,7 +7,7 @@ import 'package:drp/widgets/waving_emoji.dart';
 class ChatSection extends StatelessWidget {
   final String title;
   final List<ChatConversation> conversations;
-  final Map<String, List<String>> eventsInCommon;
+  final Map<String, List<MapEntry<String, String>>> eventsInCommon;
   final VoidCallback onRefresh;
   final bool currentChats;
 
@@ -90,7 +90,7 @@ class ChatSection extends StatelessWidget {
                   ),
                   if (chat.event.isNotEmpty)
                     Text(
-                      (eventsInCommon[chat.otherUserId] ?? [chat.event]).join(
+                      (eventsInCommon[chat.otherUserId]?.map((e) => e.value) ?? [chat.event]).join(
                         ", ",
                       ),
                       style: const TextStyle(

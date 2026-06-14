@@ -169,14 +169,23 @@ class EventService {
     return result['name'];
   }
 
-  Future<List<String>> eventsInCommon(String user1Id, String user2Id) async {
+  Future<List<MapEntry<String, String>>> eventsInCommon(
+    String user1Id,
+    String user2Id,
+  ) async {
     final rows = await supabase.rpc(
       'get_common_active_events',
       params: {'user1_id': user1Id, 'user2_id': user2Id},
     );
+
     return (rows as List)
-        .map((r) => r['event_name'] as String? ?? '')
-        .where((name) => name.isNotEmpty)
+        .map(
+          (r) => MapEntry(
+            r['event_id'] as String? ?? '',
+            r['event_name'] as String? ?? '',
+          ),
+        )
+        .where((entry) => entry.key.isNotEmpty)
         .toList();
   }
 

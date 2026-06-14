@@ -24,12 +24,16 @@ class _UserProfileCardState extends State<UserProfileCard> {
   late Future<List<EventCard>> _otherEventsFuture;
 
   @override
+  @override
   void initState() {
     super.initState();
-    _otherEventsFuture = EventService().otherUserEvents(
-      widget.card.currentUserId,
-      widget.card.otherUserId,
-    );
+    // Committee member IDs are not user IDs, so skip the events lookup
+    _otherEventsFuture = widget.card.isCommitteeCard
+        ? Future.value([])
+        : EventService().otherUserEvents(
+            widget.card.currentUserId,
+            widget.card.otherUserId,
+          );
   }
 
   @override
@@ -62,7 +66,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (widget.card.yearGroup != "")
+                if (!widget.card.isCommitteeCard && widget.card.yearGroup != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -82,26 +86,71 @@ class _UserProfileCardState extends State<UserProfileCard> {
                       ),
                     ],
                   ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.account_balance, size: 17),
-                    const SizedBox(width: 2),
-                    Flexible(
-                      child: Text(
-                        widget.card.university,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
+                if (!widget.card.isCommitteeCard &&
+                    widget.card.university != "")
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.account_balance, size: 17),
+                      const SizedBox(width: 2),
+                      Flexible(
+                        child: Text(
+                          widget.card.university,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-                if (widget.card.course != "")
+                    ],
+                  ),
+                if (widget.card.isCommitteeCard &&
+                    widget.card.societyName != "")
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.group, size: 17),
+                      const SizedBox(width: 2),
+                      Flexible(
+                        child: Text(
+                          widget.card.societyName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                if (widget.card.isCommitteeCard && widget.card.course != "")
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.badge, size: 17),
+                      const SizedBox(width: 2),
+                      Flexible(
+                        child: Text(
+                          widget.card.course,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                if (!widget.card.isCommitteeCard && widget.card.course != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -122,7 +171,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
                     ],
                   ),
                 const SizedBox(height: 10),
-                if (widget.card.location != "")
+                if (!widget.card.isCommitteeCard && widget.card.location != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -207,9 +256,14 @@ class _UserProfileCardState extends State<UserProfileCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'You both want to attend:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  widget.card.isCommitteeCard
+                      ? '${widget.card.title} is hosting:' // ← changed
+                      : 'You both want to attend:', // ← original
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -236,21 +290,78 @@ class _UserProfileCardState extends State<UserProfileCard> {
 
           if (widget.card.interestPhotos.isNotEmpty) const SizedBox(height: 12),
 
-          // ── Bio ───────────────────────────────────────────────────────
+          // ── Bio / Committee meeting details ───────────────────────────
           _Card(
             color: const Color.fromARGB(255, 221, 226, 243),
-
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Bio:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(widget.card.bio, style: const TextStyle(fontSize: 16)),
-              ],
-            ),
+            child: widget.card.isCommitteeCard
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Meeting Details:',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // ── Location ──
+                      if (widget.card.location.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                widget.card.location,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (widget.card.location.isNotEmpty)
+                        const SizedBox(height: 8),
+                      // ── Time + Date ──
+                      if (widget.card.bio.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                widget.card.bio, // "14:00 · 14 Jun 2026"
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Bio:',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.card.bio,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
           ),
 
           const SizedBox(height: 12),
@@ -323,6 +434,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
 
   // ── Interests card ────────────────────────────────────────────────────────
   Widget _buildInterests() {
+    if (widget.card.isCommitteeCard) return const SizedBox.shrink();
     return _Card(
       color: const Color(0X8FBFCC94),
       child: Column(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import 'utils.dart';
 import 'supabase_client.dart';
+import 'package:intl/intl.dart';
 
 class MatchService {
   // ── Helper: parse interest photos from a user data map ─────────────────
@@ -30,7 +31,7 @@ class MatchService {
   }
 
   Future<List<MatchCard>> getPendingMatches(String currentUserId) async {
-    // ── Fetch current user — include photo_url in user_interests ──────────
+    // ── Fetch current user ─────────────────────────────────────────────────
     final currentUserData = await supabase
         .from('users')
         .select(
@@ -58,19 +59,21 @@ class MatchService {
 
     if (interestedEventIds.isEmpty) return [];
 
-    // ── Fetch matches — include photo_url in user_interests ───────────────
+    // ── Fetch matches ──────────────────────────────────────────────────────
     final rows = await supabase
         .from('matches')
         .select(
           '*, '
-          'events(event_name), '
+          'events(event_name, start_day, meet_committee, committee_meeting_location, committee_meeting_time, committee_member_id, committee_members(id, name, role, avatar_url)), '
           'user1:user1_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url), is_society), '
           'user2:user2_id(id, name, university, course, bio, year_group, location, avatar_url, user_interests(interest, photo_url), is_society)',
         )
         .inFilter('event_id', interestedEventIds)
         .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId');
 
-    // ── Build match cards ─────────────────────────────────────────────────
+    // ── Track which events yielded at least one match card ─────────────────
+    final eventsWithMatches = <String>{};
+    final eventsUserAlreadyAcceptedCommittee = <String>{};
     final matches = <(MatchCard, int)>[];
 
     for (final row in rows as List) {
@@ -86,11 +89,16 @@ class MatchService {
 
       final isUser1 = currentUserId == user1Id;
       final currentUserAccepted = isUser1 ? user1Accepted : user2Accepted;
-      if (currentUserAccepted != null ||
-          user1IsSociety == true ||
-          user2IsSociety == true) {
+
+      // ── If this is a society row, check if user has already accepted ──
+      if (user1IsSociety == true || user2IsSociety == true) {
+        if (currentUserAccepted == true) {
+          eventsUserAlreadyAcceptedCommittee.add(eventId);
+        }
         continue;
       }
+
+      if (currentUserAccepted != null) continue;
 
       final otherUserData = isUser1
           ? row['user2'] as Map<String, dynamic>
@@ -98,7 +106,7 @@ class MatchService {
 
       if (otherUserData['is_society'] == true ||
           otherUserData['is_society'].toString() == 'true') {
-        continue; // was break — changed to continue so remaining rows process
+        continue;
       }
 
       final otherUserId = otherUserData['id'] as String;
@@ -135,6 +143,9 @@ class MatchService {
 
       if (score < 1) continue;
 
+      // ── This event yielded a valid match card ──────────────────────────
+      eventsWithMatches.add(eventId);
+
       matches.add((
         MatchCard(
           currentUserId: currentUserId,
@@ -153,6 +164,85 @@ class MatchService {
         ),
         score,
       ));
+    }
+
+    // ── Committee cards for events with no matches ─────────────────────────
+    // Exclude events where the user has already accepted the committee card
+    final eventsWithoutMatches = interestedEventIds
+        .where(
+          (id) =>
+              !eventsWithMatches.contains(id) &&
+              !eventsUserAlreadyAcceptedCommittee.contains(id),
+        )
+        .toList();
+
+    if (eventsWithoutMatches.isNotEmpty) {
+      final committeeRows = await supabase
+          .from('events')
+          .select(
+            'event_id, event_name, start_day, society_id, meet_committee, '
+            'committee_meeting_location, committee_meeting_time, '
+            'committee_members(id, name, role, avatar_url), '
+            'society:society_id(name)',
+          )
+          .inFilter('event_id', eventsWithoutMatches)
+          .eq('meet_committee', true)
+          .not('committee_member_id', 'is', null);
+
+      for (final event in committeeRows as List) {
+        final eventId = event['event_id'] as String;
+        final eventName = event['event_name'] as String? ?? '';
+        final meetingLocation =
+            event['committee_meeting_location'] as String? ?? '';
+        final meetingTimeRaw = event['committee_meeting_time'] as String?;
+        final meetingTime = meetingTimeRaw != null
+            ? DateFormat(
+                'HH:mm',
+              ).format(DateFormat('HH:mm:ss').parse(meetingTimeRaw))
+            : '';
+        final member = event['committee_members'] as Map<String, dynamic>?;
+
+        if (member == null) continue;
+
+        final memberName = member['name'] as String? ?? 'Committee Member';
+        final memberRole = member['role'] as String? ?? '';
+        final memberAvatar = member['avatar_url'] as String? ?? '';
+        final memberId = member['id'] as String? ?? '';
+        final societyName =
+            (event['society'] as Map<String, dynamic>?)?['name'] as String? ??
+            '';
+        final societyId = event['society_id'] as String? ?? '';
+
+        final startDayRaw = event['start_day'] as String?;
+        final formattedDate = startDayRaw != null
+            ? DateFormat('d MMM yyyy').format(DateTime.parse(startDayRaw))
+            : '';
+
+        matches.add((
+          MatchCard(
+            currentUserId: currentUserId,
+            otherUserId: memberId,
+            title: memberName,
+            university: '',
+            course: memberRole,
+            bio: [
+              meetingTime,
+              if (formattedDate.isNotEmpty) formattedDate,
+            ].join(' · '),
+            eventId: eventId,
+            eventName: eventName,
+            yearGroup: '',
+            interests: [],
+            location: meetingLocation,
+            imageUrl: memberAvatar,
+            isCommitteeCard: true,
+            societyName: societyName,
+            societyId: societyId,
+            interestPhotos: {},
+          ),
+          0,
+        ));
+      }
     }
 
     matches.sort((a, b) => b.$2.compareTo(a.$2));
@@ -178,6 +268,32 @@ class MatchService {
         : row['user1_accepted'] as bool?;
 
     return otherAccepted == true;
+  }
+
+  Future<void> acceptCommitteeCard(MatchCard card) async {
+    // For committee cards, otherUserId is a committee_members.id, not a users.id
+    // so we can't use matchKey. Instead match on currentUserId + eventId only.
+    final currentUserId = card.currentUserId;
+    final eventId = card.eventId;
+
+    // Find the row — current user could be user1 or user2
+    final row = await supabase
+        .from('matches')
+        .select('user1_id, user2_id')
+        .eq('event_id', eventId)
+        .or('user1_id.eq.$currentUserId,user2_id.eq.$currentUserId')
+        .single();
+
+    final isUser1 = row['user1_id'] == currentUserId;
+
+    await supabase
+        .from('matches')
+        .update({
+          if (isUser1) 'user1_accepted': true else 'user2_accepted': true,
+        })
+        .eq('user1_id', row['user1_id'])
+        .eq('user2_id', row['user2_id'])
+        .eq('event_id', eventId);
   }
 
   Future<List<MatchCard>> getAwaitingResponseMatches(

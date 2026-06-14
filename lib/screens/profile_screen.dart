@@ -323,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         const Text(
-          'Tap an interest to add an optional photo!',
+          'Tap an interest to edit or add an optional photo!',
           style: TextStyle(
             fontFamily: 'Bitter',
             fontSize: 13,
@@ -933,7 +933,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildStitchedField(
                             _buildTextField(
                               controller: _nameController,
-                              label: 'Full Name',
+                              label: 'Name',
                               icon: Icons.person_outline,
                               required: true,
                             ),
