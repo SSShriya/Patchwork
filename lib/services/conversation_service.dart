@@ -162,6 +162,108 @@ class ConversationService {
     }).toList();
   }
 
+  Future<List<ChatConversation>> getSocietyConversations() async {
+    final currentUserId = await loadUserId();
+
+    // Get all messages to/from societies
+    final messageRows = await supabase
+        .from('messages')
+        .select('sender_id, recipient_id, content, created_at')
+        .or('sender_id.eq.$currentUserId,recipient_id.eq.$currentUserId')
+        .order('created_at', ascending: true);
+
+    final allMessages = List<Map<String, dynamic>>.from(messageRows as List);
+
+    // Collect unique society IDs we've messaged
+    final societyIds = <String>{};
+    for (final msg in allMessages) {
+      final senderId = msg['sender_id'] as String;
+      final recipientId = msg['recipient_id'] as String;
+      if (senderId != currentUserId) societyIds.add(senderId);
+      if (recipientId != currentUserId) societyIds.add(recipientId);
+    }
+
+    if (societyIds.isEmpty) return [];
+
+    // Fetch only the ones that are societies
+    final societyRows = await supabase
+        .from('users')
+        .select('id, name, avatar_url, is_society')
+        .inFilter('id', societyIds.toList())
+        .eq('is_society', true);
+
+    final societies = List<Map<String, dynamic>>.from(societyRows as List);
+    if (societies.isEmpty) return [];
+
+    final conversations = <ChatConversation>[];
+
+    for (final society in societies) {
+      final societyId = society['id'] as String;
+
+      final directMessages = allMessages.where((msg) {
+        final sId = msg['sender_id'] as String;
+        final rId = msg['recipient_id'] as String;
+        return (sId == currentUserId && rId == societyId) ||
+            (sId == societyId && rId == currentUserId);
+      }).toList();
+
+      if (directMessages.isEmpty) continue;
+
+      // Parse last message timestamp
+      DateTime? lastMessageAt;
+      final rawTime = directMessages.last['created_at']?.toString();
+      if (rawTime != null) {
+        final normalised = rawTime.endsWith('Z') || rawTime.contains('+')
+            ? rawTime
+            : '${rawTime}Z';
+        lastMessageAt = DateTime.tryParse(normalised)?.toUtc();
+      }
+
+      String previewText(String content) {
+        if (content.startsWith('INVITATION_DATA:')) {
+          return '📅 Invitation sent.';
+        }
+        if (content == 'Invitation sent.') return '📅 Invitation sent.';
+        if (content.startsWith('=== ') && content.endsWith(' ===')) {
+          return content.replaceAll('=== ', '').replaceAll(' ===', '');
+        }
+        return content;
+      }
+
+      final matchCard = MatchCard(
+        currentUserId: currentUserId,
+        otherUserId: societyId,
+        title: society['name'] as String? ?? 'Society',
+        university: '',
+        course: '',
+        bio: '',
+        eventId: '',
+        eventName: '',
+        yearGroup: '',
+        location: '',
+        interests: [],
+        imageUrl: society['avatar_url'] as String? ?? '',
+      );
+
+      conversations.add(
+        ChatConversation(
+          matchCard: matchCard,
+          numMessages: directMessages.length,
+          lastMessage: previewText(
+            directMessages.last['content'] as String? ?? '',
+          ),
+          time: 'Active',
+          unreadCount: 0,
+          isOnline: false,
+          isSociety: true,
+          lastMessageAt: lastMessageAt,
+        ),
+      );
+    }
+
+    return conversations;
+  }
+
   Future<String> recordMessage(
     String message,
     String sender,

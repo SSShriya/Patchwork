@@ -58,7 +58,27 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
 
   Future<void> _loadConversations() async {
     setState(() => isLoading = true);
-    final convos = await _conversationService.getConversations();
+
+    // Fetch both in parallel
+    final results = await Future.wait([
+      _conversationService.getConversations(),
+      _conversationService.getSocietyConversations(), // ← NEW
+    ]);
+
+    final matchConvos = results[0];
+    final societyConvos = results[1];
+
+    // Merge, avoiding duplicates (in case a society also has a match row)
+    final existingSocietyIds = matchConvos
+        .where((c) => c.isSociety)
+        .map((c) => c.otherUserId)
+        .toSet();
+
+    final dedupedSocietyConvos = societyConvos
+        .where((c) => !existingSocietyIds.contains(c.otherUserId))
+        .toList();
+
+    final convos = [...matchConvos, ...dedupedSocietyConvos]; // ← merged
 
     final eventIds = convos
         .map((c) => c.eventId)
@@ -67,15 +87,14 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
         .toList();
 
     final endTimes = await _conversationService.getEventEndTimes(eventIds);
-
     final myId = await loadUserId();
 
     final Map<String, List<String>> eventsInCommon = {};
-
     final seen = <String>{};
     final filters = <MapEntry<String, String>>[];
+
     for (final chat in convos) {
-      if (_isChatCurrent(chat) && seen.add(chat.eventId)) {
+      if (!chat.isSociety && _isChatCurrent(chat) && seen.add(chat.eventId)) {
         filters.add(MapEntry(chat.eventId, chat.event));
         eventsInCommon[chat.otherUserId] = await _eventService.eventsInCommon(
           myId,
