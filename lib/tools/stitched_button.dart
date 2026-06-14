@@ -1,3 +1,4 @@
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 
 class StitchedButton extends StatelessWidget {
@@ -23,8 +24,13 @@ class StitchedButton extends StatelessWidget {
     return GestureDetector(
       onTap: isLoading ? null : onPressed,
       child: CustomPaint(
-        foregroundPainter: _StitchedBorderPainter(
-          color: stitchColor.withValues(alpha: 0.6),
+        foregroundPainter: StitchedBorderPainter(
+          stitchColor: stitchColor.withValues(alpha: 0.6),
+          strokeWidth: 2.6,
+          dashLength: 8.0,
+          gapLength: 8.0,
+          borderRadius: 8.0,
+          inset: 5.0,
         ),
         child: Container(
           width: double.infinity,
@@ -58,53 +64,4 @@ class StitchedButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _StitchedBorderPainter extends CustomPainter {
-  final Color color;
-  _StitchedBorderPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2.6
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final inset = 5.0;
-    final r = 8.0;
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            inset,
-            inset,
-            size.width - inset * 2,
-            size.height - inset * 2,
-          ),
-          Radius.circular(r),
-        ),
-      );
-
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0;
-      const dash = 8.0;
-      const gap = 8.0;
-      while (distance < metric.length) {
-        final t1 = metric.getTangentForOffset(distance);
-        final t2 = metric.getTangentForOffset(
-          (distance + dash).clamp(0, metric.length),
-        );
-        if (t1 != null && t2 != null) {
-          canvas.drawLine(t1.position, t2.position, paint);
-        }
-        distance += dash + gap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_StitchedBorderPainter old) => old.color != color;
 }

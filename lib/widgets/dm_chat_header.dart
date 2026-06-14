@@ -1,4 +1,5 @@
 import 'package:drp/screens/society_info_screen.dart';
+import 'package:drp/tools/scalloped_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';
@@ -33,14 +34,38 @@ class DmChatHeader extends StatelessWidget implements PreferredSizeWidget {
             context,
             MaterialPageRoute(
               builder: (_) => Scaffold(
-                appBar: AppBar(
-                  backgroundColor: _accentColor,
-                  foregroundColor: Colors.white,
-                  title: Text(card.title),
+                appBar: PreferredSize(
+                  preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+                  child: ClipPath(
+                    clipper: ScallopedClipper(),
+                    child: AppBar(
+                      // backgroundColor: _accentColor,
+                      // foregroundColor: Colors.white,
+                      title: Text(
+                        card.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 25,
+                          fontFamily: 'Lora',
+                        ),
+                      ),
+                      flexibleSpace: Opacity(
+                        opacity: 0.6,
+                        child: Image(
+                          image: AssetImage('assets/images/teal_gingham.png'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                body: chat.isSociety ? 
-                        SocietyInfoScreen(societyId: chat.matchCard.otherUserId, eventId: chat.matchCard.eventId) : 
-                        UserProfileCard(card: card, accepted: true),
+
+                body: chat.isSociety
+                    ? SocietyInfoScreen(
+                        societyId: chat.matchCard.otherUserId,
+                        eventId: chat.matchCard.eventId,
+                      )
+                    : UserProfileCard(card: card, accepted: true),
               ),
             ),
           );

@@ -1,3 +1,5 @@
+import 'package:drp/tools/scalloped_clipper.dart';
+import 'package:drp/tools/stitched_search_bar.dart';
 import 'package:flutter/material.dart';
 import '../models/event_card.dart';
 import '../services/event_service.dart';
@@ -105,26 +107,34 @@ class _EventsScreenState extends State<EventsScreen> {
         // CONTENT
         Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: const Text(
-              'Events',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                fontFamily: 'Lora',
+
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+            child: ClipPath(
+              clipper: ScallopedClipper(),
+              child: AppBar(
+                title: const Text(
+                  'Events',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 25,
+                    fontFamily: 'Lora',
+                  ),
+                ),
+                flexibleSpace: Opacity(
+                  opacity: 0.6,
+                  child: Image(
+                    image: AssetImage('assets/images/teal_gingham.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                centerTitle: true,
+                foregroundColor: const Color(0XFF222222),
+                automaticallyImplyLeading: false,
               ),
             ),
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/teal_gingham.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            centerTitle: true,
-            foregroundColor: const Color(0XFF222222),
-            automaticallyImplyLeading: false,
           ),
+
           body: _loading
               ? const Center(child: CircularProgressIndicator())
               : ListView(
@@ -133,46 +143,54 @@ class _EventsScreenState extends State<EventsScreen> {
                     // Search Bar
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: TextField(
+                      child: StitchedSearchBar(
                         controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search events...',
-                          hintStyle: const TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear),
-                                  onPressed: _clearSearch,
-                                )
-                              : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0XFF84DCC6),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0XFF84DCC6),
-                              width: 1.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0XFF84DCC6),
-                              width: 2,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
+                        hintText: 'Search events...',
+                        searchQuery: _searchController.text,
+                        borderRadius: 30,
+                        onChanged: (_) => setState(() {}),
+                        onClear: _clearSearch,
                       ),
+                      // child: TextField(
+                      //   controller: _searchController,
+                      //   decoration: InputDecoration(
+                      //     hintText: 'Search events...',
+                      //     hintStyle: const TextStyle(
+                      //       fontFamily: 'Montserrat',
+                      //       fontSize: 14,
+                      //       color: Colors.grey,
+                      //     ),
+                      //     prefixIcon: const Icon(Icons.search),
+                      //     suffixIcon: _searchController.text.isNotEmpty
+                      //         ? IconButton(
+                      //             icon: const Icon(Icons.clear),
+                      //             onPressed: _clearSearch,
+                      //           )
+                      //         : null,
+                      //     border: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       borderSide: const BorderSide(
+                      //         color: Color(0XFF84DCC6),
+                      //       ),
+                      //     ),
+                      //     enabledBorder: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       borderSide: const BorderSide(
+                      //         color: Color(0XFF84DCC6),
+                      //         width: 1.5,
+                      //       ),
+                      //     ),
+                      //     focusedBorder: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       borderSide: const BorderSide(
+                      //         color: Color(0XFF84DCC6),
+                      //         width: 2,
+                      //       ),
+                      //     ),
+                      //     filled: true,
+                      //     fillColor: Colors.white,
+                      //   ),
+                      // ),
                     ),
 
                     // Events Section

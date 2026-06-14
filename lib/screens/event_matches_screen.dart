@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
@@ -58,6 +59,12 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
       }
     }
     log("Successfully initialized page");
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
   }
 
   Future<void> _loadCommitteeMember(EventCard event) async {
@@ -364,269 +371,281 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                 builder: (context) => EventProfileScreen(card: event),
               ),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: event.color,
-                borderRadius: BorderRadius.circular(16),
+            child: CustomPaint(
+              foregroundPainter: StitchedBorderPainter(
+                stitchColor: Colors.white.withValues(alpha: 0.7),
+                strokeWidth: 2.6,
+                dashLength: 8.0,
+                gapLength: 8.0,
+                borderRadius: 10.0,
+                inset: 7.0,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        event.icon,
-                        color: const Color(0xFF222222),
-                        size: 32,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          event.title,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF222222),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: event.color,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          event.icon,
+                          color: const Color(0xFF222222),
+                          size: 32,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF222222),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.group,
-                        size: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _societyNamesByEvent[event.eventId] ?? '',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: const Color(0xFF222222).withValues(alpha: 0.8),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.group,
+                          size: 14,
+                          color: Color(0xFF222222),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _societyNamesByEvent[event.eventId] ?? '',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: const Color(
+                              0xFF222222,
+                            ).withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 8),
-                  Text(
-                    event.subtitle,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: const Color(0xFF222222).withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Tap here to find out more!',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: const Color(0XFF224488).withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(color: Color(0xFF222222), thickness: 0.3),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: Color(0xFF222222),
+                    const SizedBox(height: 8),
+                    Text(
+                      event.subtitle,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: const Color(0xFF222222).withValues(alpha: 0.8),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DateFormat(
-                          'EEEE, d MMMM yyyy',
-                        ).format(event.startDateTime),
-                        style: const TextStyle(
-                          fontSize: 13,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tap here to find out more!',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: const Color(0XFF224488).withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(color: Color(0xFF222222), thickness: 0.3),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
                           color: Color(0xFF222222),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${DateFormat('HH:mm').format(event.startDateTime)} - ${DateFormat('HH:mm').format(event.endDateTime)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF222222),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          event.location,
+                        const SizedBox(width: 6),
+                        Text(
+                          DateFormat(
+                            'EEEE, d MMMM yyyy',
+                          ).format(event.startDateTime),
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF222222),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-                  const Divider(color: Color(0xFF222222), thickness: 0.3),
-                  const SizedBox(height: 8),
-
-                  // ── View Society Button ──────────────────────────────
-                  // ── Buttons Row ────────────────────────────────────────────────
-                  Row(
-                    children: [
-                      // Button 1: View Society
-                      GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SocietyInfoScreen(
-                              societyId: event.societyId,
-                              eventId: event.eventId,
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Color(0xFF222222),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${DateFormat('HH:mm').format(event.startDateTime)} - ${DateFormat('HH:mm').format(event.endDateTime)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Color(0xFF222222),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            event.location,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF222222),
                             ),
                           ),
                         ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF222222,
-                            ).withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF222222,
-                              ).withValues(alpha: 0.15),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
-                                Icons.groups_rounded,
-                                size: 16,
-                                color: Color(0xFF222222),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'View Society',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF222222),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      ],
+                    ),
 
-                      const SizedBox(width: 8),
+                    const SizedBox(height: 12),
+                    const Divider(color: Color(0xFF222222), thickness: 0.3),
+                    const SizedBox(height: 8),
 
-                      // Button 2: Message Society
-                      GestureDetector(
-                        onTap: () async {
-                          await _initiateSocietyChat(
-                            event.societyId,
-                            event.eventId,
-                          );
-                          if (!mounted) return;
-                          Navigator.push(
+                    // ── View Society Button ──────────────────────────────
+                    // ── Buttons Row ────────────────────────────────────────────────
+                    Row(
+                      children: [
+                        // Button 1: View Society
+                        GestureDetector(
+                          onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DMScreen(
-                                chat: ChatConversation(
-                                  matchCard: MatchCard(
-                                    currentUserId: '',
-                                    otherUserId: event.societyId,
-                                    title:
-                                        _societyNamesByEvent[event.eventId] ??
-                                        'Society',
-                                    university: '',
-                                    course: '',
-                                    bio: '',
-                                    eventId: event.eventId,
-                                    eventName: event.title,
-                                    yearGroup: '',
-                                    location: '',
-                                    interests: [],
-                                    imageUrl: '',
-                                  ),
-                                  isSociety: true,
-                                ),
+                              builder: (context) => SocietyInfoScreen(
+                                societyId: event.societyId,
+                                eventId: event.eventId,
                               ),
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF222222,
-                            ).withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
                               color: const Color(
                                 0xFF222222,
-                              ).withValues(alpha: 0.15),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
-                                Icons.message_rounded,
-                                size: 16,
-                                color: Color(0xFF222222),
+                              ).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF222222,
+                                ).withValues(alpha: 0.15),
                               ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Message Society',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.groups_rounded,
+                                  size: 16,
                                   color: Color(0xFF222222),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 8),
+                                Text(
+                                  'View Society',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF222222),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                ], // closes Column
+
+                        const SizedBox(width: 8),
+
+                        // Button 2: Message Society
+                        GestureDetector(
+                          onTap: () async {
+                            await _initiateSocietyChat(
+                              event.societyId,
+                              event.eventId,
+                            );
+                            if (!mounted) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DMScreen(
+                                  chat: ChatConversation(
+                                    matchCard: MatchCard(
+                                      currentUserId: '',
+                                      otherUserId: event.societyId,
+                                      title:
+                                          _societyNamesByEvent[event.eventId] ??
+                                          'Society',
+                                      university: '',
+                                      course: '',
+                                      bio: '',
+                                      eventId: event.eventId,
+                                      eventName: event.title,
+                                      yearGroup: '',
+                                      location: '',
+                                      interests: [],
+                                      imageUrl: '',
+                                    ),
+                                    isSociety: true,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF222222,
+                                ).withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.message_rounded,
+                                  size: 16,
+                                  color: Color(0xFF222222),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Message Society',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF222222),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ], // closes Column
+                ),
               ),
-            ), // closes Container
-          ), // closes outer GestureDetector
+            ),
+          ),
           _buildCommitteeMeetingCard(event),
 
           const SizedBox(height: 24),
@@ -852,98 +871,122 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
   Widget build(BuildContext context) {
     final currentEvent = widget.allEvents[_currentPage];
 
-    return Scaffold(
-      backgroundColor: const Color(0XFFF5F0F6),
-      appBar: AppBar(
-        title: Text(
-          currentEvent.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 25,
-            fontFamily: 'Lora',
-          ),
-        ),
-        flexibleSpace: Opacity(
-          opacity: 0.6,
-          child: Image(
-            image: AssetImage('assets/images/yellow_gingham.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        foregroundColor: const Color(0XFF222222),
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // ── AnimatedSwitcher handles circular swipe with correct direction ──
-          Expanded(
-            child: GestureDetector(
-              onHorizontalDragEnd: (details) {
-                final velocity = details.primaryVelocity ?? 0;
-                if (velocity < -300) {
-                  _goToPage(
-                    _currentPage < widget.allEvents.length - 1
-                        ? _currentPage + 1
-                        : 0,
-                    goingForward: true,
-                  );
-                } else if (velocity > 300) {
-                  _goToPage(
-                    _currentPage > 0
-                        ? _currentPage - 1
-                        : widget.allEvents.length - 1,
-                    goingForward: false,
-                  );
-                }
-              },
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                layoutBuilder: (currentChild, _) =>
-                    currentChild ?? const SizedBox(),
-                transitionBuilder: (child, animation) {
-                  final isEntering = child.key == ValueKey(_currentPage);
-                  final beginOffset = isEntering
-                      ? Offset(_goingForward ? 1.0 : -1.0, 0.0)
-                      : Offset(_goingForward ? -1.0 : 1.0, 0.0);
-                  return SlideTransition(
-                    position:
-                        Tween<Offset>(
-                          begin: beginOffset,
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOut,
-                          ),
-                        ),
-                    child: child,
-                  );
-                },
-                child: KeyedSubtree(
-                  key: ValueKey(_currentPage),
-                  child: _buildEventPage(currentEvent),
+    return Stack(
+      children: [
+        // BACKGROUND IMG
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/textures/bg_texture.jpg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                    BlendMode.multiply,
+                  ),
                 ),
               ),
             ),
           ),
+        ),
 
-          // ── Worm indicator ──
-          if (widget.allEvents.length > 1) ...[
-            const SizedBox(height: 12),
-            AnimatedSmoothIndicator(
-              activeIndex: _currentPage,
-              count: widget.allEvents.length,
-              effect: const WormEffect(
-                dotHeight: 8,
-                dotWidth: 8,
-                activeDotColor: Color(0XFF84DCC6),
-                dotColor: Colors.grey,
+        // CONTENT
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: Text(
+              currentEvent.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                fontFamily: 'Lora',
               ),
             ),
-            const SizedBox(height: 16),
-          ],
-        ],
-      ),
+            flexibleSpace: Opacity(
+              opacity: 0.6,
+              child: Image(
+                image: AssetImage('assets/images/yellow_gingham.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            foregroundColor: const Color(0XFF222222),
+            elevation: 0,
+          ),
+          body: Column(
+            children: [
+              // ── AnimatedSwitcher handles circular swipe with correct direction ──
+              Expanded(
+                child: GestureDetector(
+                  onHorizontalDragEnd: (details) {
+                    final velocity = details.primaryVelocity ?? 0;
+                    if (velocity < -300) {
+                      _goToPage(
+                        _currentPage < widget.allEvents.length - 1
+                            ? _currentPage + 1
+                            : 0,
+                        goingForward: true,
+                      );
+                    } else if (velocity > 300) {
+                      _goToPage(
+                        _currentPage > 0
+                            ? _currentPage - 1
+                            : widget.allEvents.length - 1,
+                        goingForward: false,
+                      );
+                    }
+                  },
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    layoutBuilder: (currentChild, _) =>
+                        currentChild ?? const SizedBox(),
+                    transitionBuilder: (child, animation) {
+                      final isEntering = child.key == ValueKey(_currentPage);
+                      final beginOffset = isEntering
+                          ? Offset(_goingForward ? 1.0 : -1.0, 0.0)
+                          : Offset(_goingForward ? -1.0 : 1.0, 0.0);
+                      return SlideTransition(
+                        position:
+                            Tween<Offset>(
+                              begin: beginOffset,
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOut,
+                              ),
+                            ),
+                        child: child,
+                      );
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey(_currentPage),
+                      child: _buildEventPage(currentEvent),
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Worm indicator ──
+              if (widget.allEvents.length > 1) ...[
+                const SizedBox(height: 12),
+                AnimatedSmoothIndicator(
+                  activeIndex: _currentPage,
+                  count: widget.allEvents.length,
+                  effect: const WormEffect(
+                    dotHeight: 8,
+                    dotWidth: 8,
+                    activeDotColor: Color(0XFF84DCC6),
+                    dotColor: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

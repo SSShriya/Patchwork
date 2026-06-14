@@ -38,6 +38,7 @@ flutter:
     - assets/images/teal_gingham.png
     - assets/images/yellow_gingham.png
     - assets/images/pink_gingham.png
+    - assets/images/purple_gingham.png
   fonts:
     - family: Montserrat
       fonts:

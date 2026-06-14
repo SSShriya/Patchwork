@@ -1,5 +1,6 @@
 import 'package:drp/services/supabase_client.dart';
 import 'package:drp/tools/embroidered_chip.dart';
+import 'package:drp/tools/scalloped_clipper.dart';
 import 'package:drp/tools/sitched_divider.dart';
 import 'package:drp/tools/stitched_border_box.dart';
 import 'package:drp/tools/stitched_button.dart';
@@ -808,25 +809,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Scaffold(
           // backgroundColor: const Color(0XFFF5F0F6),
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: const Text(
-              'Setup Your Profile',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                fontFamily: 'Lora',
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+            child: ClipPath(
+              clipper: ScallopedClipper(),
+              child: AppBar(
+                title: const Text(
+                  'Setup Your Profile',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 25,
+                    fontFamily: 'Lora',
+                  ),
+                ),
+                flexibleSpace: Opacity(
+                  opacity: 0.6,
+                  child: Image(
+                    image: AssetImage('assets/images/teal_gingham.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                elevation: 0,
+                centerTitle: true,
               ),
             ),
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/teal_gingham.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            elevation: 0,
-            centerTitle: true,
           ),
+
           body: SafeArea(
             child: _isLoading
                 ? const Center(
@@ -1232,6 +1240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         border: InputBorder.none,
         contentPadding: EdgeInsets.all(10),
+        enabledBorder: InputBorder.none,
       ),
       validator: required
           ? (value) => (value == null || value.trim().isEmpty)
