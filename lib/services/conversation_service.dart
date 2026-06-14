@@ -23,23 +23,34 @@ class ConversationService {
   Future<List<ChatConversation>> getConversations() async {
     final currentUserId = await loadUserId();
 
-    // ── Include photo_url in user_interests ───────────────────────────────
     final matchRows = await supabase
         .from('matches')
         .select('''*, 
-        user1:user1_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest, photo_url), is_society), 
-        user2:user2_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest, photo_url), is_society),
-        event:event_id(event_id, event_name)''')
+        matched_at,
+      user1:user1_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest, photo_url), is_society), 
+      user2:user2_id(id, name, avatar_url, university, course, bio, year_group, location, user_interests(interest, photo_url), is_society),
+      event:event_id(event_id, event_name)''')
         .eq('user1_accepted', true)
         .eq('user2_accepted', true)
         .or('user1_id.eq.$currentUserId, user2_id.eq.$currentUserId');
 
     final messageRows = await supabase
         .from('messages')
-        .select('sender_id, recipient_id, content')
-        .or('sender_id.eq.$currentUserId, recipient_id.eq.$currentUserId');
+        .select('sender_id, recipient_id, content, created_at')
+        .or('sender_id.eq.$currentUserId, recipient_id.eq.$currentUserId')
+        .order('created_at', ascending: true);
 
-    return (matchRows as List).map((r) {
+    final allMatches = List<Map<String, dynamic>>.from(matchRows as List);
+    final allMessages = List<Map<String, dynamic>>.from(messageRows as List);
+
+    // Debug: verify messages have created_at
+    for (final msg in allMessages) {
+      debugPrint(
+        'MSG: ${msg['sender_id']} -> ${msg['recipient_id']} at ${msg['created_at']}',
+      );
+    }
+
+    return allMatches.map((r) {
       final user1Data = r['user1'] as Map<String, dynamic>;
       final user2Data = r['user2'] as Map<String, dynamic>;
 
@@ -49,7 +60,6 @@ class ConversationService {
       final otherUser = currentUserId == user1Data['id']
           ? user2Data
           : user1Data;
-
       final actualOtherUserId = otherUser['id'] as String;
 
       final interestsList =
@@ -57,7 +67,7 @@ class ConversationService {
               .map((i) => i['interest'] as String)
               .toList();
 
-      final directMessages = (messageRows as List).where((msg) {
+      final directMessages = allMessages.where((msg) {
         final sId = msg['sender_id'] as String;
         final rId = msg['recipient_id'] as String;
         return (sId == currentUserId && rId == actualOtherUserId) ||
@@ -67,7 +77,30 @@ class ConversationService {
       final messageCount = directMessages.length;
       final hasHistory = messageCount > 0;
 
-      // ── Extract event data ───────────────────────────────────────────
+      // Parse last message timestamp
+      DateTime? lastMessageAt;
+      if (hasHistory) {
+        final rawTime = directMessages.last['created_at']?.toString();
+        if (rawTime != null) {
+          final normalised = rawTime.endsWith('Z') || rawTime.contains('+')
+              ? rawTime
+              : '${rawTime}Z';
+          lastMessageAt = DateTime.tryParse(normalised)?.toUtc();
+        }
+      }
+      debugPrint('lastMessageAt for ${otherUser['name']}: $lastMessageAt');
+
+      // Parse matched_at timestamp
+      final rawMatchedAt = r['matched_at'];
+      debugPrint('matched_at raw for ${otherUser['name']}: $rawMatchedAt');
+
+      final matchedAt = rawMatchedAt != null
+          ? DateTime.tryParse(rawMatchedAt.toString())?.toUtc()
+          : null;
+
+      debugPrint('matched_at parsed for ${otherUser['name']}: $matchedAt');
+
+      // ── Extract event data ───────────────────────────────────────────────
       final eventData = r['event'];
       String eventName = '';
       String eventId = '';
@@ -85,7 +118,7 @@ class ConversationService {
         }
       }
 
-      // ── Build MatchCard ──────────────────────────────────────────────
+      // ── Build MatchCard ──────────────────────────────────────────────────
       final matchCard = MatchCard(
         currentUserId: currentUserId,
         otherUserId: actualOtherUserId,
@@ -99,15 +132,12 @@ class ConversationService {
         interests: interestsList,
         location: otherUser['location'] as String? ?? '',
         imageUrl: otherUser['avatar_url'] as String? ?? '',
-        interestPhotos: _parseInterestPhotos(
-          otherUser,
-        ), // ← replaces galleryUrls
+        interestPhotos: _parseInterestPhotos(otherUser),
       );
 
       String previewText(String content) {
-        if (content.startsWith('INVITATION_DATA:')) {
+        if (content.startsWith('INVITATION_DATA:'))
           return '📅 Invitation sent.';
-        }
         if (content == 'Invitation sent.') return '📅 Invitation sent.';
         if (content.startsWith('=== ') && content.endsWith(' ===')) {
           return content.replaceAll('=== ', '').replaceAll(' ===', '');
@@ -125,6 +155,8 @@ class ConversationService {
         unreadCount: 0,
         isOnline: false,
         isSociety: isSociety,
+        lastMessageAt: lastMessageAt,
+        matchedAt: matchedAt,
       );
     }).toList();
   }
@@ -204,13 +236,12 @@ class ConversationService {
   Future<Map<String, ({String endDay, String endTime})>> getEventEndTimes(
     List<String> eventIds,
   ) async {
-    // No need to query if there's nothing to look up
     if (eventIds.isEmpty) return {};
 
     final rows = await supabase
         .from('events')
         .select('event_id, end_day, end_time')
-        .inFilter('event_id', eventIds); // ✅ fetches only the relevant events
+        .inFilter('event_id', eventIds);
 
     final result = <String, ({String endDay, String endTime})>{};
 

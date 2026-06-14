@@ -24,7 +24,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   String? _selectedEventName;
   List<MapEntry<String, String>> _eventFilters = [];
   Map<String, ({String endDay, String endTime})> _eventEndTimes = {};
-  Map<String, List<String>> _eventsInCommon = {};   // Map of otherUserId to list of eventNames
+  Map<String, List<String>> _eventsInCommon = {};
 
   String _searchQuery = '';
 
@@ -42,18 +42,15 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
 
   @override
   void dispose() {
-    // Always unsubscribe to avoid memory leaks
     routeObserver.unsubscribe(this);
     super.dispose();
   }
 
-  /// Called when this screen is popped back to (e.g. user navigates back)
   @override
   void didPopNext() {
-    _loadConversations(); // reload every time the screen is returned to
+    _loadConversations();
   }
 
-  /// Called when this screen is first pushed onto the stack
   @override
   void didPush() {
     _loadConversations();
@@ -73,10 +70,8 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
 
     final myId = await loadUserId();
 
-    // Map of otherUserId to all events in common
     final Map<String, List<String>> eventsInCommon = {};
 
-    // Event filter chips
     final seen = <String>{};
     final filters = <MapEntry<String, String>>[];
     for (final chat in convos) {
@@ -101,7 +96,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   bool _isChatCurrent(ChatConversation chat) {
     final endTimeEntry = _eventEndTimes[chat.eventId];
 
-    // If we have no end time data, default to treating it as current
     if (endTimeEntry == null) return true;
 
     final endDay = endTimeEntry.endDay;
@@ -113,76 +107,85 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
       final endDateTime = DateTime.parse('$endDay $endTime');
       return DateTime.now().isBefore(endDateTime);
     } catch (_) {
-      return true; // default to current if parsing fails
+      return true;
     }
   }
 
-  /// Returns conversations that satisfy both the text search query
-  /// and the currently selected event filter chip.
+  /// Sorts conversations so the most recently active appears first.
+  /// Falls back to matchedAt for conversations with no messages.
+  List<ChatConversation> _sortByRecent(List<ChatConversation> convos) {
+    final sorted = List<ChatConversation>.from(convos);
+
+    sorted.sort((a, b) {
+      // Normalise everything to UTC before comparing
+      final aTime = (a.lastMessageAt ?? a.matchedAt)?.toUtc();
+      final bTime = (b.lastMessageAt ?? b.matchedAt)?.toUtc();
+
+      if (aTime != null && bTime != null) return bTime.compareTo(aTime);
+      if (aTime == null && bTime != null) return 1;
+      if (aTime != null && bTime == null) return -1;
+      return 0;
+    });
+
+    return sorted;
+  }
+
   List<ChatConversation> _applyFilters(List<ChatConversation> source) {
-  return source.where((chat) {
+    return source.where((chat) {
+      // --- Search filter ---
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final nameMatch = chat.name.toLowerCase().contains(query);
+        final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
+        final eventMatch = userEvents.any(
+          (eventName) => eventName.toLowerCase().contains(query),
+        );
+        if (!nameMatch && !eventMatch) return false;
+      }
 
-    // --- Search filter ---
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      final nameMatch = chat.name.toLowerCase().contains(query);
+      // --- Event filter ---
+      if (_selectedEventName != null) {
+        final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
+        final hasMatchingEvent = userEvents.any(
+          (eventName) => eventName == _selectedEventName,
+        );
+        if (!hasMatchingEvent) return false;
+      }
 
-      // Get all event names for this chat's user, falling back to an empty list
-      final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
-
-      // Match if any of the user's events contain the search query
-      final eventMatch = userEvents.any(
-        (eventName) => eventName.toLowerCase().contains(query),
-      );
-
-      if (!nameMatch && !eventMatch) return false;
-    }
-
-    // --- Event filter ---
-    if (_selectedEventName != null) {
-      // Get all event names for this chat's user
-      final userEvents = _eventsInCommon[chat.otherUserId] ?? [];
-
-      // Keep this chat only if any of their events match the selected event name
-      final hasMatchingEvent = userEvents.any(
-        (eventName) => eventName == _selectedEventName,
-      );
-
-      if (!hasMatchingEvent) return false;
-    }
-
-    return true;
-  }).toList();
-}
+      return true;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Initial generalized search filtering
+    // 1. Apply search/event filters
     final filteredConversations = _applyFilters(_conversations);
 
-    // 2. Separate Society Chats completely away from general user chats
-    final filteredSocietyConvos = filteredConversations
-        .where((chat) => chat.isSociety)
-        .toList();
+    // 2. Separate and sort each section
+    final filteredSocietyConvos = _sortByRecent(
+      filteredConversations.where((chat) => chat.isSociety).toList(),
+    );
 
-    // 3. Keep non-society matches and partition them by relevance
-    final filteredCurrentConvos = filteredConversations
-        .where((chat) => !chat.isSociety && _isChatCurrent(chat))
-        .toList();
+    final filteredCurrentConvos = _sortByRecent(
+      filteredConversations
+          .where((chat) => !chat.isSociety && _isChatCurrent(chat))
+          .toList(),
+    );
 
     final currentChatUserIds = filteredCurrentConvos
         .map((chat) => chat.otherUserId)
         .toSet();
 
-    // Ensure the old conversations have no current user IDs
-    final filteredOldConvos = filteredConversations
-        .where(
-          (chat) =>
-              !chat.isSociety &&
-              !_isChatCurrent(chat) &&
-              !currentChatUserIds.contains(chat.otherUserId),
-        )
-        .toList();
+    final filteredOldConvos = _sortByRecent(
+      filteredConversations
+          .where(
+            (chat) =>
+                !chat.isSociety &&
+                !_isChatCurrent(chat) &&
+                !currentChatUserIds.contains(chat.otherUserId),
+          )
+          .toList(),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0F6),
@@ -237,7 +240,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                                 )
                               : null,
                           filled: true,
-                          fillColor: Color(0XBFFEFEFA),
+                          fillColor: const Color(0XBFFEFEFA),
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 0,
                           ),
@@ -270,7 +273,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                         ),
                       )
                     else ...[
-                      // Current Chats Section
                       if (filteredCurrentConvos.isNotEmpty)
                         ChatSection(
                           title: 'Current Chats',
@@ -280,7 +282,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                           currentChats: true,
                         ),
 
-                      // Society Chats Section
                       if (filteredSocietyConvos.isNotEmpty)
                         ChatSection(
                           title: 'Contact a Committee Member',
@@ -290,7 +291,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                           currentChats: true,
                         ),
 
-                      // Old Chats Section
                       if (filteredOldConvos.isNotEmpty)
                         ChatSection(
                           title: 'Old Chats',
@@ -307,7 +307,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
   }
 
   Widget _buildEventFilterRow() {
-    // Don't render the row at all if there are no events to filter by
     if (_eventFilters.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
@@ -316,7 +315,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         children: [
-          // "All" chip — clears the event filter
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
@@ -337,7 +335,6 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
             ),
           ),
 
-          // One chip per unique event
           ..._eventFilters.map((entry) {
             final isSelected = _selectedEventName == entry.value;
             return Padding(
@@ -345,10 +342,11 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
               child: ChoiceChip(
                 label: Text(
                   entry.value,
-                  style: TextStyle(fontFamily: 'Bitter'),
-                ), // displays eventName
+                  style: const TextStyle(fontFamily: 'Bitter'),
+                ),
                 selected: isSelected,
-                onSelected: (_) => setState(() => _selectedEventName = entry.value),
+                onSelected: (_) =>
+                    setState(() => _selectedEventName = entry.value),
                 selectedColor: const Color(0xFFFC89AC),
                 backgroundColor: Colors.grey[200],
                 labelStyle: TextStyle(
