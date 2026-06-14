@@ -15,14 +15,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   late int _currentIndex;
 
-  // Keep pages alive by using IndexedStack
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    EventsScreen(),
-    DMOverviewScreen(),
-    ProfileScreen(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -35,9 +27,16 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      HomeScreen(onGoToEvents: () => goToTab(1)), // ← pass callback
+      const EventsScreen(),
+      const DMOverviewScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       // body: IndexedStack(index: _currentIndex, children: _pages),
-      body: _pages[_currentIndex],
+      body: pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,

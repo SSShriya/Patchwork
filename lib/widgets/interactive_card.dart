@@ -387,13 +387,9 @@ class _InteractiveCardState extends State<InteractiveCard> {
                             const SizedBox(width: 2),
                             Flexible(
                               child: _societyName.isEmpty
-                                  ? const SizedBox(
-                                      // 👈 show nothing while loading
-                                      height: 12,
-                                      width: 60,
-                                    )
+                                  ? const SizedBox(height: 12, width: 60)
                                   : Text(
-                                      _societyName, // 👈 use state variable
+                                      _societyName,
                                       style: const TextStyle(
                                         fontSize: 12,
                                         fontFamily: 'Merriweather',

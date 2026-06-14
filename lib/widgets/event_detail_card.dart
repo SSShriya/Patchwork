@@ -123,7 +123,7 @@ class _EventDetailCardState extends State<EventDetailCard> {
                 overflow: TextOverflow.ellipsis,
               ),
 
-              // ── Society Name ── 👈 added here
+              // ── Society Name ──
               if (_societyName.isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Row(
