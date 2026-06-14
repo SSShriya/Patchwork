@@ -11,6 +11,8 @@ import 'event_profile_screen.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../widgets/user_profile_card.dart';
+import '../screens/society_info_screen.dart';
+import '../services/event_service.dart';
 
 class EventMatchesScreen extends StatefulWidget {
   final List<EventCard> allEvents;
@@ -29,6 +31,8 @@ class EventMatchesScreen extends StatefulWidget {
 class _EventMatchesScreenState extends State<EventMatchesScreen> {
   final _matchService = MatchService();
   final Map<String, List<MatchCard>> _matchesByEvent = {};
+  final Map<String, String> _societyNamesByEvent = {};
+  final _eventService = EventService();
   final Map<String, bool> _loadingByEvent = {};
 
   late int _currentPage;
@@ -45,6 +49,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
 
     for (final event in widget.allEvents) {
       _loadMatchesFor(event.eventId);
+      _loadSocietyNameFor(event.eventId, event.societyId);
     }
     log("Successfully initialized page");
   }
@@ -59,6 +64,12 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
       _matchesByEvent[eventId] = matches;
       _loadingByEvent[eventId] = false;
     });
+  }
+
+  Future<void> _loadSocietyNameFor(String eventId, String societyId) async {
+    final name = await _eventService.getSocietyName(societyId);
+    if (!mounted) return;
+    setState(() => _societyNamesByEvent[eventId] = name);
   }
 
   void _goToPage(int newIndex, {bool goingForward = true}) {
@@ -197,10 +208,158 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                ],
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Color(0xFF222222),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          event.location,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(color: Color(0xFF222222), thickness: 0.3),
+                  const SizedBox(height: 8),
+
+                  // ── View Society Button ──────────────────────────────
+                  // ── Buttons Row ────────────────────────────────────────────────
+                  Row(
+                    children: [
+                      // Button 1: View Society
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SocietyInfoScreen(
+                              societyId: event.societyId,
+                              eventId: event.eventId,
+                            ),
+                          ),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF222222,
+                            ).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.groups_rounded,
+                                size: 16,
+                                color: Color(0xFF222222),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'View Society',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF222222),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // Button 2: Message Society
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DMScreen(
+                              chat: ChatConversation(
+                                matchCard: MatchCard(
+                                  currentUserId:
+                                      '', // filled in by DMScreen via loadUserId()
+                                  otherUserId: event.societyId,
+                                  title:
+                                      _societyNamesByEvent[event.eventId] ??
+                                      'Society',
+                                  university: '',
+                                  course: '',
+                                  bio: '',
+                                  eventId: event.eventId,
+                                  eventName: event.title,
+                                  yearGroup: '',
+                                  location: '',
+                                  interests: [],
+                                  imageUrl: '',
+                                ),
+                                isSociety: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF222222,
+                            ).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.message_rounded,
+                                size: 16,
+                                color: Color(0xFF222222),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Message Society',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF222222),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                ], // closes Column
               ),
-            ),
-          ),
+            ), // closes Container
+          ), // closes outer GestureDetector
 
           const SizedBox(height: 24),
 
