@@ -6,6 +6,7 @@ class StitchedBorderPainter extends CustomPainter {
   final double dashLength;
   final double gapLength;
   final double borderRadius;
+  final double inset;
 
   const StitchedBorderPainter({
     this.stitchColor = const Color(0xFF84DCC6),
@@ -13,6 +14,7 @@ class StitchedBorderPainter extends CustomPainter {
     this.dashLength = 6.0,
     this.gapLength = 4.0,
     this.borderRadius = 24.0,
+    this.inset = 0.0,
   });
 
   @override
@@ -23,7 +25,12 @@ class StitchedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final rect = Rect.fromLTWH(
+      inset,
+      inset,
+      size.width - inset * 2,
+      size.height - inset * 2,
+    );
     final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
 
     // Build the full path of the rounded rect
