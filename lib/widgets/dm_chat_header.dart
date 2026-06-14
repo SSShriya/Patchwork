@@ -1,5 +1,4 @@
 import 'package:drp/screens/society_info_screen.dart';
-import 'package:drp/tools/scalloped_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';

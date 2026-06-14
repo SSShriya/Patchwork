@@ -98,7 +98,10 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
     setState(() => _isLoading = true);
     try {
       // Image is already uploaded in _pickImage, just save bio here
-      await _societyService.updateSocDetails(id: _societyId, bio: _aboutController.text.trim());
+      await _societyService.updateSocDetails(
+        id: _societyId,
+        bio: _aboutController.text.trim(),
+      );
       if (_disposed) return;
       await _loadProfile();
       if (!_disposed && mounted) {
@@ -209,7 +212,10 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
                     final nav = Navigator.of(ctx);
 
                     try {
-                      await _societyService.updateSocDetails(id: _societyId, bio: text);
+                      await _societyService.updateSocDetails(
+                        id: _societyId,
+                        bio: text,
+                      );
                     } catch (e) {
                       if (mounted) _snack('Failed to update about section.');
                       return; //
@@ -400,7 +406,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
               child: AppBar(
                 title: const Text(
                   'Profile',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 25,
                     fontFamily: 'Lora',
