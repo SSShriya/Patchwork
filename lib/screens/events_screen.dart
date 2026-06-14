@@ -33,11 +33,17 @@ class _EventsScreenState extends State<EventsScreen> {
     precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
   }
 
+  List<EventCard> _onlyUpcomingEvents(List<EventCard> events) {
+    final now = DateTime.now();
+    return events.where((event) => event.endDateTime.isAfter(now)).toList();
+  }
+
   Future<void> _loadEvents() async {
     final events = await _eventService.getAllEvents();
+    final upcomingEvents = _onlyUpcomingEvents(events);
     setState(() {
-      _allEvents = events;
-      _filteredEvents = events;
+      _allEvents = upcomingEvents;
+      _filteredEvents = upcomingEvents;
       _loading = false;
     });
   }
@@ -51,7 +57,7 @@ class _EventsScreenState extends State<EventsScreen> {
   void _filterEvents() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredEvents = _allEvents
+      _filteredEvents = _onlyUpcomingEvents(_allEvents)
           .where(
             (event) =>
                 event.title.toLowerCase().contains(query) ||
@@ -98,7 +104,6 @@ class _EventsScreenState extends State<EventsScreen> {
 
         // CONTENT
         Scaffold(
-          // backgroundColor: const Color(0xFFF5F0F6),
           backgroundColor: Colors.transparent,
           appBar: AppBar(
             title: const Text(
@@ -205,7 +210,6 @@ class _EventsScreenState extends State<EventsScreen> {
                                     : width > 600
                                     ? 3
                                     : 2;
-                                crossAxisCount;
                                 return GridView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
