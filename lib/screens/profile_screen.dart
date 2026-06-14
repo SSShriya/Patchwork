@@ -925,7 +925,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildStitchedField(
                             _buildTextField(
                               controller: _nameController,
-                              label: 'Full Name',
+                              label: 'Name',
                               icon: Icons.person_outline,
                               required: true,
                             ),
