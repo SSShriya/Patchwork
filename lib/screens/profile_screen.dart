@@ -1,4 +1,8 @@
 import 'package:drp/services/supabase_client.dart';
+import 'package:drp/tools/embroidered_chip.dart';
+import 'package:drp/tools/sitched_divider.dart';
+import 'package:drp/tools/stitched_border_box.dart';
+import 'package:drp/tools/stitched_button.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -521,10 +525,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Color(0xFF4D5359),
-                          width: 1.5,
-                        ),
+                        // border: Border.all(
+                        //   color: Color(0xFF4D5359),
+                        //   width: 1.5,
+                        // ),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -689,6 +693,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           focusNode: focusNode,
           style: const TextStyle(fontFamily: 'Merriweather'),
           decoration: InputDecoration(
+            enabledBorder: InputBorder.none,
             labelText: label,
             labelStyle: const TextStyle(fontFamily: 'Merriweather'),
             floatingLabelBehavior: FloatingLabelBehavior.always, // ← add this
@@ -698,11 +703,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             prefixIcon: Icon(prefixIcon),
             suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFB284BE), width: 2),
-            ),
           ),
           validator: validator,
         );
@@ -760,11 +760,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         prefixIcon: const Icon(Icons.calendar_today_outlined),
         suffixIcon: const SizedBox.shrink(), // hides default dropdown arrow gap
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFB284BE), width: 2),
-        ),
+        enabledBorder: InputBorder.none,
       ),
       borderRadius: BorderRadius.circular(12),
       icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
@@ -926,31 +922,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          _buildTextField(
-                            controller: _nameController,
-                            label: 'Full Name',
-                            icon: Icons.person_outline,
-                            required: true,
+                          _buildStitchedField(
+                            _buildTextField(
+                              controller: _nameController,
+                              label: 'Full Name',
+                              icon: Icons.person_outline,
+                              required: true,
+                            ),
                           ),
                           const SizedBox(height: 16),
 
-                          _buildUniversityField(),
+                          _buildStitchedField(_buildUniversityField()),
                           const SizedBox(height: 16),
 
                           if (!widget.isSociety) ...[
-                            _buildYearGroupField(),
+                            _buildStitchedField(_buildYearGroupField()),
                             const SizedBox(height: 16),
 
-                            _buildTextField(
-                              controller: _courseController,
-                              label: 'Course / Major',
-                              icon: Icons.book_outlined,
-                              required: false,
+                            _buildStitchedField(
+                              _buildTextField(
+                                controller: _courseController,
+                                label: 'Course / Major',
+                                icon: Icons.book_outlined,
+                                required: false,
+                              ),
                             ),
                             const SizedBox(height: 16),
 
-                            _buildBoroughField(),
-                            const SizedBox(height: 16),
+                            _buildStitchedField(_buildBoroughField()),
+                            const SizedBox(height: 20),
+
+                            const StitchedDivider(color: Color(0x8FCD5C5C)),
+                            const SizedBox(height: 6),
 
                             // ── Interests ──────────────────────────────────
                             Row(
@@ -1030,32 +1033,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 spacing: 8.0,
                                 runSpacing: 4.0,
                                 children: _interests.map((interest) {
-                                  return Chip(
-                                    label: Text(
-                                      interest,
-                                      style: const TextStyle(
-                                        fontFamily: 'Merriweather',
-                                        color: Color(0xFF4D5359),
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    backgroundColor: Color.fromARGB(
-                                      255,
-                                      210,
-                                      210,
-                                      249,
-                                    ),
-                                    side: const BorderSide(
-                                      color: Color(
-                                        0XFF002147,
-                                      ), // removes outline
-                                      width: 0,
-                                    ),
-                                    deleteIcon: const Icon(
-                                      Icons.cancel,
-                                      size: 18,
-                                      color: Color(0xFF4D5359),
-                                    ),
+                                  return EmbroideredChip(
+                                    // label: Text(
+                                    //   interest,
+                                    //   style: const TextStyle(
+                                    //     fontFamily: 'Merriweather',
+                                    //     color: Color(0xFF4D5359),
+                                    //     fontSize: 13,
+                                    //   ),
+                                    // ),
+                                    label: interest,
+                                    // backgroundColor: Color.fromARGB(
+                                    //   255,
+                                    //   210,
+                                    //   210,
+                                    //   249,
+                                    // ),
+                                    // side: const BorderSide(
+                                    //   color: Color(
+                                    //     0XFF002147,
+                                    //   ), // removes outline
+                                    //   width: 0,
+                                    // ),
+                                    // deleteIcon: const Icon(
+                                    //   Icons.cancel,
+                                    //   size: 18,
+                                    //   color: Color(0xFF4D5359),
+                                    // ),
                                     onDeleted: () => setState(() {
                                       _interests.remove(interest);
                                       _interestData.remove(interest);
@@ -1072,12 +1076,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 16),
                           ],
 
+                          const StitchedDivider(color: Color(0x8FCD5C5C)),
+                          const SizedBox(height: 16),
+
                           // ── Bio ───────────────────────────────────────────
                           const Text(
                             'Bio',
                             style: TextStyle(
                               fontFamily: 'Lora',
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
@@ -1091,65 +1098,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          TextFormField(
-                            controller: _bioController,
-                            maxLines: 3,
-                            keyboardType: TextInputType.multiline,
-                            decoration: InputDecoration(
-                              hintText: 'Introduce yourself!',
-                              hintStyle: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 13,
-                                color: Colors.grey,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          _buildStitchedField(
+                            TextFormField(
+                              controller: _bioController,
+                              maxLines: 3,
+                              keyboardType: TextInputType.multiline,
+                              decoration: InputDecoration(
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                hintText: 'Introduce yourself!',
+                                hintStyle: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                                contentPadding: EdgeInsets.all(10),
                               ),
                             ),
                           ),
                           const SizedBox(height: 20),
 
-                          ElevatedButton(
+                          StitchedButton(
+                            label: 'SAVE PROFILE',
                             onPressed: _isLoading ? null : _saveProfile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0XFFDBB2D1),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'SAVE PROFILE',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
+                            isLoading: _isLoading,
+                            backgroundColor: const Color(0xFFDBB2D1),
                           ),
                           const SizedBox(height: 20),
 
-                          ElevatedButton(
+                          StitchedButton(
+                            label: 'LOG OUT',
                             onPressed: _isLoading ? null : _logout,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0XFFFD5757),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'LOG OUT',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
+                            backgroundColor: const Color(0xFFfd5757),
+                            stitchColor: Colors.white,
                           ),
                         ],
                       ),
@@ -1249,17 +1230,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           fontFamily: 'Montserrat',
           fontWeight: FontWeight.bold,
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFB284BE), width: 2),
-        ),
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.all(10),
       ),
       validator: required
           ? (value) => (value == null || value.trim().isEmpty)
                 ? 'Please enter your $label'
                 : null
           : null,
+    );
+  }
+
+  Widget _buildStitchedField(Widget field) {
+    return StitchedBorderBox(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      borderRadius: 12,
+      child: field,
     );
   }
 }
