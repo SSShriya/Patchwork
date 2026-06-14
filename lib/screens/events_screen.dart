@@ -221,10 +221,9 @@ class _EventsScreenState extends State<EventsScreen> {
                                   gridDelegate:
                                       SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: crossAxisCount,
-                                        mainAxisSpacing: 12,
-                                        crossAxisSpacing: 12,
-                                        childAspectRatio: 1.0,
-                                        mainAxisExtent: 230,
+                                        mainAxisSpacing: 14,
+                                        crossAxisSpacing: 14,
+                                        mainAxisExtent: 250,
                                       ),
                                 );
                               },

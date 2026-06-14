@@ -1,3 +1,4 @@
+import 'package:drp/tools/zig_zag_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
@@ -16,17 +17,31 @@ class EventDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+    return ClipPath(
+      clipper: ZigZagClipper(toothSize: 6.8),
       child: Material(
         color: card.color,
-        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
           onTap: onTap ?? () {},
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: isListView ? _buildListLayout() : _buildGridLayout(),
+          child: Stack(
+            children: [
+              // LINEN TEXTURE
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.17,
+                  child: Image.asset(
+                    'assets/textures/linen.jpg',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+
+              // CONTENT
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: isListView ? _buildListLayout() : _buildGridLayout(),
+              ),
+            ],
           ),
         ),
       ),
