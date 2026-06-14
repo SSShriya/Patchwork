@@ -398,7 +398,7 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
 
         // CONTENT
         Scaffold(
-          backgroundColor: const Color(0xFFF5F0F6),
+          backgroundColor: Colors.transparent,
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight + 10),
             child: ClipPath(

@@ -1,4 +1,5 @@
 import 'package:drp/tools/scalloped_clipper.dart';
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:drp/services/supabase_client.dart';
@@ -25,6 +26,12 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
   void initState() {
     super.initState();
     _loadEvents();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/textures/bg_texture.jpg'), context);
   }
 
   // ── Load ───────────────────────────────────────────────────────────────────
@@ -245,30 +252,82 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
 
     return Opacity(
       opacity: isPast ? 0.55 : 1.0,
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: const Color(0x4F3E92CC),
-        child: ListTile(
-          onTap: isPast ? null : () => _editEvent(event),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: CustomPaint(
+          foregroundPainter: StitchedBorderPainter(
+            stitchColor: Colors.white.withValues(alpha: 0.8),
+            strokeWidth: 2.6,
+            dashLength: 8.0,
+            gapLength: 8.0,
+            borderRadius: 12.0,
+            inset: 6.0,
           ),
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: imageUrl.isNotEmpty
-                // Show event photo if image_url exists
-                ? Image.network(
-                    imageUrl,
-                    width: 52,
-                    height: 52,
-                    fit: BoxFit.cover,
-                    // ── Show icon while loading ──────────────────────────
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0x4F3E92CC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              onTap: isPast ? null : () => _editEvent(event),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: imageUrl.isNotEmpty
+                    // Show event photo if image_url exists
+                    ? Image.network(
+                        imageUrl,
+                        width: 52,
+                        height: 52,
+                        fit: BoxFit.cover,
+                        // ── Show icon while loading ──────────────────────────
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color:
+                                  (isPast
+                                          ? Colors.grey
+                                          : const Color(0xFF84DCC6))
+                                      .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        // ── Fallback icon if image fails to load ─────────────
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color:
+                                (isPast ? Colors.grey : const Color(0xFF84DCC6))
+                                    .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.calendar_today,
+                            color: isPast
+                                ? Colors.grey
+                                : const Color(0xFF4D5359),
+                          ),
+                        ),
+                      )
+                    // Fallback icon if no image_url
+                    : Container(
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
@@ -277,72 +336,41 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
                                   .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                        child: Icon(
+                          Icons.calendar_today,
+                          color: isPast ? Colors.grey : const Color(0xFF4D5359),
                         ),
-                      );
-                    },
-                    // ── Fallback icon if image fails to load ─────────────
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: (isPast ? Colors.grey : const Color(0xFF84DCC6))
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(
-                        Icons.calendar_today,
-                        color: isPast ? Colors.grey : const Color(0xFF4D5359),
-                      ),
-                    ),
-                  )
-                // Fallback icon if no image_url
-                : Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: (isPast ? Colors.grey : const Color(0xFF84DCC6))
-                          .withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.calendar_today,
-                      color: isPast ? Colors.grey : const Color(0xFF4D5359),
-                    ),
-                  ),
-          ),
-          title: Text(
-            event['title']!,
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: isPast ? Colors.grey : Colors.black87,
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              '${event['start_date']} • ${event['location']}',
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 12,
-                color: Color(0xFF4D5359),
               ),
+              title: Text(
+                event['title']!,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: isPast ? Colors.grey : Colors.black87,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${event['start_date']} • ${event['location']}',
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    color: Color(0xFF4D5359),
+                  ),
+                ),
+              ),
+              trailing: isPast
+                  ? null
+                  : const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
             ),
           ),
-          trailing: isPast
-              ? null
-              : const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: Colors.grey,
-                ),
         ),
       ),
     );
@@ -354,155 +382,179 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
     final active = _events.where((e) => e['is_past'] != 'true').toList();
     final archived = _events.where((e) => e['is_past'] == 'true').toList();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F0F6),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight + 10),
-        child: ClipPath(
-          clipper: ScallopedClipper(),
-          child: AppBar(
-            title: const Text(
-              'Events',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                fontFamily: 'Lora',
+    return Stack(
+      children: [
+        // BACKGROUND IMAGE
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/textures/bg_texture.jpg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                    BlendMode.multiply,
+                  ),
+                ),
               ),
             ),
+          ),
+        ),
+
+        // CONTENT
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+            child: ClipPath(
+              clipper: ScallopedClipper(),
+              child: AppBar(
+                title: const Text(
+                  'Events',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 25,
+                    fontFamily: 'Lora',
+                  ),
+                ),
+                foregroundColor: const Color(0xFF222222),
+                elevation: 0,
+                automaticallyImplyLeading: false,
+                flexibleSpace: Opacity(
+                  opacity: 0.6,
+                  child: Image(
+                    image: AssetImage('assets/images/teal_gingham.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                centerTitle: true,
+                actions: [
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF222222),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _isLoading ? null : _addNewEvent,
+            backgroundColor: const Color(0xFF84DCC6),
             foregroundColor: const Color(0xFF222222),
-            elevation: 0,
-            automaticallyImplyLeading: false,
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/teal_gingham.png'),
-                fit: BoxFit.cover,
+            icon: const Icon(Icons.add),
+            label: const Text(
+              'New Event',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.bold,
               ),
             ),
-            centerTitle: true,
-            actions: [
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF222222),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'UPCOMING EVENTS',
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF222222),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                if (active.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'No upcoming events. Tap + New Event to add one.',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: active.length,
+                    itemBuilder: (context, index) => _eventCard(active[index]),
+                  ),
+
+                if (archived.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => setState(() => _showArchived = !_showArchived),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 4,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Past events (${archived.length})',
+                            style: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4D5359),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AnimatedRotation(
+                            turns: _showArchived ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              Icons.keyboard_arrow_down,
+                              size: 18,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-        ),
-      ),
-
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading ? null : _addNewEvent,
-        backgroundColor: const Color(0xFF84DCC6),
-        foregroundColor: const Color(0xFF222222),
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'New Event',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'UPCOMING EVENTS',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF222222),
-              ),
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox(width: double.infinity),
+                    secondChild: ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: archived.length,
+                      itemBuilder: (context, index) =>
+                          _eventCard(archived[index], isPast: true),
+                    ),
+                    crossFadeState: _showArchived
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 250),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 12),
-
-            if (active.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'No upcoming events. Tap + New Event to add one.',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: active.length,
-                itemBuilder: (context, index) => _eventCard(active[index]),
-              ),
-
-            if (archived.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => setState(() => _showArchived = !_showArchived),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 4,
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Past events (${archived.length})',
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4D5359),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      AnimatedRotation(
-                        turns: _showArchived ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 18,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              AnimatedCrossFade(
-                firstChild: const SizedBox(width: double.infinity),
-                secondChild: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: archived.length,
-                  itemBuilder: (context, index) =>
-                      _eventCard(archived[index], isPast: true),
-                ),
-                crossFadeState: _showArchived
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                duration: const Duration(milliseconds: 250),
-              ),
-            ],
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
