@@ -1,4 +1,5 @@
 import 'package:drp/services/match_service.dart';
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
@@ -765,14 +766,24 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color ?? Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
+    return CustomPaint(
+      foregroundPainter: StitchedBorderPainter(
+        stitchColor: Colors.white.withValues(alpha: 0.8),
+        strokeWidth: 2.6,
+        dashLength: 8.0,
+        gapLength: 8.0,
+        borderRadius: 8.0,
+        inset: 6.0,
       ),
-      child: child,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color ?? Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: child,
+      ),
     );
   }
 }

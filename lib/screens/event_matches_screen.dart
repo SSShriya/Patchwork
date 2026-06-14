@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:drp/models/match_convo.dart';
 import 'package:drp/screens/dm_individual_screen.dart';
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event_card.dart';
@@ -91,113 +92,123 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                 builder: (context) => EventProfileScreen(card: event),
               ),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: event.color,
-                borderRadius: BorderRadius.circular(16),
+            child: CustomPaint(
+              foregroundPainter: StitchedBorderPainter(
+                stitchColor: Colors.white.withValues(alpha: 0.7),
+                strokeWidth: 2.6,
+                dashLength: 8.0,
+                gapLength: 8.0,
+                borderRadius: 10.0,
+                inset: 7.0,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        event.icon,
-                        color: const Color(0xFF222222),
-                        size: 32,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          event.title,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF222222),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: event.color,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          event.icon,
+                          color: const Color(0xFF222222),
+                          size: 32,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            event.title,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF222222),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    event.subtitle,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: const Color(0xFF222222).withValues(alpha: 0.8),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Tap here to find out more!',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: const Color(0XFF224488).withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(color: Color(0xFF222222), thickness: 0.3),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: Color(0xFF222222),
+                    const SizedBox(height: 8),
+                    Text(
+                      event.subtitle,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: const Color(0xFF222222).withValues(alpha: 0.8),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DateFormat(
-                          'EEEE, d MMMM yyyy',
-                        ).format(event.startDateTime),
-                        style: const TextStyle(
-                          fontSize: 13,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tap here to find out more!',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: const Color(0XFF224488).withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(color: Color(0xFF222222), thickness: 0.3),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
                           color: Color(0xFF222222),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${DateFormat('HH:mm').format(event.startDateTime)} - ${DateFormat('HH:mm').format(event.endDateTime)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF222222),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          event.location,
+                        const SizedBox(width: 6),
+                        Text(
+                          DateFormat(
+                            'EEEE, d MMMM yyyy',
+                          ).format(event.startDateTime),
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF222222),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Color(0xFF222222),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${DateFormat('HH:mm').format(event.startDateTime)} - ${DateFormat('HH:mm').format(event.endDateTime)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF222222),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Color(0xFF222222),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            event.location,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                ),
               ),
             ),
           ),

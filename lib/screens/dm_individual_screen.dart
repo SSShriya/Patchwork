@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:drp/models/dm_message.dart';
 import 'package:drp/services/event_service.dart';
 import 'package:drp/services/utils.dart';
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:drp/widgets/dm_chat_header.dart';
 import 'package:drp/widgets/dm_input_bar.dart';
 import 'package:drp/widgets/dm_invitation_card.dart';
@@ -412,54 +413,69 @@ class _DMScreenState extends State<DMScreen> {
         if (widget.chat.event.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEC0C6),
-                borderRadius: BorderRadius.circular(16),
-                // border: Border.all(color: Colors.grey.shade300),
+            child: CustomPaint(
+              foregroundPainter: StitchedBorderPainter(
+                stitchColor: Colors.white.withValues(alpha: 0.6),
+                strokeWidth: 2.2,
+                dashLength: 7.0,
+                gapLength: 8.0,
+                borderRadius: 10.0,
+                inset: 6.0,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    textAlign: TextAlign.center,
-                    widget.chat.isSociety
-                        ? "Events You Are Attending:"
-                        : "You Are Both Attending:",
-                    style: const TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEC0C6),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      textAlign: TextAlign.center,
+                      widget.chat.isSociety
+                          ? "Events You Are Attending:"
+                          : "You Are Both Attending:",
+                      style: const TextStyle(
+                        fontFamily: 'Merriweather',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  ..._eventsInCommon.map(
-                    (interest) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '★ ',
-                            style: TextStyle(fontSize: 13, color: Colors.black),
-                          ),
-                          Expanded(
-                            child: Text(
-                              interest,
-                              style: const TextStyle(
-                                fontFamily: 'Bitter',
+                    const SizedBox(height: 6),
+                    ..._eventsInCommon.map(
+                      (interest) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '★ ',
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.black,
                               ),
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              child: Text(
+                                interest,
+                                style: const TextStyle(
+                                  fontFamily: 'Bitter',
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -468,51 +484,67 @@ class _DMScreenState extends State<DMScreen> {
         if (!widget.chat.isSociety)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF94d2bd),
-                borderRadius: BorderRadius.circular(16),
-                // border: Border.all(color: Colors.grey.shade300),
+            child: CustomPaint(
+              foregroundPainter: StitchedBorderPainter(
+                stitchColor: Colors.white.withValues(alpha: 0.6),
+                strokeWidth: 2.2,
+                dashLength: 7.0,
+                gapLength: 8.0,
+                borderRadius: 10.0,
+                inset: 6.0,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${widget.chat.name}'s Interests:",
-                    style: const TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF94d2bd),
+                  borderRadius: BorderRadius.circular(16),
+                  // border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${widget.chat.name}'s Interests:",
+                      style: const TextStyle(
+                        fontFamily: 'Merriweather',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  ...widget.chat.interests.map(
-                    (interest) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '★ ',
-                            style: TextStyle(fontSize: 13, color: Colors.black),
-                          ),
-                          Expanded(
-                            child: Text(
-                              interest,
-                              style: const TextStyle(
-                                fontFamily: 'Bitter',
+                    const SizedBox(height: 6),
+                    ...widget.chat.interests.map(
+                      (interest) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '★ ',
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.black,
                               ),
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              child: Text(
+                                interest,
+                                style: const TextStyle(
+                                  fontFamily: 'Bitter',
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -527,45 +559,54 @@ class _DMScreenState extends State<DMScreen> {
                   // 📅 Meeting hint
                   SizedBox(
                     width: boxWidth,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
+                    child: CustomPaint(
+                      foregroundPainter: StitchedBorderPainter(
+                        stitchColor: Colors.grey.withValues(alpha: 0.3),
+                        strokeWidth: 2.2,
+                        dashLength: 7.0,
+                        gapLength: 8.0,
+                        borderRadius: 10.0,
+                        inset: 6.0,
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD6EAF8),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // 👈 centres content vertically
-                        children: [
-                          const Icon(
-                            Icons.calendar_today,
-                            size: 24,
-                            color: Color(0xFF2471A3),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Schedule a Meeting',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD6EAF8),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 24,
+                              color: Color(0xFF2471A3),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Tap the 📅 in the top right to propose a time & place!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Schedule a Meeting',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Tap the 📅 in the top right to propose a time & place!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -575,45 +616,54 @@ class _DMScreenState extends State<DMScreen> {
                   // 💡 Suggestions hint
                   SizedBox(
                     width: boxWidth,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
+                    child: CustomPaint(
+                      foregroundPainter: StitchedBorderPainter(
+                        stitchColor: Colors.grey.withValues(alpha: 0.3),
+                        strokeWidth: 2.2,
+                        dashLength: 7.0,
+                        gapLength: 8.0,
+                        borderRadius: 10.0,
+                        inset: 6.0,
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF9E7),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // 👈 centres content vertically
-                        children: [
-                          const Icon(
-                            Icons.lightbulb_outline,
-                            size: 24,
-                            color: Color(0xFFD4AC0D),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Message Suggestions',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF9E7),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.lightbulb_outline,
+                              size: 24,
+                              color: Color(0xFFD4AC0D),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Tap the 💡 in the top right for conversation prompts!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Message Suggestions',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Tap the 💡 in the top right for conversation prompts!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
