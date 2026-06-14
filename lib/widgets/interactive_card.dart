@@ -128,10 +128,10 @@ class InteractiveCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 2),
 
-                            if (matchCard.yearGroup.isNotEmpty)
+                            if (matchCard.yearGroup != '')
                               Expanded(
                                 child: Text(
-                                  '${matchCard.yearGroup} · ${matchCard.university}',
+                                  matchCard.yearGroup,
                                   style: TextStyle(
                                     fontFamily: 'Merriweather',
                                     fontSize: 12,
@@ -142,8 +142,26 @@ class InteractiveCard extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              )
-                            else
+                              ),
+                          ],
+                        ),
+                      ],
+
+                      // University
+                      if (matchCard != null && !matchCard.isCommitteeCard) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.account_balance,
+                              size: 10,
+                              color: const Color(
+                                0xFF222222,
+                              ).withValues(alpha: 0.8),
+                            ),
+                            const SizedBox(width: 2),
+
+                            if (matchCard.university != '')
                               Expanded(
                                 child: Text(
                                   matchCard.university,
