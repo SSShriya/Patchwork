@@ -394,6 +394,25 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.group,
+                        size: 14,
+                        color: Color(0xFF222222),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _societyNamesByEvent[event.eventId] ?? '',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: const Color(0xFF222222).withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
                   Text(
                     event.subtitle,
                     style: TextStyle(
@@ -469,27 +488,7 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
 
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 14,
-                        color: Color(0xFF222222),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          event.location,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF222222),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 12),
                   const Divider(color: Color(0xFF222222), thickness: 0.3),
                   const SizedBox(height: 8),
