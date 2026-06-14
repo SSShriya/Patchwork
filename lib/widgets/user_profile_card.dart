@@ -1,4 +1,5 @@
 import 'package:drp/services/match_service.dart';
+import 'package:drp/services/utils.dart';
 import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 import '../models/match_card.dart';
@@ -23,7 +24,9 @@ class UserProfileCard extends StatefulWidget {
 class _UserProfileCardState extends State<UserProfileCard> {
   late Future<List<EventCard>> _otherEventsFuture;
 
-  @override
+  final EventService _eventService = EventService();
+  List<MapEntry<String, String>> _eventsInCommon = [];
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +37,19 @@ class _UserProfileCardState extends State<UserProfileCard> {
             widget.card.currentUserId,
             widget.card.otherUserId,
           );
+    _initEvents();
+  }
+
+  Future<void> _initEvents() async {
+    final myUserId = await loadUserId();
+    final eventsInCommon = await _eventService.eventsInCommon(
+      myUserId,
+      widget.card.otherUserId,
+    );
+    if (!mounted) return;
+    setState(() {
+      _eventsInCommon = eventsInCommon;
+    });
   }
 
   @override
@@ -266,14 +282,38 @@ class _UserProfileCardState extends State<UserProfileCard> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                ..._eventsInCommon.map(
+                  (interest) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '★ ',
+                          style: TextStyle(fontSize: 13, color: Colors.black),
+                        ),
+                        Expanded(
+                          child: Text(
+                            interest.value,
+                            style: const TextStyle(
+                              fontFamily: 'Bitter',
+                              fontSize: 13,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                /*Text(
                   widget.card.eventName.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF344966),
                     fontWeight: FontWeight.bold,
                   ),
-                ),
+                ),*/
               ],
             ),
           ),
