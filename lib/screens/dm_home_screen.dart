@@ -106,10 +106,21 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
       }
 
       if (chat.isSociety) {
-        if (chat.eventId.isNotEmpty) {
-          (eventsInCommon[chat.otherUserId] ??= []).add(
-            MapEntry(chat.eventId, chat.event),
+        if (seenUsers.add(chat.otherUserId)) {
+          eventsInCommon[chat.otherUserId] = await _eventService.eventsInCommon(
+            myId,
+            chat.otherUserId,
           );
+
+          // Optionally, still seed from chat.eventId as a fallback
+          if (chat.eventId.isNotEmpty &&
+              !(eventsInCommon[chat.otherUserId] ?? []).any(
+                (e) => e.key == chat.eventId,
+              )) {
+            (eventsInCommon[chat.otherUserId] ??= []).add(
+              MapEntry(chat.eventId, chat.event),
+            );
+          }
         }
       } else if (seenUsers.add(chat.otherUserId)) {
         eventsInCommon[chat.otherUserId] = await _eventService.eventsInCommon(

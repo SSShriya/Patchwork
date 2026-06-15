@@ -42,10 +42,20 @@ class _UserProfileCardState extends State<UserProfileCard> {
 
   Future<void> _initEvents() async {
     final myUserId = await loadUserId();
+
+    // ── For committee cards, hosted events belong to the society,
+    //    not the individual member's user ID ──
+    final lookupId = widget.card.isCommitteeCard
+        ? widget
+              .card
+              .societyId // ← use society ID
+        : widget.card.otherUserId;
+
     final eventsInCommon = await _eventService.eventsInCommon(
       myUserId,
-      widget.card.otherUserId,
+      lookupId,
     );
+
     if (!mounted) return;
     setState(() {
       _eventsInCommon = eventsInCommon;
