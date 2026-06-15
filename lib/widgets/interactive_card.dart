@@ -1,5 +1,5 @@
 import 'package:drp/models/event_card.dart';
-import 'package:drp/tools/zig_zag_clipper.dart';
+import 'package:drp/tools/stitched_border_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/base_card.dart';
@@ -61,21 +61,32 @@ class _InteractiveCardState extends State<InteractiveCard> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: 186,
-      child: ClipPath(
-        clipper: ZigZagClipper(toothSize: 8),
+      child: CustomPaint(
+        foregroundPainter: StitchedBorderPainter(
+          stitchColor: Colors.white.withValues(alpha: 0.8),
+          strokeWidth: 2.6,
+          dashLength: 8.0,
+          gapLength: 8.0,
+          borderRadius: 8.0,
+          inset: 6.0,
+        ),
         child: Material(
           color: widget.card.color,
+          borderRadius: BorderRadius.circular(12),
           child: InkWell(
             onTap: widget.onTap ?? () => {},
             child: Stack(
               children: [
                 // FABRIC TEXTURE
                 Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.17,
-                    child: Image.asset(
-                      'assets/textures/linen.jpg',
-                      fit: BoxFit.cover,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Opacity(
+                      opacity: 0.17,
+                      child: Image.asset(
+                        'assets/textures/linen.jpg',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
