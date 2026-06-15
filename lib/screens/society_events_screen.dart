@@ -263,53 +263,77 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
             borderRadius: 12.0,
             inset: 6.0,
           ),
-          child: Container(
-            decoration: BoxDecoration(
+          child: ClipRRect(
+            // ✅ clips the ripple to rounded corners
+            borderRadius: BorderRadius.circular(12),
+            child: Material(
+              // ✅ ListTile now paints splash here
               color: const Color(0x4F3E92CC),
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              onTap: isPast ? null : () => _editEvent(event),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: imageUrl.isNotEmpty
-                    // Show event photo if image_url exists
-                    ? Image.network(
-                        imageUrl,
-                        width: 52,
-                        height: 52,
-                        fit: BoxFit.cover,
-                        // ── Show icon while loading ──────────────────────────
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color:
-                                  (isPast
-                                          ? Colors.grey
-                                          : const Color(0xFF84DCC6))
-                                      .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+              child: ListTile(
+                onTap: isPast ? null : () => _editEvent(event),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: imageUrl.isNotEmpty
+                      // Show event photo if image_url exists
+                      ? Image.network(
+                          imageUrl,
+                          width: 52,
+                          height: 52,
+                          fit: BoxFit.cover,
+                          // ── Show icon while loading ──────────────────────────
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color:
+                                    (isPast
+                                            ? Colors.grey
+                                            : const Color(0xFF84DCC6))
+                                        .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                        // ── Fallback icon if image fails to load ─────────────
-                        errorBuilder: (context, error, stackTrace) => Container(
+                            );
+                          },
+                          // ── Fallback icon if image fails to load ─────────────
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color:
+                                      (isPast
+                                              ? Colors.grey
+                                              : const Color(0xFF84DCC6))
+                                          .withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.calendar_today,
+                                  color: isPast
+                                      ? Colors.grey
+                                      : const Color(0xFF4D5359),
+                                ),
+                              ),
+                        )
+                      // Fallback icon if no image_url
+                      : Container(
                           width: 52,
                           height: 52,
                           decoration: BoxDecoration(
@@ -325,50 +349,35 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
                                 : const Color(0xFF4D5359),
                           ),
                         ),
-                      )
-                    // Fallback icon if no image_url
-                    : Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color:
-                              (isPast ? Colors.grey : const Color(0xFF84DCC6))
-                                  .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.calendar_today,
-                          color: isPast ? Colors.grey : const Color(0xFF4D5359),
-                        ),
-                      ),
-              ),
-              title: Text(
-                event['title']!,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: isPast ? Colors.grey : Colors.black87,
                 ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${event['start_date']} • ${event['location']}',
-                  style: const TextStyle(
+                title: Text(
+                  event['title']!,
+                  style: TextStyle(
                     fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    color: Color(0xFF4D5359),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: isPast ? Colors.grey : Colors.black87,
                   ),
                 ),
-              ),
-              trailing: isPast
-                  ? null
-                  : const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: Colors.grey,
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '${event['start_date']} • ${event['location']}',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      color: Color(0xFF4D5359),
                     ),
+                  ),
+                ),
+                trailing: isPast
+                    ? null
+                    : const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+              ),
             ),
           ),
         ),
