@@ -316,6 +316,8 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
       ),
       child: Stack(
         children: [
+          
+          const Positioned.fill(child: ColoredBox(color: Color(0xFFF5F0F6))),
           // BACKGROUND IMG
           Positioned.fill(
             child: Opacity(

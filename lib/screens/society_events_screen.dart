@@ -389,6 +389,11 @@ class _SocietyEventsScreenState extends State<SocietyEventsScreen> {
       ),
       child: Stack(
         children: [
+          Positioned.fill(
+            child: ColoredBox(
+              color: const Color(0xFFF5F0F6),
+            ), // ← add solid base
+          ),
           // BACKGROUND IMAGE
           Positioned.fill(
             child: Opacity(

@@ -382,6 +382,11 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
       ),
       child: Stack(
         children: [
+          Positioned.fill(
+            child: ColoredBox(
+              color: const Color(0xFFF5F0F6),
+            ), // ← add solid base
+          ),
           // BACKGROUND IMG
           Positioned.fill(
             child: Opacity(
