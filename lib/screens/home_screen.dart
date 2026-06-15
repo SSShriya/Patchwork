@@ -13,6 +13,7 @@ import '../screens/event_matches_screen.dart';
 import '../services/event_service.dart';
 import '../main.dart';
 import '../services/supabase_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onGoToEvents;
@@ -30,8 +31,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   String _userName = '';
   // List<MatchCard> _awaitingMatches = [];
   bool _loading = true;
+  bool _silentRefresh = false;
   List<ChatConversation> conversations = [];
   // bool _notificationSeen = false;
+  RealtimeChannel? _channel1;
+  RealtimeChannel? _channel2;
 
   List<MatchCard> _mutualMatches = [];
   List<MatchCard> _awaitingMatches = [];
@@ -44,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     super.initState();
     _loadUserName();
     _loadSeenIds().then((_) => _loadMatches());
+    _subscribeToMatchChanges();
   }
 
   @override
@@ -55,6 +60,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void dispose() {
+    _channel1?.unsubscribe();
+    _channel2?.unsubscribe();
     routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -62,6 +69,79 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didPopNext() {
     _loadMatches();
+  }
+
+  void _subscribeToMatchChanges() {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    // Channel 1: rows where YOU are user1
+    // → fires when user2 (the other person) flips user2_accepted to true
+    _channel1 = supabase
+        .channel('home_matches_as_user1_$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'matches',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user1_id',
+            value: userId,
+          ),
+          callback: (payload) {
+            final newRow = payload.newRecord;
+            final oldRow = payload.oldRecord;
+
+            final youAlreadyAccepted =
+                newRow['user1_accepted'] as bool? ?? false;
+            final theyJustAccepted = newRow['user2_accepted'] as bool? ?? false;
+            final theyHadntBefore =
+                !(oldRow['user2_accepted'] as bool? ?? false);
+
+            if (youAlreadyAccepted &&
+                theyJustAccepted &&
+                theyHadntBefore &&
+                mounted) {
+              debugPrint('Mutual match detected (you=user1)! Refreshing...');
+              _loadMatches(silent: true);
+            }
+          },
+        )
+        .subscribe();
+
+    // Channel 2: rows where YOU are user2
+    // → fires when user1 (the other person) flips user1_accepted to true
+    _channel2 = supabase
+        .channel('home_matches_as_user2_$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'matches',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user2_id',
+            value: userId,
+          ),
+          callback: (payload) {
+            final newRow = payload.newRecord;
+            final oldRow = payload.oldRecord;
+
+            final youAlreadyAccepted =
+                newRow['user2_accepted'] as bool? ?? false;
+            final theyJustAccepted = newRow['user1_accepted'] as bool? ?? false;
+            final theyHadntBefore =
+                !(oldRow['user1_accepted'] as bool? ?? false);
+
+            if (youAlreadyAccepted &&
+                theyJustAccepted &&
+                theyHadntBefore &&
+                mounted) {
+              debugPrint('Mutual match detected (you=user2)! Refreshing...');
+              _loadMatches(silent: true);
+            }
+          },
+        )
+        .subscribe();
   }
 
   Future<void> _loadUserName() async {
@@ -90,13 +170,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
-  Future<void> _loadMatches() async {
-    setState(() => _loading = true);
+  Future<void> _loadMatches({bool silent = false}) async {
+    if (silent) {
+      setState(() => _silentRefresh = true);
+    } else {
+      setState(() => _loading = true);
+    }
+
     try {
       final userId = await loadUserId();
-
       final matches = await _matchService.getPendingMatches(userId);
-
       final events = await _eventService.getInterestedEvents(userId);
       final awaiting = await _matchService.getAwaitingResponseMatches(userId);
       final mutual = await _matchService.getMutualMatches(userId);
@@ -105,7 +188,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _interestedEvents = events
           ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
 
-        // reusing the alr filtered event ids from getInterestedEvents
         final activeEventIds = _interestedEvents.map((e) => e.eventId).toSet();
 
         _pendingMatches = matches
@@ -119,11 +201,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             .toList();
 
         _loading = false;
+        _silentRefresh = false; // ← clear it when done
       });
     } catch (e) {
       debugPrint('Error: $e');
       if (mounted) {
-        if (mounted) setState(() => _loading = false);
+        setState(() {
+          _loading = false;
+          _silentRefresh = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -197,6 +283,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    // Silent refresh indicator — sits at the top of the page unobtrusively
+    if (_silentRefresh) {
+      // handled below in the Stack
     }
 
     final groupedMatches = _matchesByEvent;
@@ -636,6 +726,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                    if (_silentRefresh)
+                      const Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: LinearProgressIndicator(
+                          color: Color(0xFF84DCC6),
+                          backgroundColor: Colors.transparent,
                         ),
                       ),
                   ],
