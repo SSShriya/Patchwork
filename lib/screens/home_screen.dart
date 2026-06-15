@@ -560,7 +560,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                           ),
                         ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(16, 24, 16, 16),
+                    padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
