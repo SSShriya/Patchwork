@@ -22,15 +22,14 @@ class _SocietyNavBarState extends State<SocietyNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      const SocietyEventsScreen(),
+      const DMOverviewScreen(),
+      const SocietyProfileScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: const [
-          SocietyEventsScreen(),
-          DMOverviewScreen(),
-          SocietyProfileScreen(),
-        ],
-      ),
+      body: pages[_currentIndex], // ← only active screen is mounted
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,

@@ -18,6 +18,18 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // ← Add these two:
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('🔴 FLUTTER ERROR: ${details.exceptionAsString()}');
+    debugPrint('🔴 STACK: ${details.stack}');
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('🔴 PLATFORM ERROR: $error');
+    debugPrint('🔴 STACK: $stack');
+    return true;
+  };
   await dotenv.load(fileName: ".env");
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   await Supabase.initialize(

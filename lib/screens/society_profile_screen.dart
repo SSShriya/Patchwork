@@ -273,24 +273,24 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
       ),
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (confirmed != true) return;
+
+    // ✅ Capture messenger BEFORE any async gap that could unmount the widget
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
-      await supabase.auth.signOut();
+      // ✅ Clear session FIRST, before signOut triggers the auth listener
       await SessionManager.clearSession();
-
-      // auth listener in main.dart handles navigation
+      await supabase.auth.signOut();
+      // Navigation is handled by the auth listener in main.dart — do nothing here
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logout failed. Please try again.'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      debugPrint('🔴 LOGOUT: Error during logout: $e');
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Logout failed. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
