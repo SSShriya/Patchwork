@@ -375,180 +375,276 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // BACKGROUND IMG
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/textures/bg_texture.jpg'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
-                    BlendMode.multiply,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F0F6),
+      ),
+      child: Stack(
+        children: [
+          // BACKGROUND IMG
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/textures/bg_texture.jpg'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                      BlendMode.multiply,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
 
-        // CONTENT
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
-            child: ClipPath(
-              clipper: ScallopedClipper(),
-              child: AppBar(
-                title: const Text(
-                  'Profile',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 25,
-                    fontFamily: 'Lora',
+          // CONTENT
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+              child: ClipPath(
+                clipper: ScallopedClipper(),
+                child: AppBar(
+                  title: const Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25,
+                      fontFamily: 'Lora',
+                    ),
                   ),
-                ),
-                flexibleSpace: Opacity(
-                  opacity: 0.6,
-                  child: Image(
-                    image: AssetImage('assets/images/teal_gingham.png'),
-                    fit: BoxFit.cover,
+                  flexibleSpace: Opacity(
+                    opacity: 0.6,
+                    child: Image(
+                      image: AssetImage('assets/images/teal_gingham.png'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-                centerTitle: true,
-                foregroundColor: const Color(0xFF222222),
-                elevation: 0,
-                automaticallyImplyLeading: false,
-                actions: [
-                  _isLoading
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF222222),
+                  centerTitle: true,
+                  foregroundColor: const Color(0xFF222222),
+                  elevation: 0,
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    _isLoading
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF222222),
+                                ),
                               ),
                             ),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.save),
+                            tooltip: 'Save Details',
+                            onPressed: _saveDetails,
                           ),
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.save),
-                          tooltip: 'Save Details',
-                          onPressed: _saveDetails,
-                        ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          body: _isLoading && _societyName == null
-              ? const Center(child: CircularProgressIndicator())
-              : Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 10),
-
-                        // ── Avatar ───────────────────────────────────────────
-                        GestureDetector(
-                          onTap: _pickImage,
-                          child: Stack(
-                            children: [
-                              // ── Avatar in build — use MemoryImage for preview like ProfileScreen ──────
-                              CircleAvatar(
-                                // ✅ Key forces Flutter to rebuild the widget when the URL changes
-                                key: ValueKey(_existingImageUrl),
-                                radius: 60,
-                                backgroundColor: Colors.grey.shade300,
-                                backgroundImage: _imageBytes != null
-                                    ? MemoryImage(_imageBytes!) as ImageProvider
-                                    : (_existingImageUrl != null &&
-                                          _existingImageUrl!.isNotEmpty)
-                                    ? NetworkImage(_existingImageUrl!)
-                                    : null,
-                                child:
-                                    (_imageBytes == null &&
-                                        (_existingImageUrl == null ||
-                                            _existingImageUrl!.isEmpty))
-                                    ? const Icon(
-                                        Icons.person,
-                                        size: 65,
-                                        color: Colors.white,
-                                      )
-                                    : null,
-                              ),
-
-                              const Positioned(
-                                bottom: 0,
-                                right: 4,
-                                child: CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: Color(0xFF4D5359),
-                                  child: Icon(
-                                    Icons.add_a_photo,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // ── Society name ─────────────────────────────────────
-                        Text(
-                          _societyName ?? 'UNKNOWN',
-                          style: const TextStyle(
-                            fontFamily: 'Lora',
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF222222),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // ── Contact toggle ───────────────────────────────────
-                        _StitchedCard(
-                          color: const Color(0xFFEEDDEE),
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                value: _canContact,
-                                onChanged: (val) {
-                                  if (val != null) _updateContactStatus(val);
-                                },
-                              ),
-                              const Expanded(
-                                child: Text(
-                                  'Check this box if your committee members can be contacted on this app!',
-                                  style: TextStyle(
-                                    color: Color(0xFF222222),
-                                    fontSize: 13,
-                                    fontFamily: 'Montserrat',
-                                  ),
-                                  softWrap: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // ── Committee members ────────────────────────────────
-                        if (_canContact) ...[
+            body: _isLoading && _societyName == null
+                ? const Center(child: CircularProgressIndicator())
+                : Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
                           const SizedBox(height: 10),
+
+                          // ── Avatar ───────────────────────────────────────────
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Stack(
+                              children: [
+                                // ── Avatar in build — use MemoryImage for preview like ProfileScreen ──────
+                                CircleAvatar(
+                                  // ✅ Key forces Flutter to rebuild the widget when the URL changes
+                                  key: ValueKey(_existingImageUrl),
+                                  radius: 60,
+                                  backgroundColor: Colors.grey.shade300,
+                                  backgroundImage: _imageBytes != null
+                                      ? MemoryImage(_imageBytes!)
+                                            as ImageProvider
+                                      : (_existingImageUrl != null &&
+                                            _existingImageUrl!.isNotEmpty)
+                                      ? NetworkImage(_existingImageUrl!)
+                                      : null,
+                                  child:
+                                      (_imageBytes == null &&
+                                          (_existingImageUrl == null ||
+                                              _existingImageUrl!.isEmpty))
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 65,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+
+                                const Positioned(
+                                  bottom: 0,
+                                  right: 4,
+                                  child: CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: Color(0xFF4D5359),
+                                    child: Icon(
+                                      Icons.add_a_photo,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // ── Society name ─────────────────────────────────────
+                          Text(
+                            _societyName ?? 'UNKNOWN',
+                            style: const TextStyle(
+                              fontFamily: 'Lora',
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // ── Contact toggle ───────────────────────────────────
                           _StitchedCard(
                             color: const Color(0xFFEEDDEE),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: _canContact,
+                                  onChanged: (val) {
+                                    if (val != null) _updateContactStatus(val);
+                                  },
+                                ),
+                                const Expanded(
+                                  child: Text(
+                                    'Check this box if your committee members can be contacted on this app!',
+                                    style: TextStyle(
+                                      color: Color(0xFF222222),
+                                      fontSize: 13,
+                                      fontFamily: 'Montserrat',
+                                    ),
+                                    softWrap: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // ── Committee members ────────────────────────────────
+                          if (_canContact) ...[
+                            const SizedBox(height: 10),
+                            _StitchedCard(
+                              color: const Color(0xFFEEDDEE),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'COMMITTEE MEMBERS',
+                                        style: TextStyle(
+                                          color: Color(0xFF222222),
+                                          fontSize: 14,
+                                          fontFamily: 'Montserrat',
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.add_circle,
+                                          color: Color(0xFF4F3E92),
+                                        ),
+                                        onPressed: _showAddMemberDialog,
+                                        tooltip: 'Add Member',
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(color: Colors.black12),
+                                  if (_committee.isEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      child: Text(
+                                        'No committee members added yet.',
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: _committee.length,
+                                      itemBuilder: (context, index) {
+                                        final member = _committee[index];
+                                        return ListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          leading: const CircleAvatar(
+                                            backgroundColor: Colors.white60,
+                                            child: Icon(
+                                              Icons.person,
+                                              color: Color(0xFF222222),
+                                            ),
+                                          ),
+                                          title: Text(
+                                            member['name'] ?? '',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Montserrat',
+                                            ),
+                                          ),
+                                          subtitle: Text(
+                                            member['role'] ?? '',
+                                            style: TextStyle(
+                                              color: Colors.grey[800],
+                                            ),
+                                          ),
+                                          trailing: IconButton(
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.redAccent,
+                                            ),
+                                            onPressed: () =>
+                                                _removeMember(member['id']),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+
+                          // ── About ────────────────────────────────────────────
+                          _StitchedCard(
+                            color: const Color(0x5F79C99E),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -557,151 +653,62 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
-                                      'COMMITTEE MEMBERS',
+                                      'ABOUT THE SOCIETY',
                                       style: TextStyle(
-                                        color: Color(0xFF222222),
-                                        fontSize: 14,
                                         fontFamily: 'Montserrat',
+                                        fontSize: 13,
                                         fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.1,
+                                        color: Color(0xFF4D5359),
                                       ),
                                     ),
                                     IconButton(
                                       icon: const Icon(
-                                        Icons.add_circle,
-                                        color: Color(0xFF4F3E92),
+                                        Icons.edit,
+                                        size: 18,
+                                        color: Color(0xFF4D5359),
                                       ),
-                                      onPressed: _showAddMemberDialog,
-                                      tooltip: 'Add Member',
+                                      onPressed: _editAbout,
+                                      constraints: const BoxConstraints(),
+                                      padding: EdgeInsets.zero,
                                     ),
                                   ],
                                 ),
-                                const Divider(color: Colors.black12),
-                                if (_committee.isEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    child: Text(
-                                      'No committee members added yet.',
-                                      style: TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                  )
-                                else
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: _committee.length,
-                                    itemBuilder: (context, index) {
-                                      final member = _committee[index];
-                                      return ListTile(
-                                        contentPadding: EdgeInsets.zero,
-                                        leading: const CircleAvatar(
-                                          backgroundColor: Colors.white60,
-                                          child: Icon(
-                                            Icons.person,
-                                            color: Color(0xFF222222),
-                                          ),
-                                        ),
-                                        title: Text(
-                                          member['name'] ?? '',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Montserrat',
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          member['role'] ?? '',
-                                          style: TextStyle(
-                                            color: Colors.grey[800],
-                                          ),
-                                        ),
-                                        trailing: IconButton(
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.redAccent,
-                                          ),
-                                          onPressed: () =>
-                                              _removeMember(member['id']),
-                                        ),
-                                      );
-                                    },
+                                const SizedBox(height: 8),
+                                Text(
+                                  _aboutController.text.isNotEmpty
+                                      ? _aboutController.text
+                                      : 'No description provided yet. Click the edit icon to write something!',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 14,
+                                    color: Color(0x9F4D5359),
+                                    height: 1.5,
                                   ),
+                                ),
                               ],
                             ),
                           ),
+                          const SizedBox(height: 32),
+
+                          // ── Logout ───────────────────────────────────────────
+                          SizedBox(
+                            width: double.infinity,
+                            child: StitchedButton(
+                              label: 'LOG OUT',
+                              onPressed: _isLoading ? null : _logout,
+                              backgroundColor: const Color(0xFFfd5757),
+                              stitchColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                         ],
-                        const SizedBox(height: 24),
-
-                        // ── About ────────────────────────────────────────────
-                        _StitchedCard(
-                          color: const Color(0x5F79C99E),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'ABOUT THE SOCIETY',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.1,
-                                      color: Color(0xFF4D5359),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      size: 18,
-                                      color: Color(0xFF4D5359),
-                                    ),
-                                    onPressed: _editAbout,
-                                    constraints: const BoxConstraints(),
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _aboutController.text.isNotEmpty
-                                    ? _aboutController.text
-                                    : 'No description provided yet. Click the edit icon to write something!',
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 14,
-                                  color: Color(0x9F4D5359),
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // ── Logout ───────────────────────────────────────────
-                        SizedBox(
-                          width: double.infinity,
-                          child: StitchedButton(
-                            label: 'LOG OUT',
-                            onPressed: _isLoading ? null : _logout,
-                            backgroundColor: const Color(0xFFfd5757),
-                            stitchColor: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

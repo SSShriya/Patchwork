@@ -91,7 +91,11 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
     try {
       await registrationService.registerForEvent(widget.card.eventId);
       final userId = await loadUserId();
-      await _societyService.initiateSocietyChat(widget.card.societyId, userId, widget.card.eventId);
+      await _societyService.initiateSocietyChat(
+        widget.card.societyId,
+        userId,
+        widget.card.eventId,
+      );
       setState(() => _isRegistered = true);
       if (mounted) {
         showDialog(
@@ -305,230 +309,240 @@ class _EventProfileScreenState extends State<EventProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // BACKGROUND IMG
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/textures/bg_texture.jpg'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
-                    BlendMode.multiply,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F0F6),
+      ),
+      child: Stack(
+        children: [
+          // BACKGROUND IMG
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/textures/bg_texture.jpg'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                      BlendMode.multiply,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
 
-        // CONTENT
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            foregroundColor: const Color(0XFF222222),
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/yellow_gingham.png'),
-                fit: BoxFit.cover,
+          // CONTENT
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              foregroundColor: const Color(0XFF222222),
+              flexibleSpace: Opacity(
+                opacity: 0.6,
+                child: Image(
+                  image: AssetImage('assets/images/yellow_gingham.png'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Event image, name & datetime ─────────────────────────────
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: Colors.grey[300],
-                      child: Icon(
-                        Icons.event,
-                        size: 36,
-                        color: Colors.grey[600],
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Event image, name & datetime ─────────────────────────────
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 36,
+                        backgroundColor: Colors.grey[300],
+                        child: Icon(
+                          Icons.event,
+                          size: 36,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.card.title,
-                            style: const TextStyle(
-                              fontFamily: 'Lora',
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                size: 16,
-                                color: Color(0xFF4D5359),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.card.title,
+                              style: const TextStyle(
+                                fontFamily: 'Lora',
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
-                                '${DateFormat('HH:mm').format(widget.card.startDateTime)}'
-                                '-${DateFormat('HH:mm').format(widget.card.endDateTime)}',
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 16,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 16,
                                   color: Color(0xFF4D5359),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // ── Location ─────────────────────────────────────────────────
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on,
-                      size: 18,
-                      color: Color(0xFF4D5359),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.card.location,
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.normal,
-                        fontSize: 18,
-                        color: Color(0xFF4D5359),
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (widget.card.latitude != null &&
-                    widget.card.longitude != null) ...[
-                  MapPreview(
-                    latitude: widget.card.latitude!,
-                    longitude: widget.card.longitude!,
-                  ),
-                ],
-                const SizedBox(height: 10),
-
-                // ── Cost ─────────────────────────────────────────────────────
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.confirmation_num,
-                      size: 18,
-                      color: Color(0xFF4D5359),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.card.cost > 0
-                          ? '£${widget.card.cost.toStringAsFixed(2)}'
-                          : 'Free',
-                      style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.normal,
-                        fontSize: 18,
-                        color: Color(0xFF4D5359),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0XFFD0F0C0),
-                        foregroundColor: const Color(0xFF4D5359),
-                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SocietyInfoScreen(
-                            societyId: widget.card.societyId,
-                            eventId: widget.card.eventId,
-                          ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${DateFormat('d MMM').format(widget.card.startDateTime)}  ·  '
+                                  '${DateFormat('HH:mm').format(widget.card.startDateTime)}'
+                                  '-${DateFormat('HH:mm').format(widget.card.endDateTime)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 16,
+                                    color: Color(0xFF4D5359),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      child: Text(
-                        'More About $societyName',
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Location ─────────────────────────────────────────────────
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 18,
+                        color: Color(0xFF4D5359),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.card.location,
                         style: const TextStyle(
                           fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: Colors.black87,
+                          fontWeight: FontWeight.normal,
+                          fontSize: 18,
+                          color: Color(0xFF4D5359),
                         ),
                       ),
+                    ],
+                  ),
+
+                  if (widget.card.latitude != null &&
+                      widget.card.longitude != null) ...[
+                    MapPreview(
+                      latitude: widget.card.latitude!,
+                      longitude: widget.card.longitude!,
                     ),
                   ],
-                ),
+                  const SizedBox(height: 10),
 
-                const Divider(height: 32),
-
-                // ── Description ──────────────────────────────────────────────
-                const Text(
-                  'Description',
-                  style: TextStyle(
-                    fontFamily: 'Lora',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.black87,
+                  // ── Cost ─────────────────────────────────────────────────────
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.confirmation_num,
+                        size: 18,
+                        color: Color(0xFF4D5359),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.card.cost > 0
+                            ? '£${widget.card.cost.toStringAsFixed(2)}'
+                            : 'Free',
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.normal,
+                          fontSize: 18,
+                          color: Color(0xFF4D5359),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.card.subtitle,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 15,
-                    color: Colors.black87,
-                    height: 1.5,
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0XFFD0F0C0),
+                          foregroundColor: const Color(0xFF4D5359),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SocietyInfoScreen(
+                              societyId: widget.card.societyId,
+                              eventId: widget.card.eventId,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'More About $societyName',
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
 
-                // Committee meeting section ───────────────────────────
-                _buildCommitteeMeetingCard(),
+                  const Divider(height: 32),
 
-                const SizedBox(height: 32),
-
-                // ── Registration button ──────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  child: StitchedButton(
-                    label: _isRegistered ? 'Cancel Registration' : "I'm going!",
-                    backgroundColor: _isRegistered
-                        ? const Color(0xFFfd5757)
-                        : const Color(0xFF81D8D0),
-                    foregroundColor: Colors.black87,
-                    stitchColor: Colors.white,
-                    onPressed: _isRegistered ? _unregister : _register,
+                  // ── Description ──────────────────────────────────────────────
+                  const Text(
+                    'Description',
+                    style: TextStyle(
+                      fontFamily: 'Lora',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.card.subtitle,
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 15,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  // Committee meeting section ───────────────────────────
+                  _buildCommitteeMeetingCard(),
+
+                  const SizedBox(height: 32),
+
+                  // ── Registration button ──────────────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: StitchedButton(
+                      label: _isRegistered
+                          ? 'Cancel Registration'
+                          : "I'm going!",
+                      backgroundColor: _isRegistered
+                          ? const Color(0xFFfd5757)
+                          : const Color(0xFF81D8D0),
+                      foregroundColor: Colors.black87,
+                      stitchColor: Colors.white,
+                      onPressed: _isRegistered ? _unregister : _register,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

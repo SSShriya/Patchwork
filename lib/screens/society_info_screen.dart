@@ -174,365 +174,375 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // BACKGROUND IMG
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/textures/bg_texture.jpg'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
-                    BlendMode.multiply,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // CONTENT
-        Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
-            child: ClipPath(
-              clipper: ScallopedClipper(),
-              child: AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                title: Text(
-                  _name.isEmpty ? 'Society' : _name,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 25,
-                    fontFamily: 'Lora',
-                  ),
-                ),
-                flexibleSpace: Opacity(
-                  opacity: 0.6,
-                  child: Image(
-                    image: AssetImage('assets/images/purple_gingham.png'),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F0F6),
+      ),
+      child: Stack(
+        children: [
+          // BACKGROUND IMG
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/textures/bg_texture.jpg'),
                     fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                      BlendMode.multiply,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // -- Profile card --
-                _Card(
-                  child: Column(
-                    children: [
-                      ProfilePicture(
-                        name: _name,
-                        radius: 60,
-                        fontsize: 48,
-                        random: false,
-                        img: _imageUrl.isNotEmpty ? _imageUrl : null,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _name,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.school, size: 17),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '${_uni.isEmpty ? 'University not listed' : _uni} · ${_location.isEmpty ? 'London' : _location}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
 
-                      if (_isUserInterestedInCurrentEvent())
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () async {
-                                try {
-                                  final navigator = Navigator.of(context);
-                                  await _societyService.initiateSocietyChat(
-                                    widget.societyId,
-                                    userId,
-                                    widget.eventId,
-                                  );
-                                  if (!mounted) return;
-                                  navigator.push(
-                                    MaterialPageRoute(
-                                      builder: (context) => DMScreen(
-                                        chat: ChatConversation(
-                                          matchCard: _societyCard!,
-                                          isSociety: true,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                } catch (e, stack) {
-                                  debugPrint('=== onPressed error: $e ===');
-                                  debugPrint('=== stack: $stack ===');
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(
-                                  197,
-                                  199,
-                                  162,
-                                  251,
-                                ),
-                                foregroundColor: Colors.black,
-                              ),
-                              child: Text(
-                                (_isLoading || _societyCard == null)
-                                    ? "Loading..."
-                                    : (_isUserInterestedInCurrentEvent()
-                                          ? "Message"
-                                          : "Express interest in an event to message!"),
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
+          // CONTENT
+          Scaffold(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+              child: ClipPath(
+                clipper: ScallopedClipper(),
+                child: AppBar(
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  title: Text(
+                    _name.isEmpty ? 'Society' : _name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25,
+                      fontFamily: 'Lora',
+                    ),
+                  ),
+                  flexibleSpace: Opacity(
+                    opacity: 0.6,
+                    child: Image(
+                      image: AssetImage('assets/images/purple_gingham.png'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // ── About ──
-                _Card(
-                  color: const Color(0XFFbde0fe),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'About:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _about.isEmpty
-                            ? 'No description provided for $_name.'
-                            : _about,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // ── Events section ──
-                _Card(
-                  color: const Color(0X8FE6AACE),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Events:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : _events.isEmpty
-                          ? const Text('No events listed.')
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _events.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, i) {
-                                final event = _events[i];
-                                return InkWell(
-                                  onTap: () => _openEventSummary(event),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          child: event.imageUrl.isNotEmpty
-                                              ? Image.network(
-                                                  event.imageUrl,
-                                                  width: 60,
-                                                  height: 60,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  width: 60,
-                                                  height: 60,
-                                                  color: const Color(
-                                                    0XFFC0EDF7,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.event,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                event.title,
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              if (event
-                                                  .subtitle
-                                                  .isNotEmpty) ...[
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  event.subtitle,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          color: Colors.black38,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                if (_canMessage)
+              ),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // -- Profile card --
                   _Card(
-                    color: Color(0X8FAAFFAA),
                     child: Column(
                       children: [
+                        ProfilePicture(
+                          name: _name,
+                          radius: 60,
+                          fontsize: 48,
+                          random: false,
+                          img: _imageUrl.isNotEmpty ? _imageUrl : null,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              "COMMITTEE MEMBERS",
-                              style: TextStyle(
-                                color: Color(0XFF222222),
-                                fontSize: 14,
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.bold,
+                            const Icon(Icons.school, size: 17),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                '${_uni.isEmpty ? 'University not listed' : _uni} · ${_location.isEmpty ? 'London' : _location}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        Divider(color: Colors.black12),
+                        const SizedBox(height: 14),
 
-                        if (_committee.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                            child: Text(
-                              "No committee members added yet.",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey[700],
+                        if (_isUserInterestedInCurrentEvent())
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () async {
+                                  try {
+                                    final navigator = Navigator.of(context);
+                                    await _societyService.initiateSocietyChat(
+                                      widget.societyId,
+                                      userId,
+                                      widget.eventId,
+                                    );
+                                    if (!mounted) return;
+                                    navigator.push(
+                                      MaterialPageRoute(
+                                        builder: (context) => DMScreen(
+                                          chat: ChatConversation(
+                                            matchCard: _societyCard!,
+                                            isSociety: true,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  } catch (e, stack) {
+                                    debugPrint('=== onPressed error: $e ===');
+                                    debugPrint('=== stack: $stack ===');
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color.fromARGB(
+                                    197,
+                                    199,
+                                    162,
+                                    251,
+                                  ),
+                                  foregroundColor: Colors.black,
+                                ),
+                                child: Text(
+                                  (_isLoading || _societyCard == null)
+                                      ? "Loading..."
+                                      : (_isUserInterestedInCurrentEvent()
+                                            ? "Message"
+                                            : "Express interest in an event to message!"),
+                                ),
                               ),
-                            ),
-                          )
-                        else
-                          // Renders the list items sequentially
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: _committee.length,
-                            itemBuilder: (context, index) {
-                              final member = _committee[index];
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.white60,
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Color(0XFF222222),
-                                  ),
-                                ),
-                                title: Text(
-                                  member['name'] ?? '',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Montserrat',
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  member['role'] ?? '',
-                                  style: TextStyle(color: Colors.grey[800]),
-                                ),
-                              );
-                            },
+                            ],
                           ),
                       ],
                     ),
                   ),
-                const SizedBox(height: 32),
-              ],
+                  const SizedBox(height: 12),
+
+                  // ── About ──
+                  _Card(
+                    color: const Color(0XFFbde0fe),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'About:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _about.isEmpty
+                              ? 'No description provided for $_name.'
+                              : _about,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Events section ──
+                  _Card(
+                    color: const Color(0X8FE6AACE),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Events:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : _events.isEmpty
+                            ? const Text('No events listed.')
+                            : ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _events.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, i) {
+                                  final event = _events[i];
+                                  return InkWell(
+                                    onTap: () => _openEventSummary(event),
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: event.imageUrl.isNotEmpty
+                                                ? Image.network(
+                                                    event.imageUrl,
+                                                    width: 60,
+                                                    height: 60,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    color: const Color(
+                                                      0XFFC0EDF7,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.event,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  event.title,
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                if (event
+                                                    .subtitle
+                                                    .isNotEmpty) ...[
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    event.subtitle,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.black38,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (_canMessage)
+                    _Card(
+                      color: Color(0X8FAAFFAA),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "COMMITTEE MEMBERS",
+                                style: TextStyle(
+                                  color: Color(0XFF222222),
+                                  fontSize: 14,
+                                  fontFamily: 'Montserrat',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Divider(color: Colors.black12),
+
+                          if (_committee.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16.0,
+                              ),
+                              child: Text(
+                                "No committee members added yet.",
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            )
+                          else
+                            // Renders the list items sequentially
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              itemCount: _committee.length,
+                              itemBuilder: (context, index) {
+                                final member = _committee[index];
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.white60,
+                                    child: Icon(
+                                      Icons.person,
+                                      color: Color(0XFF222222),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    member['name'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Montserrat',
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    member['role'] ?? '',
+                                    style: TextStyle(color: Colors.grey[800]),
+                                  ),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

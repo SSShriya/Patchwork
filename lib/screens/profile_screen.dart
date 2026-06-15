@@ -784,210 +784,331 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // BACKGROUND IMG
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/textures/bg_texture.jpg'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
-                    BlendMode.multiply,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // CONTENT
-        Scaffold(
-          // backgroundColor: const Color(0XFFF5F0F6),
-          backgroundColor: Colors.transparent,
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight + 10),
-            child: ClipPath(
-              clipper: ScallopedClipper(),
-              child: AppBar(
-                title: const Text(
-                  'Setup Your Profile',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 25,
-                    fontFamily: 'Lora',
-                  ),
-                ),
-                flexibleSpace: Opacity(
-                  opacity: 0.6,
-                  child: Image(
-                    image: AssetImage('assets/images/teal_gingham.png'),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F0F6),
+      ),
+      child: Stack(
+        children: [
+          // BACKGROUND IMG
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/textures/bg_texture.jpg'),
                     fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                      BlendMode.multiply,
+                    ),
                   ),
                 ),
-                elevation: 0,
-                centerTitle: true,
               ),
             ),
           ),
 
-          body: SafeArea(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0XFF84DCC6),
-                      ),
+          // CONTENT
+          Scaffold(
+            // backgroundColor: const Color(0XFFF5F0F6),
+            backgroundColor: Colors.transparent,
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight + 10),
+              child: ClipPath(
+                clipper: ScallopedClipper(),
+                child: AppBar(
+                  title: const Text(
+                    'Setup Your Profile',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25,
+                      fontFamily: 'Lora',
                     ),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // ── Profile Picture ────────────────────────────────
-                          Center(
-                            child: GestureDetector(
-                              onTap: _pickImage,
-                              child: Column(
-                                children: [
-                                  const Text(
-                                    'Profile Picture',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Upload a picture, preferably with you in it!',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Stack(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 60,
-                                        backgroundColor: Colors.grey.shade200,
-                                        backgroundImage: _imageBytes != null
-                                            ? MemoryImage(_imageBytes!)
-                                                  as ImageProvider
-                                            : _existingAvatarUrl != null
-                                            ? NetworkImage(_existingAvatarUrl!)
-                                            : null,
-                                        child:
-                                            (_imageBytes == null &&
-                                                _existingAvatarUrl == null)
-                                            ? Icon(
-                                                Icons.camera_alt_outlined,
-                                                size: 40,
-                                                color: Colors.grey.shade600,
-                                              )
-                                            : null,
+                  ),
+                  flexibleSpace: Opacity(
+                    opacity: 0.6,
+                    child: Image(
+                      image: AssetImage('assets/images/teal_gingham.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  elevation: 0,
+                  centerTitle: true,
+                ),
+              ),
+            ),
+
+            body: SafeArea(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0XFF84DCC6),
+                        ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // ── Profile Picture ────────────────────────────────
+                            Center(
+                              child: GestureDetector(
+                                onTap: _pickImage,
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Profile Picture',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
                                       ),
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 4,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF4D5359),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.edit,
-                                            size: 16,
-                                            color: Colors.white,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Upload a picture, preferably with you in it!',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Stack(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 60,
+                                          backgroundColor: Colors.grey.shade200,
+                                          backgroundImage: _imageBytes != null
+                                              ? MemoryImage(_imageBytes!)
+                                                    as ImageProvider
+                                              : _existingAvatarUrl != null
+                                              ? NetworkImage(
+                                                  _existingAvatarUrl!,
+                                                )
+                                              : null,
+                                          child:
+                                              (_imageBytes == null &&
+                                                  _existingAvatarUrl == null)
+                                              ? Icon(
+                                                  Icons.camera_alt_outlined,
+                                                  size: 40,
+                                                  color: Colors.grey.shade600,
+                                                )
+                                              : null,
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 4,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF4D5359),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.edit,
+                                              size: 16,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 32),
+                            const SizedBox(height: 32),
 
-                          Text(
-                            'Your Information',
-                            style: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                            Text(
+                              'Your Information',
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildStitchedField(
-                            _buildTextField(
-                              controller: _nameController,
-                              label: 'Name',
-                              icon: Icons.person_outline,
-                              required: true,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildStitchedField(_buildUniversityField()),
-                          const SizedBox(height: 16),
-
-                          if (!widget.isSociety) ...[
-                            _buildStitchedField(_buildYearGroupField()),
                             const SizedBox(height: 16),
 
                             _buildStitchedField(
                               _buildTextField(
-                                controller: _courseController,
-                                label: 'Course / Major',
-                                icon: Icons.book_outlined,
-                                required: false,
+                                controller: _nameController,
+                                label: 'Name',
+                                icon: Icons.person_outline,
+                                required: true,
                               ),
                             ),
                             const SizedBox(height: 16),
 
-                            _buildStitchedField(_buildBoroughField()),
-                            const SizedBox(height: 20),
+                            _buildStitchedField(_buildUniversityField()),
+                            const SizedBox(height: 16),
+
+                            if (!widget.isSociety) ...[
+                              _buildStitchedField(_buildYearGroupField()),
+                              const SizedBox(height: 16),
+
+                              _buildStitchedField(
+                                _buildTextField(
+                                  controller: _courseController,
+                                  label: 'Course / Major',
+                                  icon: Icons.book_outlined,
+                                  required: false,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              _buildStitchedField(_buildBoroughField()),
+                              const SizedBox(height: 20),
+
+                              const StitchedDivider(color: Color(0x8FCD5C5C)),
+                              const SizedBox(height: 6),
+
+                              // ── Interests ──────────────────────────────────
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Your Interests',
+                                    style: const TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_interests.length}/$_maxInterests',
+                                    style: const TextStyle(
+                                      fontFamily: 'Merriweather',
+                                      fontSize: 13,
+                                      color: Color(0xFF4D5359),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                'Pick categories to explore interests',
+                                style: const TextStyle(
+                                  fontFamily: 'Bitter',
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: interestCategories.map((category) {
+                                  return GestureDetector(
+                                    onTap: () => _openCategorySheet(category),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Color(0X8FADD8E6),
+                                        borderRadius: BorderRadius.circular(24),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            category.emoji,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            category.name,
+                                            style: const TextStyle(
+                                              fontFamily: 'Merriweather',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 12),
+
+                              if (_interests.isNotEmpty) ...[
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 4.0,
+                                  children: _interests.map((interest) {
+                                    return EmbroideredChip(
+                                      // label: Text(
+                                      //   interest,
+                                      //   style: const TextStyle(
+                                      //     fontFamily: 'Merriweather',
+                                      //     color: Color(0xFF4D5359),
+                                      //     fontSize: 13,
+                                      //   ),
+                                      // ),
+                                      label: interest,
+                                      // backgroundColor: Color.fromARGB(
+                                      //   255,
+                                      //   210,
+                                      //   210,
+                                      //   249,
+                                      // ),
+                                      // side: const BorderSide(
+                                      //   color: Color(
+                                      //     0XFF002147,
+                                      //   ), // removes outline
+                                      //   width: 0,
+                                      // ),
+                                      // deleteIcon: const Icon(
+                                      //   Icons.cancel,
+                                      //   size: 18,
+                                      //   color: Color(0xFF4D5359),
+                                      // ),
+                                      onDeleted: () => setState(() {
+                                        _interests.remove(interest);
+                                        _interestData.remove(interest);
+                                      }),
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(height: 16),
+
+                                // ── Interest Photos ────────────────────────────
+                                _buildPhotoGallery(),
+                                const SizedBox(height: 8),
+                              ],
+                              const SizedBox(height: 16),
+                            ],
 
                             const StitchedDivider(color: Color(0x8FCD5C5C)),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
 
-                            // ── Interests ──────────────────────────────────
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Your Interests',
-                                  style: const TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                Text(
-                                  '${_interests.length}/$_maxInterests',
-                                  style: const TextStyle(
-                                    fontFamily: 'Merriweather',
-                                    fontSize: 13,
-                                    color: Color(0xFF4D5359),
-                                  ),
-                                ),
-                              ],
+                            // ── Bio ───────────────────────────────────────────
+                            const Text(
+                              'Bio',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
                             Text(
-                              'Pick categories to explore interests',
+                              'Favorite quotes? Ideal day off? Passion projects? Show off your personality and flare!',
                               style: const TextStyle(
                                 fontFamily: 'Bitter',
                                 fontSize: 13,
@@ -995,158 +1116,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                             const SizedBox(height: 10),
-
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: interestCategories.map((category) {
-                                return GestureDetector(
-                                  onTap: () => _openCategorySheet(category),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Color(0X8FADD8E6),
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          category.emoji,
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          category.name,
-                                          style: const TextStyle(
-                                            fontFamily: 'Merriweather',
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                            _buildStitchedField(
+                              TextFormField(
+                                controller: _bioController,
+                                maxLines: 3,
+                                keyboardType: TextInputType.multiline,
+                                decoration: InputDecoration(
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  hintText: 'Introduce yourself!',
+                                  hintStyle: TextStyle(
+                                    fontFamily: 'Montserrat',
+                                    fontSize: 13,
+                                    color: Colors.grey,
                                   ),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 12),
-
-                            if (_interests.isNotEmpty) ...[
-                              Wrap(
-                                spacing: 8.0,
-                                runSpacing: 4.0,
-                                children: _interests.map((interest) {
-                                  return EmbroideredChip(
-                                    // label: Text(
-                                    //   interest,
-                                    //   style: const TextStyle(
-                                    //     fontFamily: 'Merriweather',
-                                    //     color: Color(0xFF4D5359),
-                                    //     fontSize: 13,
-                                    //   ),
-                                    // ),
-                                    label: interest,
-                                    // backgroundColor: Color.fromARGB(
-                                    //   255,
-                                    //   210,
-                                    //   210,
-                                    //   249,
-                                    // ),
-                                    // side: const BorderSide(
-                                    //   color: Color(
-                                    //     0XFF002147,
-                                    //   ), // removes outline
-                                    //   width: 0,
-                                    // ),
-                                    // deleteIcon: const Icon(
-                                    //   Icons.cancel,
-                                    //   size: 18,
-                                    //   color: Color(0xFF4D5359),
-                                    // ),
-                                    onDeleted: () => setState(() {
-                                      _interests.remove(interest);
-                                      _interestData.remove(interest);
-                                    }),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 16),
-
-                              // ── Interest Photos ────────────────────────────
-                              _buildPhotoGallery(),
-                              const SizedBox(height: 8),
-                            ],
-                            const SizedBox(height: 16),
-                          ],
-
-                          const StitchedDivider(color: Color(0x8FCD5C5C)),
-                          const SizedBox(height: 16),
-
-                          // ── Bio ───────────────────────────────────────────
-                          const Text(
-                            'Bio',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            'Favorite quotes? Ideal day off? Passion projects? Show off your personality and flare!',
-                            style: const TextStyle(
-                              fontFamily: 'Bitter',
-                              fontSize: 13,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildStitchedField(
-                            TextFormField(
-                              controller: _bioController,
-                              maxLines: 3,
-                              keyboardType: TextInputType.multiline,
-                              decoration: InputDecoration(
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                hintText: 'Introduce yourself!',
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 13,
-                                  color: Colors.grey,
+                                  contentPadding: EdgeInsets.all(10),
                                 ),
-                                contentPadding: EdgeInsets.all(10),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                          StitchedButton(
-                            label: 'SAVE PROFILE',
-                            onPressed: _isLoading ? null : _saveProfile,
-                            isLoading: _isLoading,
-                            backgroundColor: const Color(0xFFDBB2D1),
-                          ),
-                          const SizedBox(height: 20),
+                            StitchedButton(
+                              label: 'SAVE PROFILE',
+                              onPressed: _isLoading ? null : _saveProfile,
+                              isLoading: _isLoading,
+                              backgroundColor: const Color(0xFFDBB2D1),
+                            ),
+                            const SizedBox(height: 20),
 
-                          StitchedButton(
-                            label: 'LOG OUT',
-                            onPressed: _isLoading ? null : _logout,
-                            backgroundColor: const Color(0xFFfd5757),
-                            stitchColor: Colors.white,
-                          ),
-                        ],
+                            StitchedButton(
+                              label: 'LOG OUT',
+                              onPressed: _isLoading ? null : _logout,
+                              backgroundColor: const Color(0xFFfd5757),
+                              stitchColor: Colors.white,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
