@@ -148,19 +148,23 @@ class _DMMeetingPopupState extends State<DMMeetingPopup> {
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Header ───────────────────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Suggest a Meeting',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _purple,
+                  Flexible(
+                    child: Text(
+                      'Suggest a Meeting',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _purple,
+                      ),
+                      overflow: TextOverflow
+                          .ellipsis, // optional: prevent text wrapping
                     ),
                   ),
                   IconButton(

@@ -120,7 +120,9 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
       final data = await _societyService.getSocDetails(widget.societyId);
       if (data == null) return;
 
-      final committeeMembers = await _societyService.getCommittee(widget.societyId);
+      final committeeMembers = await _societyService.getCommittee(
+        widget.societyId,
+      );
 
       if (mounted) {
         setState(() {
@@ -269,56 +271,54 @@ class _SocietyInfoScreenState extends State<SocietyInfoScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () async {
-                              debugPrint('=== Message button pressed ===');
-                              debugPrint('_isLoading: $_isLoading');
-                              debugPrint('_societyCard: $_societyCard');
-                              debugPrint(
-                                '_isUserInterestedInCurrentEvent: ${_isUserInterestedInCurrentEvent()}',
-                              );
-                              try {
-                                final navigator = Navigator.of(context);
-                                await _societyService.initiateSocietyChat(widget.societyId, userId, widget.eventId);
-                                if (!mounted) return;
-                                debugPrint('=== Navigating to DMScreen ===');
-                                navigator.push(
-                                  MaterialPageRoute(
-                                    builder: (context) => DMScreen(
-                                      chat: ChatConversation(
-                                        matchCard: _societyCard!,
-                                        isSociety: true,
+                      if (_isUserInterestedInCurrentEvent())
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () async {
+                                try {
+                                  final navigator = Navigator.of(context);
+                                  await _societyService.initiateSocietyChat(
+                                    widget.societyId,
+                                    userId,
+                                    widget.eventId,
+                                  );
+                                  if (!mounted) return;
+                                  navigator.push(
+                                    MaterialPageRoute(
+                                      builder: (context) => DMScreen(
+                                        chat: ChatConversation(
+                                          matchCard: _societyCard!,
+                                          isSociety: true,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              } catch (e, stack) {
-                                debugPrint('=== onPressed error: $e ===');
-                                debugPrint('=== stack: $stack ===');
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(
-                                197,
-                                199,
-                                162,
-                                251,
+                                  );
+                                } catch (e, stack) {
+                                  debugPrint('=== onPressed error: $e ===');
+                                  debugPrint('=== stack: $stack ===');
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  197,
+                                  199,
+                                  162,
+                                  251,
+                                ),
+                                foregroundColor: Colors.black,
                               ),
-                              foregroundColor: Colors.black,
+                              child: Text(
+                                (_isLoading || _societyCard == null)
+                                    ? "Loading..."
+                                    : (_isUserInterestedInCurrentEvent()
+                                          ? "Message"
+                                          : "Express interest in an event to message!"),
+                              ),
                             ),
-                            child: Text(
-                              (_isLoading || _societyCard == null)
-                                  ? "Loading..."
-                                  : (_isUserInterestedInCurrentEvent()
-                                        ? "Message"
-                                        : "Express interest in an event to message!"),
-                            ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
