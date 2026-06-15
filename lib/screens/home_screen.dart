@@ -31,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   String _userName = '';
   // List<MatchCard> _awaitingMatches = [];
   bool _loading = true;
-  bool _silentRefresh = false;
   List<ChatConversation> conversations = [];
   // bool _notificationSeen = false;
   RealtimeChannel? _channel1;
@@ -171,12 +170,26 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Future<void> _loadMatches({bool silent = false}) async {
+    // Silent: only refresh mutual + awaiting for the bell, touch nothing else
     if (silent) {
-      setState(() => _silentRefresh = true);
-    } else {
-      setState(() => _loading = true);
+      try {
+        final userId = await loadUserId();
+        final mutual = await _matchService.getMutualMatches(userId);
+        final awaiting = await _matchService.getAwaitingResponseMatches(userId);
+        if (!mounted) return;
+        setState(() {
+          _mutualMatches = mutual;
+          _awaitingMatches = awaiting;
+          // ← _pendingMatches, _interestedEvents untouched — no UI flicker
+        });
+      } catch (e) {
+        debugPrint('Silent refresh error: $e');
+      }
+      return; // ← exit early, never sets _loading
     }
 
+    // Full load (first open, pull-to-refresh, didPopNext)
+    setState(() => _loading = true);
     try {
       final userId = await loadUserId();
       final matches = await _matchService.getPendingMatches(userId);
@@ -199,19 +212,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _mutualMatches = mutual
             .where((m) => activeEventIds.contains(m.eventId))
             .toList();
-
         _loading = false;
-        _silentRefresh = false; // ← clear it when done
       });
     } catch (e) {
       debugPrint('Error: $e');
       if (mounted) {
-        setState(() {
-          _loading = false;
-          _silentRefresh = false;
-        });
+        setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
               'An issue has occurred: for your security, you have been logged out.',
             ),
@@ -283,10 +291,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    // Silent refresh indicator — sits at the top of the page unobtrusively
-    if (_silentRefresh) {
-      // handled below in the Stack
     }
 
     final groupedMatches = _matchesByEvent;
@@ -726,16 +730,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    if (_silentRefresh)
-                      const Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: LinearProgressIndicator(
-                          color: Color(0xFF84DCC6),
-                          backgroundColor: Colors.transparent,
                         ),
                       ),
                   ],
