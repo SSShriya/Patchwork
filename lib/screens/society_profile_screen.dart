@@ -274,12 +274,10 @@ class _SocietyProfileScreenState extends State<SocietyProfileScreen> {
     );
 
     if (confirmed != true) return;
-
-    // ✅ Capture messenger BEFORE any async gap that could unmount the widget
+    if (_disposed || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      // ✅ Clear session FIRST, before signOut triggers the auth listener
       await SessionManager.clearSession();
       await supabase.auth.signOut();
       // Navigation is handled by the auth listener in main.dart — do nothing here
