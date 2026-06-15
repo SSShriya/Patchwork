@@ -23,9 +23,14 @@ class ChatSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
+      shape: const Border(),
+      collapsedShape: const Border(),
       title: Text(
         title,
-        style: const TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.bold,
+        ),
       ),
       initiallyExpanded: currentChats,
       children: [
@@ -90,9 +95,9 @@ class ChatSection extends StatelessWidget {
                   ),
                   if (chat.event.isNotEmpty)
                     Text(
-                      (eventsInCommon[chat.otherUserId]?.map((e) => e.value) ?? [chat.event]).join(
-                        ", ",
-                      ),
+                      (eventsInCommon[chat.otherUserId]?.map((e) => e.value) ??
+                              [chat.event])
+                          .join(", "),
                       style: const TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 11,

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../models/match_convo.dart';
 import '../services/conversation_service.dart';
 import '../services/event_service.dart';
+import '../tools/sitched_divider.dart';
 
 class DMOverviewScreen extends StatefulWidget {
   const DMOverviewScreen({super.key});
@@ -362,7 +363,7 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                               ),
                               child: Center(
                                 child: Text(
-                                  'No conversations found matching criteria.',
+                                  'Match with a friend to start a conversation!',
                                   style: TextStyle(
                                     color: Colors.grey[600],
                                     fontSize: 14,
@@ -381,6 +382,16 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                                 currentChats: true,
                               ),
 
+                            // Divider between Current Chats and Society Chats
+                            if (filteredCurrentConvos.isNotEmpty &&
+                                filteredSocietyConvos.isNotEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                child: StitchedDivider(
+                                  color: Color(0x8FCD5C5C),
+                                ),
+                              ),
+
                             // Society Chats Section
                             if (filteredSocietyConvos.isNotEmpty)
                               ChatSection(
@@ -389,6 +400,23 @@ class _DMOverviewScreenState extends State<DMOverviewScreen> with RouteAware {
                                 eventsInCommon: _eventsInCommon,
                                 onRefresh: _loadConversations,
                                 currentChats: true,
+                              ),
+
+                            // Divider between Society Chats and Old Chats
+                            if (filteredSocietyConvos.isNotEmpty &&
+                                filteredOldConvos.isNotEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                child: StitchedDivider(),
+                              ),
+
+                            // Edge case: divider if Current exists but Society doesn't, before Old
+                            if (filteredCurrentConvos.isNotEmpty &&
+                                filteredSocietyConvos.isEmpty &&
+                                filteredOldConvos.isNotEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                child: StitchedDivider(),
                               ),
 
                             // Old Chats Section

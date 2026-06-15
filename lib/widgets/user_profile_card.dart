@@ -102,6 +102,8 @@ class _UserProfileCardState extends State<UserProfileCard> {
                       ),
                     ],
                   ),
+                const SizedBox(height: 8),
+
                 if (!widget.card.isCommitteeCard &&
                     widget.card.university != "")
                   Row(
@@ -165,6 +167,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
                       ),
                     ],
                   ),
+                const SizedBox(height: 8),
 
                 if (!widget.card.isCommitteeCard && widget.card.course != "")
                   Row(
@@ -186,7 +189,7 @@ class _UserProfileCardState extends State<UserProfileCard> {
                       ),
                     ],
                   ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 if (!widget.card.isCommitteeCard && widget.card.location != "")
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
