@@ -871,122 +871,133 @@ class _EventMatchesScreenState extends State<EventMatchesScreen> {
   Widget build(BuildContext context) {
     final currentEvent = widget.allEvents[_currentPage];
 
-    return Stack(
-      children: [
-        // BACKGROUND IMG
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/textures/bg_texture.jpg'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Color(0xFFF5F0F6).withValues(alpha: 0.4),
-                    BlendMode.multiply,
-                  ),
-                ),
-              ),
-            ),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F0F6),
+      ),
+      child: Stack(
+        children: [
+          // BACKGROUND IMG
+          Positioned.fill(
+            child: ColoredBox(
+              color: const Color(0xFFF5F0F6),
+            ), // ← add solid base
           ),
-        ),
-
-        // CONTENT
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: Text(
-              currentEvent.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                fontFamily: 'Lora',
-              ),
-            ),
-            flexibleSpace: Opacity(
-              opacity: 0.6,
-              child: Image(
-                image: AssetImage('assets/images/yellow_gingham.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            foregroundColor: const Color(0XFF222222),
-            elevation: 0,
-          ),
-          body: Column(
-            children: [
-              // ── AnimatedSwitcher handles circular swipe with correct direction ──
-              Expanded(
-                child: GestureDetector(
-                  onHorizontalDragEnd: (details) {
-                    final velocity = details.primaryVelocity ?? 0;
-                    if (velocity < -300) {
-                      _goToPage(
-                        _currentPage < widget.allEvents.length - 1
-                            ? _currentPage + 1
-                            : 0,
-                        goingForward: true,
-                      );
-                    } else if (velocity > 300) {
-                      _goToPage(
-                        _currentPage > 0
-                            ? _currentPage - 1
-                            : widget.allEvents.length - 1,
-                        goingForward: false,
-                      );
-                    }
-                  },
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    layoutBuilder: (currentChild, _) =>
-                        currentChild ?? const SizedBox(),
-                    transitionBuilder: (child, animation) {
-                      final isEntering = child.key == ValueKey(_currentPage);
-                      final beginOffset = isEntering
-                          ? Offset(_goingForward ? 1.0 : -1.0, 0.0)
-                          : Offset(_goingForward ? -1.0 : 1.0, 0.0);
-                      return SlideTransition(
-                        position:
-                            Tween<Offset>(
-                              begin: beginOffset,
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOut,
-                              ),
-                            ),
-                        child: child,
-                      );
-                    },
-                    child: KeyedSubtree(
-                      key: ValueKey(_currentPage),
-                      child: _buildEventPage(currentEvent),
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/textures/bg_texture.jpg'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Color(0xFFF5F0F6).withValues(alpha: 0.4),
+                      BlendMode.multiply,
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
 
-              // ── Worm indicator ──
-              if (widget.allEvents.length > 1) ...[
-                const SizedBox(height: 12),
-                AnimatedSmoothIndicator(
-                  activeIndex: _currentPage,
-                  count: widget.allEvents.length,
-                  effect: const WormEffect(
-                    dotHeight: 8,
-                    dotWidth: 8,
-                    activeDotColor: Color(0XFF84DCC6),
-                    dotColor: Colors.grey,
+          // CONTENT
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: Text(
+                currentEvent.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 25,
+                  fontFamily: 'Lora',
+                ),
+              ),
+              flexibleSpace: Opacity(
+                opacity: 0.6,
+                child: Image(
+                  image: AssetImage('assets/images/yellow_gingham.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              foregroundColor: const Color(0XFF222222),
+              elevation: 0,
+            ),
+            body: Column(
+              children: [
+                // ── AnimatedSwitcher handles circular swipe with correct direction ──
+                Expanded(
+                  child: GestureDetector(
+                    onHorizontalDragEnd: (details) {
+                      final velocity = details.primaryVelocity ?? 0;
+                      if (velocity < -300) {
+                        _goToPage(
+                          _currentPage < widget.allEvents.length - 1
+                              ? _currentPage + 1
+                              : 0,
+                          goingForward: true,
+                        );
+                      } else if (velocity > 300) {
+                        _goToPage(
+                          _currentPage > 0
+                              ? _currentPage - 1
+                              : widget.allEvents.length - 1,
+                          goingForward: false,
+                        );
+                      }
+                    },
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      layoutBuilder: (currentChild, _) =>
+                          currentChild ?? const SizedBox(),
+                      transitionBuilder: (child, animation) {
+                        final isEntering = child.key == ValueKey(_currentPage);
+                        final beginOffset = isEntering
+                            ? Offset(_goingForward ? 1.0 : -1.0, 0.0)
+                            : Offset(_goingForward ? -1.0 : 1.0, 0.0);
+                        return SlideTransition(
+                          position:
+                              Tween<Offset>(
+                                begin: beginOffset,
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOut,
+                                ),
+                              ),
+                          child: child,
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey(_currentPage),
+                        child: _buildEventPage(currentEvent),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
+
+                // ── Worm indicator ──
+                if (widget.allEvents.length > 1) ...[
+                  const SizedBox(height: 12),
+                  AnimatedSmoothIndicator(
+                    activeIndex: _currentPage,
+                    count: widget.allEvents.length,
+                    effect: const WormEffect(
+                      dotHeight: 8,
+                      dotWidth: 8,
+                      activeDotColor: Color(0XFF84DCC6),
+                      dotColor: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
