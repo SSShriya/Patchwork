@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/match_card.dart';
 import '../widgets/user_profile_card.dart';
 
+
 class UserProfileScreen extends StatelessWidget {
   final MatchCard card;
   final bool accepted;

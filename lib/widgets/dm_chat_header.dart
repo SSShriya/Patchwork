@@ -3,7 +3,7 @@ import 'package:drp/tools/scalloped_clipper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import '../models/match_convo.dart';
-import '../screens/dm_user_profile_screen.dart';
+import '../screens/user_profile_screen.dart';
 
 class DmChatHeader extends StatelessWidget implements PreferredSizeWidget {
   final ChatConversation chat;

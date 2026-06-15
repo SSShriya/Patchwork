@@ -14,6 +14,7 @@ import '../services/event_service.dart';
 import '../main.dart';
 import '../services/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../screens/user_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onGoToEvents;
@@ -355,8 +356,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       const SizedBox(height: 16),
 
                       // -- New matches --
+                      // -- New matches --
                       Text(
-                        'New Connections !!',
+                        'New Connections!',
                         style: const TextStyle(
                           fontFamily: 'Bitter',
                           fontSize: 16,
@@ -387,6 +389,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                             badge: 'Matched',
                             badgeColor: const Color(0XFF84DCC6),
                             badgeTextColor: const Color(0XFF2A8C73),
+                            onTap: () => Navigator.push(
+                              // ← ADD
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => UserProfileScreen(
+                                  card: m,
+                                  accepted:
+                                      true, // shows Message + Invite to Meet
+                                ),
+                              ),
+                            ),
                           ),
                         ),
 
@@ -752,78 +765,104 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String badge,
     required Color badgeColor,
     required Color badgeTextColor,
+    VoidCallback? onTap, // ← ADD
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: isNew
-          ? BoxDecoration(
-              color: const Color(0xFF84DCC6),
-              borderRadius: BorderRadius.circular(10),
-            )
-          : null,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        leading: CircleAvatar(
-          radius: 26,
-          backgroundImage: m.imageUrl.isNotEmpty
-              ? NetworkImage(m.imageUrl)
-              : null,
-          backgroundColor: const Color(0xFF84DCC6),
-          child: m.imageUrl.isEmpty
-              ? Text(
-                  m.title.isNotEmpty ? m.title[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-              : null,
-        ),
-        title: Row(
-          children: [
-            Text(
-              m.title,
-              style: const TextStyle(
-                fontFamily: 'Bitter',
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-            if (isNew) ...[
-              const SizedBox(width: 6),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
-                  shape: BoxShape.circle,
+    return GestureDetector(
+      // ← WRAP
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: isNew
+            ? BoxDecoration(
+                color: const Color(0xFF84DCC6),
+                borderRadius: BorderRadius.circular(10),
+              )
+            : null,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 4,
+            horizontal: 8,
+          ),
+          leading: CircleAvatar(
+            radius: 26,
+            backgroundImage: m.imageUrl.isNotEmpty
+                ? NetworkImage(m.imageUrl)
+                : null,
+            backgroundColor: const Color(0xFF84DCC6),
+            child: m.imageUrl.isEmpty
+                ? Text(
+                    m.title.isNotEmpty ? m.title[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
+          ),
+          title: Row(
+            children: [
+              Text(
+                m.title,
+                style: const TextStyle(
+                  fontFamily: 'Bitter',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
+              if (isNew) ...[
+                const SizedBox(width: 6),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            fontFamily: 'Merriweather',
-            fontSize: 12,
-            color: Colors.grey[600],
           ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: badgeColor,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            badge,
+          subtitle: Text(
+            subtitle,
             style: TextStyle(
               fontFamily: 'Merriweather',
-              fontSize: 11,
-              color: badgeTextColor,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: Colors.grey[600],
             ),
+          ),
+          trailing: Row(
+            // ← updated trailing
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  badge,
+                  style: TextStyle(
+                    fontFamily: 'Merriweather',
+                    fontSize: 11,
+                    color: badgeTextColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (onTap != null) ...[
+                // ← chevron only on tappable tiles
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Colors.black54,
+                ),
+              ],
+            ],
           ),
         ),
       ),
