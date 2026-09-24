@@ -3,21 +3,20 @@
 A social application for London universities focused on motivating students to attend society events by connecting them with others attending the same events.
 
 ## Project Pitch Leaflet 
-<img src="/app_images/leaflet.png" width="48">
+<img src="/app_images/leaflet.png" width="200">
 
 ## Homescreen
-![app homescreen](/app_images/homepage.jpg)
+<img src="/app_images/homepage.jpg" width="100">
 
 ## Profile Page
-[!profile page](/app_images/match.png)
+<img src="/app_images/match.png" width="100">
 
 ## Profile Setup Page
-![profile setup page](/app_images/profile.jpg)
+<img src="/app_images/profile.jpg" width="100">
 
 ## Messaging Page
-![messaging page](/app_images/chat.jpg)
+<img src="/app_images/chat.jpg" width="100">
 
 ## Events Page
-![events page](/app_images/events.jpg)
-
+<img src="/app_images/events.jpg" width="100">
 
