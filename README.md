@@ -3,7 +3,7 @@
 A social application for London universities focused on motivating students to attend society events by connecting them with others attending the same events.
 
 ## Project Pitch Leaflet 
-![project pitch leaflet](/app_images/leaflet.png)
+<img src="/app_images/leaflet.png" width="48">
 
 ## Homescreen
 ![app homescreen](/app_images/homepage.jpg)
@@ -18,6 +18,6 @@ A social application for London universities focused on motivating students to a
 ![messaging page](/app_images/chat.jpg)
 
 ## Events Page
-[!events page](/app_images/events.jpg)
+![events page](/app_images/events.jpg)
 
 
